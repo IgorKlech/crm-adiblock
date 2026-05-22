@@ -567,7 +567,7 @@ function conf(tit, msg, cb) {
   CCB = cb;
 }
 function fechaConf() { document.getElementById('co').classList.remove('op'); CCB = null; }
-document.getElementById('cosi').onclick = () => { fechaConf(); if(CCB) CCB(); };
+document.getElementById('cosi').onclick = () => { const cb = CCB; fechaConf(); if(cb) cb(); };
 document.getElementById('cono').onclick = fechaConf;
 
 // ── DB ────────────────────────────────────────────────────────────────────

@@ -1,10 +1,26 @@
 // ── Config ────────────────────────────────────────────────────────────────
 const SUPABASE_URL      = 'https://kgiynhrytnzfdywgjhby.supabase.co';
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtnaXluaHJ5dG56ZmR5d2dqaGJ5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk0Mzc0NzUsImV4cCI6MjA5NTAxMzQ3NX0.8cOWLAsJyXAzid5ce73FUI-HVVYJoWyfOC3pSKci6Vs';
-const { createClient } = supabase;
-const db = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-// ── State ─────────────────────────────────────────────────────────────────
+// Pega o fetch original via iframe — bypassa a interceptação do Vercel
+function getCleanFetch() {
+  try {
+    const f = document.createElement('iframe');
+    f.style.cssText = 'display:none';
+    document.head.appendChild(f);
+    const fn = f.contentWindow.fetch.bind(f.contentWindow);
+    document.head.removeChild(f);
+    return fn;
+  } catch { return fetch.bind(window); }
+}
+
+const { createClient } = supabase;
+const db = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+  global: { fetch: getCleanFetch() },
+  auth:   { persistSession: true, autoRefreshToken: true },
+});
+
+// ── Estado ────────────────────────────────────────────────────────────────
 let currentUser     = null;
 let currentProfile  = null;
 let allClients      = [];
@@ -15,432 +31,343 @@ let sortCol         = 'created_at';
 let sortDir         = 'desc';
 let confirmCb       = null;
 
-// ── Palette for avatars ───────────────────────────────────────────────────
-const PALETTE = ['#1F4E78','#0891b2','#7c3aed','#059669','#dc2626','#d97706','#0284c7','#c026d3'];
-function avatarColor(name) {
-  return PALETTE[(name || 'A').toUpperCase().charCodeAt(0) % PALETTE.length];
-}
-function avatarInitial(name) { return (name || '?')[0].toUpperCase(); }
+// ── Avatares ─────────────────────────────────────────────────────────────
+const CORES = ['#1F4E78','#0891b2','#7c3aed','#059669','#dc2626','#d97706','#0284c7','#c026d3'];
+const cor    = n => CORES[(n||'A').toUpperCase().charCodeAt(0) % CORES.length];
+const ini    = n => (n||'?')[0].toUpperCase();
 
-// ── XHR (não sofre interferência do script do Vercel) ────────────────────
-let _authToken = SUPABASE_ANON_KEY;
+// ── Formatação ────────────────────────────────────────────────────────────
+const hoje = () => new Date().toISOString().split('T')[0];
+const vencido = d => !!d && d <= hoje();
 
-function api(method, path, body) {
-  return new Promise((resolve, reject) => {
-    const xhr = new XMLHttpRequest();
-    xhr.open(method || 'GET', `${SUPABASE_URL}/rest/v1/${path}`, true);
-    xhr.setRequestHeader('apikey', SUPABASE_ANON_KEY);
-    xhr.setRequestHeader('Authorization', `Bearer ${_authToken}`);
-    xhr.setRequestHeader('Content-Type', 'application/json');
-    if (method === 'POST' || method === 'PATCH') {
-      xhr.setRequestHeader('Prefer', 'return=representation');
-    } else if (method === 'DELETE') {
-      xhr.setRequestHeader('Prefer', 'count=exact');
-    }
-    xhr.timeout = 15000;
-    xhr.ontimeout = () => reject(new Error('Servidor nao respondeu.'));
-    xhr.onerror   = () => reject(new Error('Erro de rede.'));
-    xhr.onload = () => {
-      if (method === 'DELETE') {
-        if (xhr.status === 204 || xhr.status === 200) {
-          const cr = xhr.getResponseHeader('Content-Range') || '';
-          if (cr.endsWith('/0')) reject(new Error('Sem permissao para excluir.'));
-          else resolve([]);
-        } else {
-          let m = xhr.responseText;
-          try { m = JSON.parse(m).message || m; } catch {}
-          reject(new Error(m || `Erro ${xhr.status}`));
-        }
-        return;
-      }
-      if (xhr.status >= 200 && xhr.status < 300) {
-        try { resolve(JSON.parse(xhr.responseText) || []); } catch { resolve([]); }
-      } else {
-        let m = xhr.responseText;
-        try { m = JSON.parse(m).message || m; } catch {}
-        reject(new Error(m || `Erro ${xhr.status}`));
-      }
-    };
-    xhr.send(body !== undefined ? JSON.stringify(body) : null);
-  });
-}
-
-// ── Utils ─────────────────────────────────────────────────────────────────
-function todayStr() { return new Date().toISOString().split('T')[0]; }
-
-function isOverdue(d) { return !!d && d <= todayStr(); }
-
-function fmtDate(d) {
+function fmtData(d) {
   if (!d) return '—';
-  const [y, m, dd] = d.split('-');
+  const [y,m,dd] = d.split('-');
   return `${dd}/${m}/${y}`;
 }
 
-function fmtDateRelative(d) {
-  if (!d) return '—';
-  const today = todayStr();
-  const diff  = Math.round((new Date(d) - new Date(today)) / 86400000);
-  if (diff === 0)  return 'Hoje';
-  if (diff === 1)  return 'Amanha';
-  if (diff === -1) return 'Ontem';
-  if (diff < -1)   return `${Math.abs(diff)}d atras`;
+function fmtRelativo(d) {
+  if (!d) return '';
+  const diff = Math.round((new Date(d) - new Date(hoje())) / 86400000);
+  if (diff === 0) return 'Hoje';
+  if (diff === 1) return 'Amanhã';
+  if (diff ===-1) return 'Ontem';
+  if (diff < -1)  return `${Math.abs(diff)}d atrás`;
   return `em ${diff}d`;
 }
 
-function fmtDateTime(dt) {
+function fmtDH(dt) {
   if (!dt) return '—';
-  return new Date(dt).toLocaleString('pt-BR', {
-    day: '2-digit', month: '2-digit', year: '2-digit',
-    hour: '2-digit', minute: '2-digit'
-  });
+  return new Date(dt).toLocaleString('pt-BR',{day:'2-digit',month:'2-digit',year:'2-digit',hour:'2-digit',minute:'2-digit'});
 }
 
-function fmtCurrency(v) {
+function fmtMoeda(v) {
   if (v == null || v === '') return '—';
-  return Number(v).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+  return Number(v).toLocaleString('pt-BR',{style:'currency',currency:'BRL'});
 }
 
-function statusBadge(s) {
-  const cls = {
-    'Pendente':'pendente', 'Em contato':'em-contato',
-    'Comprou':'comprou', 'Nao comprou':'nao-comprou', 'Inativo':'inativo'
-  };
-  return `<span class="badge badge-${cls[s] || 'pendente'}">${s}</span>`;
-}
-
-function dotClass(r) {
+function badgeStatus(s) {
   const m = {
-    'Comprou':'d-comprou','Falou':'d-falou','Nao atendeu':'d-nao-atendeu',
-    'Nao tem interesse':'d-nao-int','WhatsApp enviado':'d-whatsapp','Caixa postal':'d-caixa'
+    'Pendente':'pendente','Em contato':'em-contato',
+    'Comprou':'comprou','Nao comprou':'nao-comprou','Inativo':'inativo'
   };
-  return m[r] || '';
+  return `<span class="badge badge-${m[s]||'pendente'}">${s}</span>`;
 }
 
-function resultClass(r) {
-  if (r === 'Comprou')           return 'r-comprou';
-  if (r === 'Nao tem interesse') return 'r-nao-int';
-  if (r === 'Nao atendeu')       return 'r-nao-at';
+function dotHistorico(r) {
+  const m = {'Comprou':'d-comprou','Falou':'d-falou','Nao atendeu':'d-nao-atendeu',
+    'Nao tem interesse':'d-nao-int','WhatsApp enviado':'d-whatsapp','Caixa postal':'d-caixa'};
+  return m[r]||'';
+}
+
+function badgeHistorico(r) {
+  if (r==='Comprou') return 'r-comprou';
+  if (r==='Nao tem interesse') return 'r-nao-int';
+  if (r==='Nao atendeu') return 'r-nao-at';
   return '';
 }
 
 // ── Toast ─────────────────────────────────────────────────────────────────
-const ICONS = {
-  info:    `<svg class="toast-icon" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"/></svg>`,
-  success: `<svg class="toast-icon" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/></svg>`,
-  warning: `<svg class="toast-icon" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/></svg>`,
+const SVG = {
+  ok:   `<svg viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/></svg>`,
+  warn: `<svg viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/></svg>`,
+  info: `<svg viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"/></svg>`,
 };
 
-function toast(title, msg = '', type = 'info') {
+function toast(titulo, msg='', tipo='info') {
   const c = document.getElementById('toast-container');
   const t = document.createElement('div');
-  const cls = type === 'success' ? 't-success' : type === 'warning' ? 't-warning' : '';
-  t.className = `toast ${cls}`;
-  t.innerHTML = `
-    ${ICONS[type] || ICONS.info}
-    <div class="toast-body">
-      <div class="toast-title">${title}</div>
-      ${msg ? `<div class="toast-msg">${msg}</div>` : ''}
-    </div>
+  t.className = `toast ${tipo==='success'?'t-success':tipo==='warning'?'t-warning':''}`;
+  t.innerHTML = `${SVG[tipo==='success'?'ok':tipo==='warning'?'warn':'info']}
+    <div class="toast-body"><div class="toast-title">${titulo}</div>${msg?`<div class="toast-msg">${msg}</div>`:''}</div>
     <button class="toast-close" onclick="this.closest('.toast').remove()">&#x2715;</button>`;
   c.appendChild(t);
-  const delay = type === 'warning' ? 12000 : 5000;
-  setTimeout(() => t && t.parentNode && t.remove(), delay);
+  setTimeout(() => t?.parentNode && t.remove(), tipo==='warning'?10000:5000);
 }
 
-// ── Confirm Dialog ────────────────────────────────────────────────────────
-function showConfirm(title, msg, cb) {
-  document.getElementById('confirm-title').textContent = title;
+// ── Confirm ───────────────────────────────────────────────────────────────
+function confirmar(titulo, msg, cb) {
+  document.getElementById('confirm-title').textContent = titulo;
   document.getElementById('confirm-msg').textContent   = msg;
   document.getElementById('confirm-overlay').classList.add('open');
   confirmCb = cb;
 }
-function closeConfirm() {
+function fecharConfirm() {
   document.getElementById('confirm-overlay').classList.remove('open');
   confirmCb = null;
 }
-document.getElementById('confirm-ok').addEventListener('click', () => {
-  closeConfirm();
-  if (confirmCb) confirmCb();
-});
-document.getElementById('confirm-cancel').addEventListener('click', closeConfirm);
+document.getElementById('confirm-ok').addEventListener('click', () => { fecharConfirm(); if(confirmCb) confirmCb(); });
+document.getElementById('confirm-cancel').addEventListener('click', fecharConfirm);
 
-// ── Supabase DB via REST direto ────────────────────────────────────────────
-async function fetchClients() {
-  return api('GET', 'clients?select=*,seller:profiles(id,name)&order=created_at.desc');
+// ── DB via SDK ────────────────────────────────────────────────────────────
+async function dbFetch(fn) {
+  const { data, error } = await fn();
+  if (error) throw error;
+  return data || [];
 }
 
-async function fetchProfiles() {
-  const rows = await api('GET', 'profiles?select=id,name,role,email');
-  return rows;
-}
-
-// Extrai vendedores únicos dos próprios clientes (fallback quando fetchProfiles retorna vazio)
-function extractSellersFromClients(clients) {
-  const seen = new Set();
-  const sellers = [];
-  (clients || []).forEach(c => {
-    if (c.seller && c.seller.id && !seen.has(c.seller.id)) {
-      seen.add(c.seller.id);
-      sellers.push({ id: c.seller.id, name: c.seller.name, role: 'vendedor' });
-    }
-  });
-  return sellers.sort((a, b) => a.name.localeCompare(b.name));
-}
-
-async function saveClient(payload, id = null) {
-  if (id) {
-    const rows = await api('PATCH', `clients?id=eq.${id}&select=*`, payload);
-    return Array.isArray(rows) ? rows[0] : rows;
-  }
-  const rows = await api('POST', 'clients?select=*', payload);
-  return Array.isArray(rows) ? rows[0] : rows;
-}
-
-async function deleteClientById(id) {
-  await api('DELETE', `clients?id=eq.${id}`);
-}
-
-async function fetchHistory(clientId) {
-  return api('GET', `call_history?client_id=eq.${clientId}&select=*,seller:profiles(id,name)&order=datetime.desc`);
-}
-
-async function insertHistory(payload) {
-  const rows = await api('POST', 'call_history?select=*', payload);
-  return Array.isArray(rows) ? rows[0] : rows;
-}
-
-// ── Sort ──────────────────────────────────────────────────────────────────
-function applySort(list) {
-  return [...list].sort((a, b) => {
-    let va = a[sortCol];
-    let vb = b[sortCol];
-    if (sortCol === 'seller_name') { va = a.seller?.name; vb = b.seller?.name; }
-    if (va == null && vb == null) return 0;
-    if (va == null) return 1;
-    if (vb == null) return -1;
-    const cmp = String(va).toLowerCase() < String(vb).toLowerCase() ? -1 : 1;
-    return sortDir === 'asc' ? cmp : -cmp;
-  });
-}
-
-function updateSortHeaders() {
-  document.querySelectorAll('thead th.sortable').forEach(th => {
-    th.classList.remove('sort-asc', 'sort-desc');
-    if (th.dataset.col === sortCol) th.classList.add(`sort-${sortDir}`);
-  });
-}
-
-// ── Filter ────────────────────────────────────────────────────────────────
-function getFiltered() {
-  const q  = (document.getElementById('search-input').value || '').toLowerCase();
-  const sf = document.getElementById('status-filter').value;
-  const vf = document.getElementById('seller-filter').value;
-  return allClients.filter(c =>
-    ((c.name || '').toLowerCase().includes(q) || (c.phone || '').includes(q)) &&
-    (!sf || c.status === sf) &&
-    (!vf || (c.seller && c.seller.id === vf))
+async function fetchClientes() {
+  return dbFetch(() =>
+    db.from('clients').select('*, seller:profiles(id,name)').order('created_at', { ascending: false })
   );
 }
 
-// ── CSV Export ────────────────────────────────────────────────────────────
-function exportCSV() {
-  const rows = getFiltered();
-  if (!rows.length) { toast('Nada para exportar', 'Sem clientes com os filtros atuais.', 'warning'); return; }
-  const headers = ['Nome','Telefone','Vendedor','Status','Produto','Peso','Data Retorno','Valor Estimado','Observacao'];
-  const lines = rows.map(c => [
+async function fetchPerfis() {
+  return dbFetch(() => db.from('profiles').select('id,name,role,email').order('name'));
+}
+
+async function salvarCliente(dados, id=null) {
+  if (id) {
+    const { data, error } = await db.from('clients').update(dados).eq('id',id).select().single();
+    if (error) throw error;
+    return data;
+  }
+  const { data, error } = await db.from('clients').insert([dados]).select().single();
+  if (error) throw error;
+  return data;
+}
+
+async function excluirCliente(id) {
+  const { error } = await db.from('clients').delete().eq('id',id);
+  if (error) throw error;
+}
+
+async function fetchHistorico(clienteId) {
+  return dbFetch(() =>
+    db.from('call_history').select('*, seller:profiles(id,name)').eq('client_id',clienteId).order('datetime',{ascending:false})
+  );
+}
+
+async function salvarContato(dados) {
+  const { data, error } = await db.from('call_history').insert([dados]).select().single();
+  if (error) throw error;
+  return data;
+}
+
+// ── Ordenação ─────────────────────────────────────────────────────────────
+function ordenar(lista) {
+  return [...lista].sort((a,b) => {
+    let va = a[sortCol], vb = b[sortCol];
+    if (sortCol==='seller_name') { va=a.seller?.name; vb=b.seller?.name; }
+    if (va==null&&vb==null) return 0;
+    if (va==null) return 1; if (vb==null) return -1;
+    const c = String(va).toLowerCase() < String(vb).toLowerCase() ? -1 : 1;
+    return sortDir==='asc' ? c : -c;
+  });
+}
+
+function atualizarCabecalhos() {
+  document.querySelectorAll('thead th.sortable').forEach(th => {
+    th.classList.remove('sort-asc','sort-desc');
+    if (th.dataset.col===sortCol) th.classList.add(`sort-${sortDir}`);
+  });
+}
+
+// ── Filtros ───────────────────────────────────────────────────────────────
+function filtrados() {
+  const q  = (document.getElementById('search-input').value||'').toLowerCase();
+  const sf = document.getElementById('status-filter').value;
+  const vf = document.getElementById('seller-filter').value;
+  return allClients.filter(c =>
+    ((c.name||'').toLowerCase().includes(q)||(c.phone||'').includes(q)) &&
+    (!sf||c.status===sf) &&
+    (!vf||(c.seller&&c.seller.id===vf))
+  );
+}
+
+// ── CSV ───────────────────────────────────────────────────────────────────
+function exportarCSV() {
+  const rows = filtrados();
+  if (!rows.length) { toast('Nada para exportar','Sem clientes com os filtros atuais.','warning'); return; }
+  const h = ['Nome','Telefone','Vendedor','Status','Produto','Peso','Data Retorno','Valor','Observacao'];
+  const l = rows.map(c => [
     c.name, c.phone||'', c.seller?.name||'', c.status,
     c.produto||'', c.peso||'', c.callback_date||'',
     c.estimated_value||'', (c.observation||'').replace(/\n/g,' ')
   ].map(v => `"${String(v).replace(/"/g,'""')}"`).join(','));
-  const csv  = [headers.join(','), ...lines].join('\n');
-  const blob = new Blob(['﻿' + csv], { type: 'text/csv;charset=utf-8' });
-  const url  = URL.createObjectURL(blob);
-  const a    = document.createElement('a');
-  a.href = url;
-  a.download = `clientes_adiblock_${todayStr()}.csv`;
+  const csv = [h.join(','),...l].join('\n');
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob(['﻿'+csv],{type:'text/csv;charset=utf-8'}));
+  a.download = `clientes_${hoje()}.csv`;
   a.click();
-  URL.revokeObjectURL(url);
-  toast('Exportado!', `${rows.length} cliente(s) exportados.`, 'success');
+  toast('Exportado!',`${rows.length} cliente(s).`,'success');
 }
 
-// ── Render Clients ────────────────────────────────────────────────────────
-function renderClients() {
-  const filtered = applySort(getFiltered());
-  const total    = allClients.length;
-  const shown    = filtered.length;
-
+// ── Render clientes ───────────────────────────────────────────────────────
+function renderClientes() {
+  const lista = ordenar(filtrados());
+  const total = allClients.length;
   document.getElementById('clients-subtitle').textContent =
-    shown === total ? `${total} cliente(s) cadastrado(s)` : `Mostrando ${shown} de ${total}`;
+    lista.length===total ? `${total} cliente(s)` : `${lista.length} de ${total}`;
 
   const tbody = document.getElementById('clients-tbody');
-  if (!filtered.length) {
-    tbody.innerHTML = `<tr><td colspan="7"><div class="state-empty"><h3>Nenhum cliente encontrado</h3><p>Tente ajustar a busca ou os filtros.</p></div></td></tr>`;
+  if (!lista.length) {
+    tbody.innerHTML = `<tr><td colspan="7"><div class="state-empty"><h3>Nenhum cliente encontrado</h3><p>Ajuste os filtros ou cadastre um novo.</p></div></td></tr>`;
     return;
   }
 
-  tbody.innerHTML = filtered.map(c => {
-    const over = isOverdue(c.callback_date);
-    const relDate = c.callback_date
-      ? `${fmtDate(c.callback_date)} <span style="color:var(--muted);font-size:11px">(${fmtDateRelative(c.callback_date)})</span>${over ? `<span class="overdue-badge">Vencido</span>` : ''}`
+  tbody.innerHTML = lista.map(c => {
+    const over = vencido(c.callback_date);
+    const dataCell = c.callback_date
+      ? `${fmtData(c.callback_date)} <small style="color:var(--muted)">(${fmtRelativo(c.callback_date)})</small>${over?`<span class="overdue-badge">Vencido</span>`:''}`
       : '—';
-
-    const sellerCell = c.seller
-      ? `<div class="seller-chip"><div class="seller-avatar" style="background:${avatarColor(c.seller.name)}">${avatarInitial(c.seller.name)}</div>${c.seller.name}</div>`
+    const vendedor = c.seller
+      ? `<div class="seller-chip"><div class="seller-avatar" style="background:${cor(c.seller.name)}">${ini(c.seller.name)}</div>${c.seller.name}</div>`
       : `<span style="color:var(--muted)">—</span>`;
-
-    const prodLine = [c.produto, c.peso ? c.peso + ' kg' : ''].filter(Boolean).join(' · ');
-    return `<tr class="${over ? 'overdue' : ''}" data-id="${c.id}">
-      <td>
-        <strong>${c.name}</strong>
-        ${prodLine ? `<div style="font-size:11px;color:var(--muted);margin-top:2px">${prodLine}</div>` : ''}
-      </td>
-      <td class="td-phone">${c.phone || '—'}</td>
-      <td>${sellerCell}</td>
-      <td>${statusBadge(c.status)}</td>
-      <td>${relDate}</td>
-      <td>${fmtCurrency(c.estimated_value)}</td>
+    const prodInfo = [c.produto, c.peso].filter(Boolean).join(' · ');
+    return `<tr class="${over?'overdue':''}" data-id="${c.id}">
+      <td><strong>${c.name}</strong>${prodInfo?`<div class="prod-info">${prodInfo}</div>`:''}</td>
+      <td class="td-phone">${c.phone||'—'}</td>
+      <td>${vendedor}</td>
+      <td>${badgeStatus(c.status)}</td>
+      <td>${dataCell}</td>
+      <td>${fmtMoeda(c.estimated_value)}</td>
       <td><div class="actions-cell">
-        <button class="btn btn-ghost btn-sm" onclick="openPanel('${c.id}')">Historico</button>
-        <button class="btn btn-primary btn-sm" onclick="openEditModal('${c.id}')">Editar</button>
-        <button class="btn btn-ghost btn-sm" style="color:var(--danger);border-color:var(--danger-mid)" onclick="doDelete('${c.id}','${(c.name||'').replace(/'/g,"\\'")}')">Excluir</button>
+        <button class="btn btn-ghost btn-sm" onclick="abrirPainel('${c.id}')">Histórico</button>
+        <button class="btn btn-primary btn-sm" onclick="abrirEdicao('${c.id}')">Editar</button>
+        <button class="btn btn-outline-danger btn-sm" onclick="confirmarExclusao('${c.id}','${(c.name||'').replace(/'/g,"\\'")}')">Excluir</button>
       </div></td>
     </tr>`;
   }).join('');
 }
 
-// ── Render Dashboard ──────────────────────────────────────────────────────
+// ── Dashboard ─────────────────────────────────────────────────────────────
 async function renderDashboard() {
-  const total    = allClients.length;
-  const bought   = allClients.filter(c => c.status === 'Comprou').length;
-  const pending  = allClients.filter(c => c.status === 'Pendente').length;
-  const overList = allClients.filter(c =>
-    isOverdue(c.callback_date) && c.status !== 'Comprou' && c.status !== 'Inativo'
-  );
+  const total   = allClients.length;
+  const comprou = allClients.filter(c=>c.status==='Comprou').length;
+  const pend    = allClients.filter(c=>c.status==='Pendente').length;
+  const vencidos = allClients.filter(c=>vencido(c.callback_date)&&c.status!=='Comprou'&&c.status!=='Inativo');
+
+  const pct = v => total ? Math.round(v/total*100) : 0;
 
   document.getElementById('stat-total').textContent   = total;
-  document.getElementById('stat-bought').textContent  = bought;
-  document.getElementById('stat-pending').textContent = pending;
-  document.getElementById('stat-overdue').textContent = overList.length;
+  document.getElementById('stat-bought').textContent  = comprou;
+  document.getElementById('stat-pending').textContent = pend;
+  document.getElementById('stat-overdue').textContent = vencidos.length;
+  document.getElementById('stat-bought-bar').style.width  = pct(comprou)+'%';
+  document.getElementById('stat-pending-bar').style.width = pct(pend)+'%';
+  document.getElementById('overdue-badge').textContent = vencidos.length;
 
-  const pct = v => total ? Math.round((v / total) * 100) : 0;
-  document.getElementById('stat-bought-bar').style.width  = pct(bought)  + '%';
-  document.getElementById('stat-pending-bar').style.width = pct(pending) + '%';
-
-  document.getElementById('overdue-badge').textContent = overList.length;
-
-  // Overdue list
   const oel = document.getElementById('overdue-list');
-  oel.innerHTML = overList.length
-    ? overList.slice(0, 10).map(c => `
+  oel.innerHTML = vencidos.length
+    ? vencidos.slice(0,10).map(c=>`
         <div class="alert-row">
           <div class="alert-dot"></div>
           <div>
             <div class="alert-name">${c.name}</div>
-            <div class="alert-sub">${c.seller ? c.seller.name : 'Sem vendedor'} &mdash; Retorno: ${fmtDate(c.callback_date)} (${fmtDateRelative(c.callback_date)})</div>
+            <div class="alert-sub">${c.seller?.name||'Sem vendedor'} — ${fmtData(c.callback_date)} (${fmtRelativo(c.callback_date)})</div>
           </div>
         </div>`).join('')
-    : `<div class="state-empty" style="padding:20px 0"><p>Sem retornos vencidos. Tudo em dia!</p></div>`;
+    : `<div class="state-empty" style="padding:16px 0"><p>Nenhum retorno vencido!</p></div>`;
 
-  // Ranking
-  const { data: hist } = await db
-    .from('call_history')
-    .select('seller_id, seller:profiles(name)')
-    .eq('result', 'Comprou');
-
-  const counts = {}, names = {};
-  (hist || []).forEach(h => {
-    counts[h.seller_id] = (counts[h.seller_id] || 0) + 1;
-    if (h.seller) names[h.seller_id] = h.seller.name;
-  });
-
-  const top3   = Object.entries(counts).sort((a, b) => b[1] - a[1]).slice(0, 3);
-  const max    = top3[0]?.[1] || 1;
-  const posClass = ['p1', 'p2', 'p3'];
-
-  const rel = document.getElementById('ranking-list');
-  rel.innerHTML = top3.length
-    ? top3.map(([sid, n], i) => `
-        <div class="rank-row">
-          <div class="rank-pos ${posClass[i]}">${i + 1}</div>
-          <div class="rank-bar-wrap">
-            <div class="rank-name">${names[sid] || 'Desconhecido'}</div>
-            <div class="rank-bar"><div class="rank-bar-fill" style="width:${Math.round((n/max)*100)}%"></div></div>
-          </div>
-          <div>
-            <div class="rank-conv">${n}</div>
-            <div class="rank-unit">vendas</div>
-          </div>
-        </div>`).join('')
-    : `<div class="state-empty" style="padding:20px 0"><p>Nenhuma conversao registrada ainda.</p></div>`;
+  try {
+    const { data: hist } = await db.from('call_history').select('seller_id, seller:profiles(name)').eq('result','Comprou');
+    const counts={}, names={};
+    (hist||[]).forEach(h=>{
+      counts[h.seller_id]=(counts[h.seller_id]||0)+1;
+      if(h.seller) names[h.seller_id]=h.seller.name;
+    });
+    const top3  = Object.entries(counts).sort((a,b)=>b[1]-a[1]).slice(0,3);
+    const max   = top3[0]?.[1]||1;
+    const medal = ['p1','p2','p3'];
+    document.getElementById('ranking-list').innerHTML = top3.length
+      ? top3.map(([sid,n],i)=>`
+          <div class="rank-row">
+            <div class="rank-pos ${medal[i]}">${i+1}</div>
+            <div class="rank-bar-wrap">
+              <div class="rank-name">${names[sid]||'Desconhecido'}</div>
+              <div class="rank-bar"><div class="rank-bar-fill" style="width:${Math.round(n/max*100)}%"></div></div>
+            </div>
+            <div><div class="rank-conv">${n}</div><div class="rank-unit">vendas</div></div>
+          </div>`).join('')
+      : `<div class="state-empty" style="padding:16px 0"><p>Nenhuma conversão registrada.</p></div>`;
+  } catch {}
 }
 
-// ── Side Panel ────────────────────────────────────────────────────────────
-async function openPanel(clientId) {
-  currentClientId = clientId;
-  const c = allClients.find(x => x.id === clientId);
+// ── Painel lateral ────────────────────────────────────────────────────────
+async function abrirPainel(id) {
+  currentClientId = id;
+  const c = allClients.find(x=>x.id===id);
   if (!c) return;
-
-  const initial = avatarInitial(c.name);
-  const color   = avatarColor(c.name);
-  document.getElementById('panel-avatar').textContent            = initial;
-  document.getElementById('panel-avatar').style.background       = color;
-  document.getElementById('panel-client-name').textContent       = c.name;
-  document.getElementById('panel-client-info').textContent =
+  document.getElementById('panel-avatar').textContent        = ini(c.name);
+  document.getElementById('panel-avatar').style.background  = cor(c.name);
+  document.getElementById('panel-client-name').textContent   = c.name;
+  document.getElementById('panel-client-info').textContent   =
     [c.phone, c.status, c.seller?.name].filter(Boolean).join(' · ');
-
   document.getElementById('call-form').reset();
   document.getElementById('side-panel').classList.add('open');
   document.getElementById('panel-overlay').classList.add('open');
-  await loadTimeline(clientId);
+  await carregarTimeline(id);
 }
 
-async function loadTimeline(clientId) {
-  const el   = document.getElementById('timeline-container');
-  const cntEl = document.getElementById('history-count');
+async function carregarTimeline(id) {
+  const el  = document.getElementById('timeline-container');
+  const cnt = document.getElementById('history-count');
   el.innerHTML = `<div class="state-loading"><div class="spinner"></div></div>`;
-
-  const hist = await fetchHistory(clientId);
-  cntEl.textContent = hist.length ? `${hist.length} registro(s)` : '';
-
-  if (!hist.length) {
-    el.innerHTML = `<div class="state-empty" style="padding:16px 0"><p>Nenhum contato registrado ainda.</p></div>`;
-    return;
-  }
-
-  el.innerHTML = `<div class="timeline">${hist.map(h => `
-    <div class="tl-item">
-      <div class="tl-dot ${dotClass(h.result)}"></div>
-      <div class="tl-card">
-        <div class="tl-meta">
-          <span class="tl-date">${fmtDateTime(h.datetime)}</span>
-          <span class="tl-seller">${h.seller ? h.seller.name : 'Desconhecido'}</span>
+  try {
+    const hist = await fetchHistorico(id);
+    cnt.textContent = hist.length ? `${hist.length} registro(s)` : '';
+    if (!hist.length) {
+      el.innerHTML = `<div class="state-empty" style="padding:12px 0"><p>Nenhum contato registrado ainda.</p></div>`;
+      return;
+    }
+    el.innerHTML = `<div class="timeline">${hist.map(h=>`
+      <div class="tl-item">
+        <div class="tl-dot ${dotHistorico(h.result)}"></div>
+        <div class="tl-card">
+          <div class="tl-meta">
+            <span class="tl-date">${fmtDH(h.datetime)}</span>
+            <span class="tl-seller">${h.seller?.name||'—'}</span>
+          </div>
+          <span class="tl-result ${badgeHistorico(h.result)}">${h.result}</span>
+          ${h.notes?`<div class="tl-notes">${h.notes}</div>`:''}
+          ${h.next_callback?`<div class="tl-next">Próximo: <strong>${fmtData(h.next_callback)}</strong> (${fmtRelativo(h.next_callback)})</div>`:''}
         </div>
-        <span class="tl-result ${resultClass(h.result)}">${h.result}</span>
-        ${h.notes ? `<div class="tl-notes">${h.notes}</div>` : ''}
-        ${h.next_callback ? `<div class="tl-next">Proximo retorno: <strong>${fmtDate(h.next_callback)}</strong> (${fmtDateRelative(h.next_callback)})</div>` : ''}
-      </div>
-    </div>`).join('')}</div>`;
+      </div>`).join('')}</div>`;
+  } catch(e) {
+    el.innerHTML = `<div class="state-empty"><p style="color:var(--danger)">${e.message}</p></div>`;
+  }
 }
 
-function closePanel() {
+function fecharPainel() {
   document.getElementById('side-panel').classList.remove('open');
   document.getElementById('panel-overlay').classList.remove('open');
   currentClientId = null;
 }
 
-// ── Client Modal ──────────────────────────────────────────────────────────
-function populateSellers(ids) {
+// ── Modal cliente ─────────────────────────────────────────────────────────
+function preencherVendedores(ids) {
   ids.forEach(id => {
-    const el  = document.getElementById(id);
+    const el = document.getElementById(id);
     if (!el) return;
     const cur = el.value;
-    const def = id === 'field-seller' ? '<option value="">Sem vendedor</option>' : '<option value="">Todos os vendedores</option>';
-    el.innerHTML = def + allProfiles.map(p => `<option value="${p.id}">${p.name}</option>`).join('');
+    const def = id==='field-seller'?'<option value="">Sem vendedor</option>':'<option value="">Todos os vendedores</option>';
+    el.innerHTML = def + allProfiles.map(p=>`<option value="${p.id}">${p.name}</option>`).join('');
     if (cur) el.value = cur;
   });
 }
 
-function openAddModal() {
+function abrirNovoCliente() {
   editingClientId = null;
   document.getElementById('modal-title').textContent    = 'Novo Cliente';
   document.getElementById('modal-save-btn').textContent = 'Criar Cliente';
@@ -448,148 +375,109 @@ function openAddModal() {
   document.getElementById('field-status').value = 'Pendente';
   const errEl = document.getElementById('modal-save-error');
   if (errEl) errEl.textContent = '';
-  populateSellers(['field-seller']);
+  preencherVendedores(['field-seller']);
   document.getElementById('client-modal-overlay').classList.add('open');
   setTimeout(() => document.getElementById('field-name').focus(), 80);
 }
 
-function openEditModal(clientId) {
-  const c = allClients.find(x => x.id === clientId);
+function abrirEdicao(id) {
+  const c = allClients.find(x=>x.id===id);
   if (!c) return;
-  editingClientId = clientId;
+  editingClientId = id;
   document.getElementById('modal-title').textContent    = 'Editar Cliente';
-  document.getElementById('modal-save-btn').textContent = 'Salvar Alteracoes';
+  document.getElementById('modal-save-btn').textContent = 'Salvar Alterações';
   const errEl = document.getElementById('modal-save-error');
   if (errEl) errEl.textContent = '';
-  populateSellers(['field-seller']);
-  document.getElementById('field-name').value          = c.name || '';
-  document.getElementById('field-phone').value         = c.phone || '';
-  document.getElementById('field-seller').value        = c.seller_id || '';
-  document.getElementById('field-status').value        = c.status || 'Pendente';
-  document.getElementById('field-callback-date').value = c.callback_date || '';
-  document.getElementById('field-value').value         = c.estimated_value || '';
-  document.getElementById('field-produto').value       = c.produto || '';
-  document.getElementById('field-peso').value          = c.peso || '';
-  document.getElementById('field-observation').value   = c.observation || '';
+  preencherVendedores(['field-seller']);
+  document.getElementById('field-name').value          = c.name||'';
+  document.getElementById('field-phone').value         = c.phone||'';
+  document.getElementById('field-seller').value        = c.seller_id||'';
+  document.getElementById('field-status').value        = c.status||'Pendente';
+  document.getElementById('field-callback-date').value = c.callback_date||'';
+  document.getElementById('field-value').value         = c.estimated_value||'';
+  document.getElementById('field-produto').value       = c.produto||'';
+  document.getElementById('field-peso').value          = c.peso||'';
+  document.getElementById('field-observation').value   = c.observation||'';
   document.getElementById('client-modal-overlay').classList.add('open');
 }
 
-function closeModal() {
+function fecharModal() {
   document.getElementById('client-modal-overlay').classList.remove('open');
   editingClientId = null;
 }
 
-async function doDelete(id, name) {
-  showConfirm(
+async function confirmarExclusao(id, nome) {
+  confirmar(
     'Excluir cliente',
-    `Tem certeza que deseja excluir "${name}"? Esta acao nao pode ser desfeita e o historico de contatos tambem sera removido.`,
+    `Tem certeza que deseja excluir "${nome}"? O histórico de contatos também será removido.`,
     async () => {
       try {
-        await deleteClientById(id);
-        allClients = allClients.filter(c => c.id !== id);
-        renderClients();
-        toast('Cliente excluido', `"${name}" foi removido com sucesso.`);
-      } catch (err) {
-        toast('Erro ao excluir', err.message, 'warning');
+        await excluirCliente(id);
+        allClients = allClients.filter(c=>c.id!==id);
+        renderClientes();
+        toast('Cliente excluído',`"${nome}" foi removido.`,'success');
+      } catch(e) {
+        toast('Erro ao excluir', e.message, 'warning');
       }
     }
   );
 }
 
-// ── Debug badge ───────────────────────────────────────────────────────────
-function updateDebugBadge(msg) {
-  const el = document.getElementById('debug-badge');
-  if (!el) return;
-  el.textContent = msg || `${allProfiles.length} vendedor(es) | ${allClients.length} cliente(s)`;
-  el.style.display = 'block';
+// ── Notificação vencidos ───────────────────────────────────────────────────
+function notificarVencidos() {
+  const n = allClients.filter(c=>vencido(c.callback_date)&&c.status!=='Comprou'&&c.status!=='Inativo').length;
+  if (n>0) toast(`${n} retorno(s) vencido(s)`,`Você tem ${n} cliente(s) com data vencida ou para hoje.`,'warning');
 }
 
-// ── Overdue notification on login ─────────────────────────────────────────
-function checkOverdueNotification() {
-  const n = allClients.filter(c =>
-    isOverdue(c.callback_date) && c.status !== 'Comprou' && c.status !== 'Inativo'
-  ).length;
-  if (n > 0)
-    toast(
-      `${n} retorno(s) vencido(s)`,
-      `Voce tem ${n} cliente(s) com data de retorno vencida ou para hoje.`,
-      'warning'
-    );
-}
-
-// ── Teste direto de conexao ───────────────────────────────────────────────
-function testeConexao(token) {
-  const xhr = new XMLHttpRequest();
-  xhr.open('GET', `${SUPABASE_URL}/rest/v1/profiles?select=id,name&limit=10`, true);
-  xhr.setRequestHeader('apikey', SUPABASE_ANON_KEY);
-  xhr.setRequestHeader('Authorization', `Bearer ${token}`);
-  xhr.timeout = 10000;
-  xhr.ontimeout = () => updateDebugBadge('XHR timeout');
-  xhr.onerror   = () => updateDebugBadge('XHR erro de rede');
-  xhr.onload    = () => {
-    try {
-      const json = JSON.parse(xhr.responseText);
-      updateDebugBadge(`XHR ${xhr.status} | ${json.length} perfil(is) encontrado(s)`);
-    } catch {
-      updateDebugBadge(`XHR ${xhr.status} | ${xhr.responseText.slice(0,60)}`);
-    }
-  };
-  xhr.send(null);
-}
-
-// ── Init App ──────────────────────────────────────────────────────────────
-async function initApp(user) {
+// ── Init ──────────────────────────────────────────────────────────────────
+async function iniciar(user, token) {
   currentUser = user;
 
-  // Salva o token para uso nas queries diretas
-  const { data: sessionData } = await db.auth.getSession();
-  _authToken = sessionData?.session?.access_token || SUPABASE_ANON_KEY;
-  testeConexao(_authToken);
-
-  // Load profile
+  // Carrega perfil do usuário logado
   try {
-    const { data } = await db.from('profiles').select('*').eq('id', user.id).single();
+    const { data } = await db.from('profiles').select('*').eq('id',user.id).single();
     currentProfile = data;
   } catch {
     currentProfile = { name: user.email.split('@')[0], role: 'vendedor' };
   }
 
-  const name = currentProfile?.name || user.email;
-  document.getElementById('user-name-display').textContent = name;
-  document.getElementById('user-role-display').textContent = currentProfile?.role === 'admin' ? 'Admin' : 'Vendedor';
-  document.getElementById('user-avatar').textContent        = avatarInitial(name);
-  document.getElementById('user-avatar').style.background   = avatarColor(name);
+  const nome = currentProfile?.name || user.email;
+  document.getElementById('user-name-display').textContent = nome;
+  document.getElementById('user-role-display').textContent = currentProfile?.role==='admin'?'Admin':'Vendedor';
+  document.getElementById('user-avatar').textContent       = ini(nome);
+  document.getElementById('user-avatar').style.background  = cor(nome);
 
   // Carrega perfis e clientes em paralelo
-  const [profResult, cliResult] = await Promise.allSettled([fetchProfiles(), fetchClients()]);
+  const [rProf, rCli] = await Promise.allSettled([fetchPerfis(), fetchClientes()]);
 
-  if (cliResult.status === 'fulfilled') {
-    allClients = cliResult.value;
+  if (rCli.status==='fulfilled') {
+    allClients = rCli.value;
   } else {
-    console.error('fetchClients:', cliResult.reason?.message);
-    document.getElementById('clients-tbody').innerHTML =
-      `<tr><td colspan="7"><div class="state-empty"><h3>Erro ao carregar clientes</h3><p style="color:var(--danger)">${cliResult.reason?.message}</p></div></td></tr>`;
-    toast('Erro de banco de dados', cliResult.reason?.message, 'warning');
+    console.error('fetchClientes:', rCli.reason?.message);
+    toast('Erro ao carregar clientes', rCli.reason?.message, 'warning');
   }
 
-  if (profResult.status === 'fulfilled' && profResult.value.length > 0) {
-    allProfiles = profResult.value;
+  if (rProf.status==='fulfilled' && rProf.value.length>0) {
+    allProfiles = rProf.value;
   } else {
-    // Fallback: extrai vendedores dos próprios clientes
-    allProfiles = extractSellersFromClients(allClients);
-    if (profResult.status === 'rejected') console.error('fetchProfiles:', profResult.reason?.message);
+    // Fallback: extrai vendedores dos clientes já carregados
+    const vistos = new Set();
+    allProfiles = [];
+    allClients.forEach(c => {
+      if (c.seller?.id && !vistos.has(c.seller.id)) {
+        vistos.add(c.seller.id);
+        allProfiles.push({id:c.seller.id, name:c.seller.name, role:'vendedor'});
+      }
+    });
+    allProfiles.sort((a,b)=>a.name.localeCompare(b.name));
   }
 
-  populateSellers(['seller-filter', 'field-seller']);
-  updateDebugBadge();
-
-  if (cliResult.status === 'fulfilled') {
-    renderClients();
-    checkOverdueNotification();
-  }
+  preencherVendedores(['seller-filter','field-seller']);
+  renderClientes();
+  notificarVencidos();
 }
 
-// ── Events ────────────────────────────────────────────────────────────────
+// ── Eventos ───────────────────────────────────────────────────────────────
 
 // Login
 document.getElementById('login-form').addEventListener('submit', async e => {
@@ -603,7 +491,7 @@ document.getElementById('login-form').addEventListener('submit', async e => {
       password: document.getElementById('login-password').value,
     });
     if (error) throw error;
-  } catch (e) {
+  } catch(e) {
     err.textContent = e.message || 'Erro ao fazer login.';
     btn.disabled = false; btn.textContent = 'Entrar';
   }
@@ -611,173 +499,149 @@ document.getElementById('login-form').addEventListener('submit', async e => {
 
 // Logout
 document.getElementById('logout-btn').addEventListener('click', async () => {
-  try { await Promise.race([db.auth.signOut(), new Promise(r => setTimeout(r, 3000))]); } catch {}
-  _authToken = SUPABASE_ANON_KEY;
+  try { await Promise.race([db.auth.signOut(), new Promise(r=>setTimeout(r,3000))]); } catch {}
   window.location.reload();
 });
 
-// Tabs
+// Abas
 document.querySelectorAll('.tab-btn').forEach(btn => {
   btn.addEventListener('click', () => {
-    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-    document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+    document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
+    document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
     btn.classList.add('active');
     const tab = btn.dataset.tab;
     document.getElementById(`${tab}-view`).classList.add('active');
-    if (tab === 'dashboard') renderDashboard();
+    if (tab==='dashboard') renderDashboard();
   });
 });
 
-// Sort columns
+// Ordenar colunas
 document.querySelectorAll('thead th.sortable').forEach(th => {
   th.addEventListener('click', () => {
     const col = th.dataset.col;
-    if (sortCol === col) {
-      sortDir = sortDir === 'asc' ? 'desc' : 'asc';
-    } else {
-      sortCol = col; sortDir = 'asc';
-    }
-    updateSortHeaders();
-    renderClients();
+    sortDir = sortCol===col && sortDir==='asc' ? 'desc' : 'asc';
+    sortCol = col;
+    atualizarCabecalhos();
+    renderClientes();
   });
 });
 
-// Search & filters
-document.getElementById('search-input').addEventListener('input', renderClients);
-document.getElementById('status-filter').addEventListener('change', renderClients);
-document.getElementById('seller-filter').addEventListener('change', renderClients);
+// Busca e filtros
+document.getElementById('search-input').addEventListener('input', renderClientes);
+document.getElementById('status-filter').addEventListener('change', renderClientes);
+document.getElementById('seller-filter').addEventListener('change', renderClientes);
 
-// Add client
-document.getElementById('add-client-btn').addEventListener('click', openAddModal);
-document.getElementById('modal-close-btn').addEventListener('click', closeModal);
-document.getElementById('modal-cancel-btn').addEventListener('click', closeModal);
-document.getElementById('client-modal-overlay').addEventListener('click', e => {
-  if (e.target === e.currentTarget) closeModal();
+// Botões da tabela
+document.getElementById('add-client-btn').addEventListener('click', abrirNovoCliente);
+document.getElementById('export-btn').addEventListener('click', exportarCSV);
+document.getElementById('dash-refresh-btn').addEventListener('click', async () => {
+  allClients = await fetchClientes().catch(()=>allClients);
+  renderDashboard();
+  toast('Dashboard atualizado','','success');
 });
 
-// Client form submit
+// Modal cliente
+document.getElementById('modal-close-btn').addEventListener('click', fecharModal);
+document.getElementById('modal-cancel-btn').addEventListener('click', fecharModal);
+document.getElementById('client-modal-overlay').addEventListener('click', e => {
+  if (e.target===e.currentTarget) fecharModal();
+});
+
 document.getElementById('client-form').addEventListener('submit', async e => {
   e.preventDefault();
-  const btn      = document.getElementById('modal-save-btn');
-  const errorEl  = document.getElementById('modal-save-error');
-  btn.disabled = true; btn.textContent = 'Salvando...'; errorEl.textContent = '';
-
+  const btn   = document.getElementById('modal-save-btn');
+  const errEl = document.getElementById('modal-save-error');
+  btn.disabled = true; btn.textContent = 'Salvando...';
+  if (errEl) errEl.textContent = '';
   try {
-    const payload = {
+    const dados = {
       name:            document.getElementById('field-name').value.trim(),
-      phone:           document.getElementById('field-phone').value.trim() || null,
-      seller_id:       document.getElementById('field-seller').value || null,
+      phone:           document.getElementById('field-phone').value.trim()||null,
+      seller_id:       document.getElementById('field-seller').value||null,
       status:          document.getElementById('field-status').value,
-      callback_date:   document.getElementById('field-callback-date').value || null,
+      callback_date:   document.getElementById('field-callback-date').value||null,
       estimated_value: document.getElementById('field-value').value ? parseFloat(document.getElementById('field-value').value) : null,
-      produto:         document.getElementById('field-produto').value.trim() || null,
-      peso:            document.getElementById('field-peso').value.trim() || null,
-      observation:     document.getElementById('field-observation').value.trim() || null,
+      produto:         document.getElementById('field-produto').value.trim()||null,
+      peso:            document.getElementById('field-peso').value.trim()||null,
+      observation:     document.getElementById('field-observation').value.trim()||null,
     };
-
-    await saveClient(payload, editingClientId);
-    allClients = await fetchClients();
-    renderClients();
-    closeModal();
-    toast(
-      editingClientId ? 'Cliente atualizado' : 'Cliente criado',
-      `"${payload.name}" foi ${editingClientId ? 'atualizado' : 'adicionado'} com sucesso.`,
-      'success'
-    );
-  } catch (err) {
-    console.error('saveClient:', err);
-    const msg = err.message || 'Erro desconhecido. Tente novamente.';
-    errorEl.textContent = msg;
+    await salvarCliente(dados, editingClientId);
+    allClients = await fetchClientes();
+    renderClientes();
+    fecharModal();
+    toast(editingClientId?'Cliente atualizado':'Cliente criado',`"${dados.name}" salvo com sucesso.`,'success');
+  } catch(e) {
+    const msg = e.message||'Erro ao salvar. Tente novamente.';
+    if (errEl) errEl.textContent = msg;
     toast('Erro ao salvar', msg, 'warning');
   } finally {
     btn.disabled = false;
-    btn.textContent = editingClientId ? 'Salvar Alteracoes' : 'Criar Cliente';
+    btn.textContent = editingClientId?'Salvar Alterações':'Criar Cliente';
   }
 });
 
-// Panel
-document.getElementById('panel-close-btn').addEventListener('click', closePanel);
-document.getElementById('panel-overlay').addEventListener('click', closePanel);
+// Painel lateral
+document.getElementById('panel-close-btn').addEventListener('click', fecharPainel);
+document.getElementById('panel-overlay').addEventListener('click', fecharPainel);
 
-// Call form
+// Formulário de contato
 document.getElementById('call-form').addEventListener('submit', async e => {
   e.preventDefault();
   if (!currentClientId) return;
-
-  const result = document.getElementById('call-result').value;
-  if (!result) { toast('Campo obrigatorio', 'Selecione o resultado do contato.', 'warning'); return; }
-
+  const resultado = document.getElementById('call-result').value;
+  if (!resultado) { toast('Campo obrigatório','Selecione o resultado do contato.','warning'); return; }
   const btn  = document.getElementById('call-submit-btn');
-  const nextCb = document.getElementById('call-next-callback').value || null;
+  const prox = document.getElementById('call-next-callback').value||null;
   btn.disabled = true; btn.textContent = 'Registrando...';
-
   try {
-    await insertHistory({
+    await salvarContato({
       client_id:     currentClientId,
       seller_id:     currentUser.id,
       datetime:      new Date().toISOString(),
-      result,
-      next_callback: nextCb,
-      notes:         document.getElementById('call-notes').value.trim() || null,
+      result:        resultado,
+      next_callback: prox,
+      notes:         document.getElementById('call-notes').value.trim()||null,
     });
-
-    // Auto-update client status
-    const updates = {};
-    if (result === 'Comprou') {
-      updates.status = 'Comprou';
-    } else if (result === 'Nao tem interesse') {
-      updates.status = 'Nao comprou';
-    } else if (result === 'Ligar de volta') {
-      updates.status = 'Em contato';
-      if (nextCb) updates.callback_date = nextCb;
+    // Atualiza status do cliente automaticamente
+    const upd = {};
+    if (resultado==='Comprou')          upd.status='Comprou';
+    else if (resultado==='Nao tem interesse') upd.status='Nao comprou';
+    else if (resultado==='Ligar de volta') {
+      upd.status='Em contato';
+      if (prox) upd.callback_date=prox;
     } else {
-      const cl = allClients.find(c => c.id === currentClientId);
-      if (cl && cl.status === 'Pendente') updates.status = 'Em contato';
-      if (nextCb) updates.callback_date = nextCb;
+      const cl = allClients.find(c=>c.id===currentClientId);
+      if (cl?.status==='Pendente') upd.status='Em contato';
+      if (prox) upd.callback_date=prox;
     }
-
-    if (Object.keys(updates).length) await saveClient(updates, currentClientId);
-
-    allClients = await fetchClients();
-    renderClients();
+    if (Object.keys(upd).length) await salvarCliente(upd, currentClientId);
+    allClients = await fetchClientes();
+    renderClientes();
     document.getElementById('call-form').reset();
-    await loadTimeline(currentClientId);
-    toast('Contato registrado', 'Historico atualizado com sucesso.', 'success');
-  } catch (err) {
-    console.error('insertHistory:', err);
-    toast('Erro ao registrar', err.message, 'warning');
+    await carregarTimeline(currentClientId);
+    toast('Contato registrado','Histórico atualizado.','success');
+  } catch(e) {
+    toast('Erro ao registrar', e.message, 'warning');
   } finally {
     btn.disabled = false; btn.textContent = 'Registrar Contato';
   }
 });
 
-// Export
-document.getElementById('export-btn').addEventListener('click', exportCSV);
-
-// Dashboard refresh
-document.getElementById('dash-refresh-btn').addEventListener('click', async () => {
-  allClients = await fetchClients();
-  renderDashboard();
-  toast('Dashboard atualizado', '', 'success');
-});
-
-// ESC key closes modals and panel
+// ESC fecha modais
 document.addEventListener('keydown', e => {
-  if (e.key !== 'Escape') return;
-  if (document.getElementById('client-modal-overlay').classList.contains('open')) { closeModal(); return; }
-  if (document.getElementById('confirm-overlay').classList.contains('open')) { closeConfirm(); return; }
-  if (document.getElementById('side-panel').classList.contains('open')) { closePanel(); return; }
+  if (e.key!=='Escape') return;
+  if (document.getElementById('client-modal-overlay').classList.contains('open')) { fecharModal(); return; }
+  if (document.getElementById('confirm-overlay').classList.contains('open'))      { fecharConfirm(); return; }
+  if (document.getElementById('side-panel').classList.contains('open'))           { fecharPainel(); return; }
 });
 
-// ── Auth state ────────────────────────────────────────────────────────────
+// ── Auth ──────────────────────────────────────────────────────────────────
 db.auth.onAuthStateChange(async (_event, session) => {
   if (session?.user) {
-    _authToken = session.access_token || SUPABASE_ANON_KEY;
     document.getElementById('login-screen').style.display = 'none';
     document.getElementById('app').style.display = 'flex';
-    await initApp(session.user);
+    await iniciar(session.user, session.access_token);
   } else {
-    _authToken = SUPABASE_ANON_KEY;
     document.getElementById('login-screen').style.display = 'flex';
     document.getElementById('app').style.display = 'none';
     currentUser = null; currentProfile = null;
@@ -790,6 +654,6 @@ db.auth.onAuthStateChange(async (_event, session) => {
   if (session?.user) {
     document.getElementById('login-screen').style.display = 'none';
     document.getElementById('app').style.display = 'flex';
-    await initApp(session.user);
+    await iniciar(session.user, session.access_token);
   }
 })();

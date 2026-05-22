@@ -351,6 +351,10 @@ td strong { color: var(--text); font-weight: 600; }
 
 .actions-cell { display: flex; gap: 5px; }
 
+.prod-info { font-size:11px; color:var(--muted); margin-top:2px; }
+.btn-outline-danger { background:transparent; color:var(--danger); border:1.5px solid var(--danger-mid); }
+.btn-outline-danger:hover { background:var(--danger); color:white; }
+
 .overdue-badge {
   display: inline-flex; align-items: center; gap: 3px;
   background: var(--danger-soft); color: var(--danger);

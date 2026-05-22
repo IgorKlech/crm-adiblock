@@ -151,7 +151,21 @@ async function fetchClients() {
 }
 
 async function fetchProfiles() {
-  return api('GET', 'profiles?select=*&order=name');
+  const rows = await api('GET', 'profiles?select=id,name,role,email');
+  return rows;
+}
+
+// Extrai vendedores únicos dos próprios clientes (fallback quando fetchProfiles retorna vazio)
+function extractSellersFromClients(clients) {
+  const seen = new Set();
+  const sellers = [];
+  (clients || []).forEach(c => {
+    if (c.seller && c.seller.id && !seen.has(c.seller.id)) {
+      seen.add(c.seller.id);
+      sellers.push({ id: c.seller.id, name: c.seller.name, role: 'vendedor' });
+    }
+  });
+  return sellers.sort((a, b) => a.name.localeCompare(b.name));
 }
 
 async function saveClient(payload, id = null) {
@@ -164,7 +178,18 @@ async function saveClient(payload, id = null) {
 }
 
 async function deleteClientById(id) {
-  await api('DELETE', `clients?id=eq.${id}`);
+  const headers = {
+    'apikey':        SUPABASE_ANON_KEY,
+    'Authorization': `Bearer ${_authToken}`,
+    'Prefer':        'count=exact',
+  };
+  const res = await fetch(`${SUPABASE_URL}/rest/v1/clients?id=eq.${id}`, {
+    method: 'DELETE', headers,
+  });
+  if (!res.ok) throw new Error(`Erro ${res.status} ao excluir`);
+  const count = res.headers.get('Content-Range') || res.headers.get('content-range') || '';
+  // Content-Range: */0 significa que nenhuma linha foi afetada (RLS bloqueou)
+  if (count.endsWith('/0')) throw new Error('Sem permissao para excluir este registro.');
 }
 
 async function fetchHistory(clientId) {
@@ -526,25 +551,29 @@ async function initApp(user) {
   // Carrega perfis e clientes em paralelo
   const [profResult, cliResult] = await Promise.allSettled([fetchProfiles(), fetchClients()]);
 
-  if (profResult.status === 'fulfilled') {
-    allProfiles = profResult.value;
-    populateSellers(['seller-filter', 'field-seller']);
-    updateDebugBadge();
-  } else {
-    console.error('fetchProfiles:', profResult.reason?.message);
-    toast('Erro ao carregar vendedores', profResult.reason?.message, 'warning');
-  }
-
   if (cliResult.status === 'fulfilled') {
     allClients = cliResult.value;
-    renderClients();
-    checkOverdueNotification();
-    updateDebugBadge();
   } else {
     console.error('fetchClients:', cliResult.reason?.message);
     document.getElementById('clients-tbody').innerHTML =
       `<tr><td colspan="7"><div class="state-empty"><h3>Erro ao carregar clientes</h3><p style="color:var(--danger)">${cliResult.reason?.message}</p></div></td></tr>`;
     toast('Erro de banco de dados', cliResult.reason?.message, 'warning');
+  }
+
+  if (profResult.status === 'fulfilled' && profResult.value.length > 0) {
+    allProfiles = profResult.value;
+  } else {
+    // Fallback: extrai vendedores dos próprios clientes
+    allProfiles = extractSellersFromClients(allClients);
+    if (profResult.status === 'rejected') console.error('fetchProfiles:', profResult.reason?.message);
+  }
+
+  populateSellers(['seller-filter', 'field-seller']);
+  updateDebugBadge();
+
+  if (cliResult.status === 'fulfilled') {
+    renderClients();
+    checkOverdueNotification();
   }
 }
 

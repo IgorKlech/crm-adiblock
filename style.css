@@ -408,6 +408,7 @@ td strong { color: var(--text); font-weight: 600; }
   background: rgba(15,23,42,.45); backdrop-filter: blur(4px);
   z-index: 200; align-items: center; justify-content: center; padding: 20px;
 }
+#confirm-overlay { z-index: 300; }
 .modal-overlay.open { display: flex; }
 
 .modal {

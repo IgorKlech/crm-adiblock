@@ -1,0 +1,10 @@
+{
+  "headers": [
+    {
+      "source": "/(.*)",
+      "headers": [
+        { "key": "X-Vercel-Skip-Toolbar", "value": "1" }
+      ]
+    }
+  ]
+}

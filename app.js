@@ -22,28 +22,47 @@ function avatarColor(name) {
 }
 function avatarInitial(name) { return (name || '?')[0].toUpperCase(); }
 
-// ── REST direto (bypassa o SDK p/ evitar conflito com scripts do Vercel) ──
+// ── XHR (não sofre interferência do script do Vercel) ────────────────────
 let _authToken = SUPABASE_ANON_KEY;
 
-async function api(method, path, body) {
-  const headers = {
-    'apikey':        SUPABASE_ANON_KEY,
-    'Authorization': `Bearer ${_authToken}`,
-    'Content-Type':  'application/json',
-    'Prefer':        'return=representation',
-  };
-  const res = await fetch(`${SUPABASE_URL}/rest/v1/${path}`, {
-    method: method || 'GET',
-    headers,
-    body: body !== undefined ? JSON.stringify(body) : undefined,
+function api(method, path, body) {
+  return new Promise((resolve, reject) => {
+    const xhr = new XMLHttpRequest();
+    xhr.open(method || 'GET', `${SUPABASE_URL}/rest/v1/${path}`, true);
+    xhr.setRequestHeader('apikey', SUPABASE_ANON_KEY);
+    xhr.setRequestHeader('Authorization', `Bearer ${_authToken}`);
+    xhr.setRequestHeader('Content-Type', 'application/json');
+    if (method === 'POST' || method === 'PATCH') {
+      xhr.setRequestHeader('Prefer', 'return=representation');
+    } else if (method === 'DELETE') {
+      xhr.setRequestHeader('Prefer', 'count=exact');
+    }
+    xhr.timeout = 15000;
+    xhr.ontimeout = () => reject(new Error('Servidor nao respondeu.'));
+    xhr.onerror   = () => reject(new Error('Erro de rede.'));
+    xhr.onload = () => {
+      if (method === 'DELETE') {
+        if (xhr.status === 204 || xhr.status === 200) {
+          const cr = xhr.getResponseHeader('Content-Range') || '';
+          if (cr.endsWith('/0')) reject(new Error('Sem permissao para excluir.'));
+          else resolve([]);
+        } else {
+          let m = xhr.responseText;
+          try { m = JSON.parse(m).message || m; } catch {}
+          reject(new Error(m || `Erro ${xhr.status}`));
+        }
+        return;
+      }
+      if (xhr.status >= 200 && xhr.status < 300) {
+        try { resolve(JSON.parse(xhr.responseText) || []); } catch { resolve([]); }
+      } else {
+        let m = xhr.responseText;
+        try { m = JSON.parse(m).message || m; } catch {}
+        reject(new Error(m || `Erro ${xhr.status}`));
+      }
+    };
+    xhr.send(body !== undefined ? JSON.stringify(body) : null);
   });
-  const text = await res.text();
-  if (!res.ok) {
-    let msg = text;
-    try { msg = JSON.parse(text).message || text; } catch {}
-    throw new Error(msg);
-  }
-  try { return JSON.parse(text); } catch { return []; }
 }
 
 // ── Utils ─────────────────────────────────────────────────────────────────
@@ -178,18 +197,7 @@ async function saveClient(payload, id = null) {
 }
 
 async function deleteClientById(id) {
-  const headers = {
-    'apikey':        SUPABASE_ANON_KEY,
-    'Authorization': `Bearer ${_authToken}`,
-    'Prefer':        'count=exact',
-  };
-  const res = await fetch(`${SUPABASE_URL}/rest/v1/clients?id=eq.${id}`, {
-    method: 'DELETE', headers,
-  });
-  if (!res.ok) throw new Error(`Erro ${res.status} ao excluir`);
-  const count = res.headers.get('Content-Range') || res.headers.get('content-range') || '';
-  // Content-Range: */0 significa que nenhuma linha foi afetada (RLS bloqueou)
-  if (count.endsWith('/0')) throw new Error('Sem permissao para excluir este registro.');
+  await api('DELETE', `clients?id=eq.${id}`);
 }
 
 async function fetchHistory(clientId) {
@@ -510,19 +518,23 @@ function checkOverdueNotification() {
 }
 
 // ── Teste direto de conexao ───────────────────────────────────────────────
-async function testeConexao(token) {
-  try {
-    const res = await fetch(`${SUPABASE_URL}/rest/v1/profiles?select=id,name&limit=10`, {
-      headers: {
-        'apikey': SUPABASE_ANON_KEY,
-        'Authorization': `Bearer ${token}`,
-      }
-    });
-    const json = await res.json();
-    updateDebugBadge(`Fetch direto: ${res.status} | ${JSON.stringify(json).slice(0,80)}`);
-  } catch(e) {
-    updateDebugBadge(`Fetch direto ERRO: ${e.message}`);
-  }
+function testeConexao(token) {
+  const xhr = new XMLHttpRequest();
+  xhr.open('GET', `${SUPABASE_URL}/rest/v1/profiles?select=id,name&limit=10`, true);
+  xhr.setRequestHeader('apikey', SUPABASE_ANON_KEY);
+  xhr.setRequestHeader('Authorization', `Bearer ${token}`);
+  xhr.timeout = 10000;
+  xhr.ontimeout = () => updateDebugBadge('XHR timeout');
+  xhr.onerror   = () => updateDebugBadge('XHR erro de rede');
+  xhr.onload    = () => {
+    try {
+      const json = JSON.parse(xhr.responseText);
+      updateDebugBadge(`XHR ${xhr.status} | ${json.length} perfil(is) encontrado(s)`);
+    } catch {
+      updateDebugBadge(`XHR ${xhr.status} | ${xhr.responseText.slice(0,60)}`);
+    }
+  };
+  xhr.send(null);
 }
 
 // ── Init App ──────────────────────────────────────────────────────────────

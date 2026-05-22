@@ -3,15 +3,16 @@ const SUPABASE_URL      = 'https://kgiynhrytnzfdywgjhby.supabase.co';
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtnaXluaHJ5dG56ZmR5d2dqaGJ5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk0Mzc0NzUsImV4cCI6MjA5NTAxMzQ3NX0.8cOWLAsJyXAzid5ce73FUI-HVVYJoWyfOC3pSKci6Vs';
 
 // Pega o fetch original via iframe — bypassa a interceptação do Vercel
+// O iframe fica no DOM para o contexto não ser destruído
+let _iframe = null;
 function getCleanFetch() {
   try {
-    const f = document.createElement('iframe');
-    f.style.cssText = 'display:none';
-    document.head.appendChild(f);
-    const fn = f.contentWindow.fetch.bind(f.contentWindow);
-    document.head.removeChild(f);
-    return fn;
-  } catch { return fetch.bind(window); }
+    _iframe = document.createElement('iframe');
+    _iframe.style.cssText = 'position:fixed;top:-9999px;left:-9999px;width:0;height:0;border:0';
+    document.body.appendChild(_iframe); // Mantém no DOM
+    if (!_iframe.contentWindow?.fetch) return window.fetch.bind(window);
+    return _iframe.contentWindow.fetch.bind(window); // bind ao window principal
+  } catch { return window.fetch.bind(window); }
 }
 
 const { createClient } = supabase;

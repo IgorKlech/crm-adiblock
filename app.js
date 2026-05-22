@@ -161,8 +161,9 @@ async function salvarCliente(dados, id=null) {
 }
 
 async function excluirCliente(id) {
-  const { error } = await db.from('clients').delete().eq('id',id);
+  const { data, error } = await db.from('clients').delete().eq('id', id).select('id');
   if (error) throw error;
+  if (!data || data.length === 0) throw new Error('Sem permissão para excluir. Verifique se está logado.');
 }
 
 async function fetchHistorico(clienteId) {
@@ -462,26 +463,37 @@ async function iniciar(user, token) {
   document.getElementById('user-avatar').textContent       = ini(nome);
   document.getElementById('user-avatar').style.background  = cor(nome);
 
+  // Mostra dados em cache instantaneamente enquanto carrega do banco
+  try {
+    const cached = localStorage.getItem('crm_clients');
+    if (cached) {
+      allClients = JSON.parse(cached);
+      renderClientes();
+    }
+  } catch {}
+
   // Carrega perfis e clientes em paralelo
   const [rProf, rCli] = await Promise.allSettled([fetchPerfis(), fetchClientes()]);
 
   if (rCli.status==='fulfilled') {
     allClients = rCli.value;
+    try { localStorage.setItem('crm_clients', JSON.stringify(allClients)); } catch {}
   } else {
     console.error('fetchClientes:', rCli.reason?.message);
-    toast('Erro ao carregar clientes', rCli.reason?.message, 'warning');
+    if (!allClients.length) toast('Erro ao carregar clientes', rCli.reason?.message, 'warning');
   }
 
   if (rProf.status==='fulfilled' && rProf.value.length>0) {
     allProfiles = rProf.value;
   } else {
-    // Fallback: extrai vendedores dos clientes já carregados
     const vistos = new Set();
     allProfiles = [];
     allClients.forEach(c => {
-      if (c.seller?.id && !vistos.has(c.seller.id)) {
-        vistos.add(c.seller.id);
-        allProfiles.push({id:c.seller.id, name:c.seller.name, role:'vendedor'});
+      const nm = c.seller_name || c.seller?.name;
+      const id = c.seller?.id || nm;
+      if (nm && id && !vistos.has(id)) {
+        vistos.add(id);
+        allProfiles.push({ id, name: nm, role:'vendedor' });
       }
     });
     allProfiles.sort((a,b)=>a.name.localeCompare(b.name));

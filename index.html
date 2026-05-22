@@ -463,6 +463,22 @@ td strong{color:var(--tx);font-weight:600}
   .rel-card,.rel-table,.rel-section{break-inside:avoid}
   @page{margin:2cm}
 }
+
+/* ── Lista de produtos dinâmica ── */
+.prod-row{display:flex;align-items:center;gap:8px;margin-bottom:8px}
+.prod-row:last-child{margin-bottom:0}
+.prod-row .prod-nome{flex:2;padding:8px 12px;border:1.5px solid var(--bdr);border-radius:var(--rs);font-size:13px;font-family:inherit;color:var(--tx);background:var(--sur);outline:none;transition:border-color .15s}
+.prod-row .prod-qtd{flex:1;padding:8px 12px;border:1.5px solid var(--bdr);border-radius:var(--rs);font-size:13px;font-family:inherit;color:var(--tx);background:var(--sur);outline:none;transition:border-color .15s}
+.prod-row .prod-nome:focus,.prod-row .prod-qtd:focus{border-color:var(--p)}
+.prod-del{background:none;border:none;color:var(--mt2);cursor:pointer;font-size:18px;padding:4px 6px;line-height:1;border-radius:4px;flex-shrink:0;transition:all .15s}
+.prod-del:hover{color:var(--er);background:var(--er2)}
+.prod-headers{display:flex;gap:8px;margin-bottom:6px;padding:0 0 0 0}
+.prod-h{font-size:11px;font-weight:600;color:var(--mt);text-transform:uppercase;letter-spacing:.04em}
+.prod-h.hn{flex:2}.prod-h.hq{flex:1}.prod-h.hd{width:32px}
+.prod-add-btn{display:flex;align-items:center;justify-content:center;gap:6px;width:100%;padding:9px;border:1.5px dashed var(--bdr2);border-radius:var(--rs);background:none;font-size:13px;color:var(--p);cursor:pointer;font-family:inherit;transition:all .15s;margin-top:6px}
+.prod-add-btn:hover{border-color:var(--p);background:var(--ps)}
+.prod-tag{display:inline-flex;align-items:center;gap:4px;background:var(--ps);color:var(--p);font-size:11px;font-weight:500;padding:2px 8px;border-radius:99px;white-space:nowrap;margin:2px 2px 2px 0}
+.prod-tag-peso{color:var(--mt);font-weight:400}
 </style>
 </head>
 <body>
@@ -669,11 +685,17 @@ td strong{color:var(--tx);font-weight:600}
           <div class="fg"><label>Telefone</label><input type="text" id="ft" placeholder="(11) 99999-9999"></div>
         </div>
       </div>
-      <div class="fs"><div class="fsl">Produto</div>
-        <div class="fr">
-          <div class="fg"><label>Produto</label><input type="text" id="fpro" placeholder="Ex: Bloco de concreto"></div>
-          <div class="fg"><label>Peso / Quantidade</label><input type="text" id="fpe" placeholder="Ex: 500 kg"></div>
+      <div class="fs">
+        <div class="fsl">Produtos</div>
+        <div class="prod-headers">
+          <span class="prod-h hn">Nome do Produto</span>
+          <span class="prod-h hq">Qtd / Peso</span>
+          <span class="prod-h hd"></span>
         </div>
+        <div id="prod-lista"></div>
+        <button type="button" class="prod-add-btn" onclick="addProdRow()">
+          + Adicionar Produto
+        </button>
       </div>
       <div class="fs"><div class="fsl">Gestão comercial</div>
         <div class="fr">
@@ -1002,7 +1024,7 @@ document.getElementById('cosi').onclick = () => { const cb = CCB; fechaConf(); i
 document.getElementById('cono').onclick = fechaConf;
 
 // ── DB ────────────────────────────────────────────────────────────────────
-const fetchCl = () => api('GET','clients','select=*,seller:profiles(id,name)&order=created_at.desc');
+const fetchCl = () => api('GET','clients','select=*,seller:profiles(id,name),produtos:client_products(id,produto,peso)&order=created_at.desc');
 const fetchPf = () => api('GET','profiles','select=id,name,role,email&order=name');
 const fetchHist = id => api('GET','call_history','client_id=eq.'+id+'&select=*,seller:profiles(id,name)&order=datetime.desc');
 function saveCl(d, id) {
@@ -1060,10 +1082,12 @@ function renderCl() {
     const ov = venc(c.callback_date);
     const nv = c.seller_name||c.seller?.name||'';
     const vc = nv ? '<div class="sch"><div class="sav" style="background:'+cor(nv)+'">'+ini(nv)+'</div>'+nv+'</div>' : '<span style="color:var(--mt)">—</span>';
-    // Coluna produto dedicada
-    const prodCell = c.produto
-      ? '<span style="font-weight:500;color:var(--tx)">'+(c.produto)+'</span>'
-        + (c.peso ? '<div style="font-size:11px;color:var(--mt);margin-top:2px">'+c.peso+'</div>' : '')
+    // Coluna produto: usa client_products ou fallback para campo antigo
+    const prods = (c.produtos && c.produtos.length > 0)
+      ? c.produtos
+      : (c.produto ? [{produto:c.produto, peso:c.peso}] : []);
+    const prodCell = prods.length
+      ? prods.map(p=>'<span class="prod-tag">'+p.produto+(p.peso?' <span class="prod-tag-peso">'+p.peso+'</span>':'')+'</span>').join('')
       : '<span style="color:var(--mt2)">—</span>';
     const dc = c.callback_date
       ? fData(c.callback_date)+' <small style="color:var(--mt)">('+fRel(c.callback_date)+')</small>'+(ov?'<span class="ob">Vencido</span>':'')
@@ -1212,6 +1236,7 @@ function abrNovo() {
   document.getElementById('fn').classList.remove('err');
   document.getElementById('fn-err').classList.remove('show');
   updSug();
+  renderProdutoRows([]); // lista de produtos vazia
   document.getElementById('cm').classList.add('op');
   setTimeout(()=>document.getElementById('fn').focus(),80);
 }
@@ -1224,8 +1249,6 @@ function abrEdit(id) {
   updSug();
   document.getElementById('fn').value=c.name||'';
   document.getElementById('ft').value=c.phone||'';
-  document.getElementById('fpro').value=c.produto||'';
-  document.getElementById('fpe').value=c.peso||'';
   document.getElementById('fv').value=c.seller_name||c.seller?.name||'';
   document.getElementById('fst').value=c.status||'Pendente';
   toggleLossReason(c.status||'Pendente');
@@ -1233,6 +1256,11 @@ function abrEdit(id) {
   document.getElementById('fcb').value=c.callback_date||'';
   document.getElementById('fvl').value=c.estimated_value||'';
   document.getElementById('fob').value=c.observation||'';
+  // Carrega produtos: usa client_products ou fallback para campo antigo
+  const prods = (c.produtos && c.produtos.length > 0)
+    ? c.produtos
+    : (c.produto ? [{produto:c.produto, peso:c.peso}] : []);
+  renderProdutoRows(prods);
   document.getElementById('cm').classList.add('op');
 }
 function fechaModal() { document.getElementById('cm').classList.remove('op'); EID=null; }
@@ -1366,8 +1394,8 @@ document.getElementById('clf').addEventListener('submit', async e => {
     const d={
       name:document.getElementById('fn').value.trim(),
       phone:document.getElementById('ft').value.trim()||null,
-      produto:document.getElementById('fpro').value.trim()||null,
-      peso:document.getElementById('fpe').value.trim()||null,
+      produto:null, // migrado para client_products
+      peso:null,
       seller_name:document.getElementById('fv').value.trim()||null,
       status:novoStatus,
       loss_reason:novoStatus==='Nao comprou'?(document.getElementById('flr').value||null):null,
@@ -1379,6 +1407,8 @@ document.getElementById('clf').addEventListener('submit', async e => {
     const oldC = EID ? (CL.find(c=>c.id===EID)||{}) : {};
     const saved = await saveCl(d, EID);
     const savedId = EID || saved?.id;
+    // Salva produtos (async, não bloqueia o toast)
+    if (savedId) salvarProdutos(savedId).catch(()=>{});
     // Audit log (não bloqueia)
     if (EID) {
       const changes = detectChanges(oldC, d);
@@ -1772,17 +1802,33 @@ function abrEditFromPerfil() {
 }
 
 function renderPfResumo(c) {
+  const prods = (c.produtos && c.produtos.length > 0)
+    ? c.produtos
+    : (c.produto ? [{produto:c.produto, peso:c.peso}] : []);
+  const prodHtml = prods.length
+    ? prods.map(p=>`<div class="pf-row" style="flex-wrap:wrap;gap:6px">
+        <div class="pf-rk" style="width:auto">${p.produto}</div>
+        ${p.peso?`<div style="font-size:12px;color:var(--mt)">${p.peso}</div>`:''}
+      </div>`).join('')
+    : '<div style="font-size:13px;color:var(--mt)">Sem produtos cadastrados.</div>';
+
   const rows = [
     ['Nome', c.name], ['Telefone', c.phone||'—'], ['Vendedor', c.seller_name||c.seller?.name||'—'],
-    ['Status', c.status], ['Produto', c.produto||'—'], ['Peso', c.peso||'—'],
+    ['Status', c.status],
     ['Valor Estimado', fMoeda(c.estimated_value)], ['Data de Retorno', c.callback_date?fData(c.callback_date):'—'],
     ['Motivo da Perda', c.loss_reason||'—'],
   ];
   document.getElementById('pf-resumo').innerHTML = `
     <div class="pf-grid">
-      <div class="dc2">
-        <div class="dch"><h3>Dados Cadastrais</h3></div>
-        ${rows.map(([k,v])=>`<div class="pf-row"><div class="pf-rk">${k}</div><div class="pf-rv">${v}</div></div>`).join('')}
+      <div>
+        <div class="dc2" style="margin-bottom:14px">
+          <div class="dch"><h3>Dados Cadastrais</h3></div>
+          ${rows.map(([k,v])=>`<div class="pf-row"><div class="pf-rk">${k}</div><div class="pf-rv">${v}</div></div>`).join('')}
+        </div>
+        <div class="dc2">
+          <div class="dch"><h3>Produtos (${prods.length})</h3></div>
+          ${prodHtml}
+        </div>
       </div>
       <div class="dc2">
         <div class="dch"><h3>Observação</h3></div>
@@ -1863,6 +1909,49 @@ document.querySelectorAll('.pf-tab').forEach(t => t.addEventListener('click', ()
   t.classList.add('ac');
   document.getElementById('pf-'+t.dataset.pt).classList.add('ac');
 }));
+
+// ── Gestão de Múltiplos Produtos ─────────────────────────────────────────
+function addProdRow(nome, peso) {
+  const lista = document.getElementById('prod-lista');
+  if (!lista) return;
+  const row = document.createElement('div');
+  row.className = 'prod-row';
+  row.innerHTML = `
+    <input type="text" class="prod-nome" placeholder="Nome do produto" value="${nome||''}">
+    <input type="text" class="prod-qtd"  placeholder="Qtd / Peso (ex: 500 kg)" value="${peso||''}">
+    <button type="button" class="prod-del" onclick="this.closest('.prod-row').remove()" title="Remover">✕</button>`;
+  lista.appendChild(row);
+  row.querySelector('.prod-nome').focus();
+}
+
+function getProdutosDoForm() {
+  const rows = document.querySelectorAll('#prod-lista .prod-row');
+  const result = [];
+  rows.forEach(r => {
+    const nome = r.querySelector('.prod-nome').value.trim();
+    const peso = r.querySelector('.prod-qtd').value.trim();
+    if (nome) result.push({ produto: nome, peso: peso || null });
+  });
+  return result;
+}
+
+function renderProdutoRows(produtos) {
+  const lista = document.getElementById('prod-lista');
+  if (!lista) return;
+  lista.innerHTML = '';
+  (produtos || []).forEach(p => addProdRow(p.produto, p.peso));
+}
+
+async function salvarProdutos(clientId) {
+  const produtos = getProdutosDoForm();
+  // Apaga todos os produtos antigos e insere os novos (replace all)
+  await api('DELETE', 'client_products', `client_id=eq.${clientId}`);
+  if (produtos.length > 0) {
+    await api('POST', 'client_products', null,
+      produtos.map(p => ({ client_id: clientId, produto: p.produto, peso: p.peso || null }))
+    );
+  }
+}
 
 // ── Filtro por Período ────────────────────────────────────────────────────
 let periodoFiltro = 0;

@@ -337,6 +337,31 @@ td strong{color:var(--tx);font-weight:600}
   .tb{padding:7px 8px}
   .ac2 .btn span{display:none}
 }
+
+/* ── Período ── */
+.period-btns{display:flex;gap:4px;flex-wrap:wrap}
+.pdb{padding:5px 11px;border:1.5px solid var(--bdr);border-radius:var(--rs);font-size:12px;font-weight:500;cursor:pointer;background:var(--sur);color:var(--tx2);transition:all .15s;font-family:inherit}
+.pdb:hover{border-color:var(--bdr2);color:var(--tx)}
+.pdb.ac{background:var(--p);color:#fff;border-color:var(--p)}
+
+/* ── Importar CSV ── */
+.im-drop{border:2px dashed var(--bdr2);border-radius:var(--r);padding:36px;text-align:center;color:var(--mt);transition:all .15s}
+.im-drop.over{border-color:var(--p);background:var(--ps)}
+.im-drop p{margin-bottom:12px;font-size:13px}
+.im-prog{height:6px;background:var(--bdr);border-radius:99px;overflow:hidden;margin:18px 0}
+.im-prog-fill{height:100%;background:var(--p);border-radius:99px;transition:width .4s ease}
+.im-table{width:100%;border-collapse:collapse;font-size:12px}
+.im-table th{padding:7px 10px;background:var(--bg);border:1px solid var(--bdr);text-align:left;font-weight:600;color:var(--tx2);white-space:nowrap}
+.im-table td{padding:7px 10px;border:1px solid var(--bdr);color:var(--tx2)}
+.im-result{text-align:center;padding:20px;font-size:14px;color:var(--tx2)}
+
+/* ── Validação ── */
+.fg input.err,.fg select.err,.fg textarea.err{border-color:var(--er)!important;box-shadow:0 0 0 3px rgba(220,38,38,.1)}
+.ferr{font-size:11px;color:var(--er);margin-top:4px;display:none}
+.ferr.show{display:block}
+.fg label .req{color:var(--er);margin-left:2px}
+@keyframes shake{0%,100%{transform:translateX(0)}20%,60%{transform:translateX(-4px)}40%,80%{transform:translateX(4px)}}
+.shake{animation:shake .35s ease}
 </style>
 </head>
 <body>
@@ -395,6 +420,7 @@ td strong{color:var(--tx);font-weight:600}
       <div class="ph">
         <div><h2>Clientes</h2><span class="ps" id="cst">Carregando...</span></div>
         <div class="pa">
+          <button class="btn bg sm" id="imbtn">↑ Importar CSV</button>
           <button class="btn bg sm" id="expbtn">↓ Exportar CSV</button>
           <button class="btn bp" id="ncbtn">+ Novo Cliente</button>
         </div>
@@ -410,6 +436,12 @@ td strong{color:var(--tx);font-weight:600}
           <option>Nao comprou</option><option>Inativo</option>
         </select>
         <input type="text" class="fi" id="svf" placeholder="Filtrar por vendedor...">
+        <div class="period-btns">
+          <button class="pdb ac" data-d="0" onclick="setPeriodo(0)">Todos</button>
+          <button class="pdb" data-d="7" onclick="setPeriodo(7)">7 dias</button>
+          <button class="pdb" data-d="30" onclick="setPeriodo(30)">30 dias</button>
+          <button class="pdb" data-d="90" onclick="setPeriodo(90)">90 dias</button>
+        </div>
       </div>
       <div class="tw">
         <table>
@@ -505,7 +537,7 @@ td strong{color:var(--tx);font-weight:600}
     <form id="clf">
       <div class="fs"><div class="fsl">Informações básicas</div>
         <div class="fr">
-          <div class="fg"><label>Nome *</label><input type="text" id="fn" placeholder="Nome do cliente" required></div>
+          <div class="fg"><label>Nome <span class="req">*</span></label><input type="text" id="fn" placeholder="Nome do cliente"><div class="ferr" id="fn-err">Nome é obrigatório</div></div>
           <div class="fg"><label>Telefone</label><input type="text" id="ft" placeholder="(11) 99999-9999"></div>
         </div>
       </div>
@@ -566,6 +598,37 @@ td strong{color:var(--tx);font-weight:600}
     <div class="coa">
       <button class="btn bg" id="cono">Cancelar</button>
       <button class="btn bd" id="cosi">Sim, excluir</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL IMPORTAR CSV -->
+<div class="mo" id="im">
+  <div class="md" style="max-width:620px">
+    <div class="mh"><h3>Importar Clientes via CSV</h3><button class="mx" onclick="fechaImport()">✕</button></div>
+    <div id="im-s1">
+      <div class="im-drop" id="im-drop">
+        <div style="font-size:32px;margin-bottom:12px">📄</div>
+        <p>Arraste um arquivo <strong>.csv</strong> aqui ou</p>
+        <button class="btn bp sm" onclick="document.getElementById('im-file').click()">Escolher arquivo</button>
+        <input type="file" id="im-file" accept=".csv,.txt" style="display:none">
+        <p style="font-size:11px;margin-top:14px;color:var(--mt)">
+          Colunas detectadas automaticamente: Nome, Telefone, Vendedor, Status, Produto, Peso, Valor, Observação, Data Retorno<br>
+          Separador: vírgula <code>,</code> ou ponto e vírgula <code>;</code> (detectado automaticamente)
+        </p>
+      </div>
+    </div>
+    <div id="im-s2" style="display:none">
+      <div id="im-info" style="margin-bottom:12px"></div>
+      <div style="overflow-x:auto;border-radius:var(--rs);border:1px solid var(--bdr)"><div id="im-prev"></div></div>
+      <div class="fa">
+        <button class="btn bg" onclick="resetImport()">← Voltar</button>
+        <button class="btn bp" id="im-ok">Importar <span id="im-n">0</span> clientes</button>
+      </div>
+    </div>
+    <div id="im-s3" style="display:none;text-align:center;padding:10px 0">
+      <div class="im-prog"><div class="im-prog-fill" id="im-bar" style="width:0%"></div></div>
+      <div class="im-result" id="im-res">Importando...</div>
     </div>
   </div>
 </div>
@@ -783,10 +846,12 @@ function filtrar() {
   const q  = (document.getElementById('srch').value||'').toLowerCase();
   const sf = document.getElementById('stf').value;
   const vf = (document.getElementById('svf').value||'').toLowerCase();
+  const cutoff = periodoFiltro > 0 ? new Date(Date.now() - periodoFiltro * 86400000) : null;
   return CL.filter(c => {
     const sv = (c.seller_name||c.seller?.name||'').toLowerCase();
+    const okP = !cutoff || (c.created_at && new Date(c.created_at) >= cutoff);
     return ((c.name||'').toLowerCase().includes(q)||(c.phone||'').includes(q)) &&
-      (!sf||c.status===sf) && (!vf||sv.includes(vf));
+      (!sf||c.status===sf) && (!vf||sv.includes(vf)) && okP;
   });
 }
 function ordenar(lst) {
@@ -957,6 +1022,8 @@ function abrNovo() {
   document.getElementById('fst').value='Pendente';
   toggleLossReason('Pendente');
   document.getElementById('serr').textContent='';
+  document.getElementById('fn').classList.remove('err');
+  document.getElementById('fn-err').classList.remove('show');
   updSug();
   document.getElementById('cm').classList.add('op');
   setTimeout(()=>document.getElementById('fn').focus(),80);
@@ -1070,6 +1137,7 @@ document.getElementById('svf').addEventListener('input',renderCl);
 
 // Botões
 document.getElementById('ncbtn').addEventListener('click',abrNovo);
+document.getElementById('imbtn').addEventListener('click',abrImport);
 document.getElementById('expbtn').addEventListener('click',()=>{
   const rows=filtrar();
   if(!rows.length){toast('Nada para exportar','','warning');return;}
@@ -1091,6 +1159,11 @@ document.getElementById('cm').addEventListener('click',e=>{if(e.target===e.curre
 
 document.getElementById('clf').addEventListener('submit', async e => {
   e.preventDefault();
+  if (!validarCliente()) {
+    document.getElementById('clf').classList.add('shake');
+    setTimeout(() => document.getElementById('clf').classList.remove('shake'), 400);
+    return;
+  }
   const btn=document.getElementById('msav'), err=document.getElementById('serr');
   btn.disabled=true; btn.textContent='Salvando...'; err.textContent='';
   try {
@@ -1177,6 +1250,158 @@ document.addEventListener('keydown', e => {
   if (document.getElementById('cm').classList.contains('op')) { fechaModal(); return; }
   if (document.getElementById('co').classList.contains('op')) { fechaConf(); return; }
   if (document.getElementById('sp').classList.contains('op')) { fechaPainel(); return; }
+});
+
+// ── Filtro por Período ────────────────────────────────────────────────────
+let periodoFiltro = 0;
+
+function setPeriodo(dias) {
+  periodoFiltro = dias;
+  document.querySelectorAll('.pdb').forEach(b =>
+    b.classList.toggle('ac', parseInt(b.dataset.d) === dias)
+  );
+  renderCl();
+}
+
+// ── Validação de Formulário ───────────────────────────────────────────────
+function validarCliente() {
+  let ok = true;
+  const nome = document.getElementById('fn');
+  const err  = document.getElementById('fn-err');
+  if (!nome.value.trim()) {
+    nome.classList.add('err');
+    err.classList.add('show');
+    ok = false;
+  } else {
+    nome.classList.remove('err');
+    err.classList.remove('show');
+  }
+  return ok;
+}
+
+// ── Importar CSV ──────────────────────────────────────────────────────────
+let importRows = [];
+
+function abrImport() {
+  document.getElementById('im').classList.add('op');
+  resetImport();
+}
+function fechaImport() {
+  document.getElementById('im').classList.remove('op');
+}
+function resetImport() {
+  document.getElementById('im-s1').style.display = 'block';
+  document.getElementById('im-s2').style.display = 'none';
+  document.getElementById('im-s3').style.display = 'none';
+  document.getElementById('im-file').value = '';
+  importRows = [];
+}
+
+function parseCSV(text) {
+  const lines = text.split(/\r?\n/).filter(l => l.trim());
+  if (!lines.length) return [];
+  const sep = lines[0].split(';').length >= lines[0].split(',').length ? ';' : ',';
+  const headers = lines[0].split(sep).map(h => h.trim().replace(/^["']|["']$/g,'').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,''));
+  const idx = {};
+  headers.forEach((h,i) => {
+    if (/^nome|^name/.test(h))                       idx.name = i;
+    else if (/fone|telefone|phone|celular|whatsapp/.test(h)) idx.phone = i;
+    else if (/vendedor|seller/.test(h))              idx.seller_name = i;
+    else if (/^status/.test(h))                      idx.status = i;
+    else if (/produto|product/.test(h))              idx.produto = i;
+    else if (/peso|weight|quant/.test(h))            idx.peso = i;
+    else if (/valor|value|preco|price/.test(h))      idx.estimated_value = i;
+    else if (/obs|observ|note|descr|anotac/.test(h)) idx.observation = i;
+    else if (/retorno|callback|data|prazo/.test(h))  idx.callback_date = i;
+  });
+  const statusValidos = ['Pendente','Em contato','Comprou','Nao comprou','Inativo'];
+  const rows = [];
+  for (let i = 1; i < lines.length; i++) {
+    const c = lines[i].split(sep).map(x => x.trim().replace(/^["']|["']$/g,''));
+    const r = {};
+    r.name = idx.name !== undefined ? c[idx.name] : '';
+    if (!r.name) continue;
+    r.phone           = idx.phone !== undefined ? (c[idx.phone]||null) : null;
+    r.seller_name     = idx.seller_name !== undefined ? (c[idx.seller_name]||null) : null;
+    r.produto         = idx.produto !== undefined ? (c[idx.produto]||null) : null;
+    r.peso            = idx.peso !== undefined ? (c[idx.peso]||null) : null;
+    r.observation     = idx.observation !== undefined ? (c[idx.observation]||null) : null;
+    if (idx.status !== undefined && statusValidos.includes(c[idx.status])) r.status = c[idx.status];
+    else r.status = 'Pendente';
+    if (idx.estimated_value !== undefined) {
+      const v = parseFloat(String(c[idx.estimated_value]||'').replace(',','.').replace(/[^\d.]/g,''));
+      r.estimated_value = isNaN(v) ? null : v;
+    }
+    if (idx.callback_date !== undefined) {
+      const d = c[idx.callback_date]||'';
+      if (/^\d{2}\/\d{2}\/\d{4}$/.test(d)) { const [dd,mm,yy]=d.split('/'); r.callback_date=`${yy}-${mm}-${dd}`; }
+      else if (/^\d{4}-\d{2}-\d{2}$/.test(d)) r.callback_date = d;
+    }
+    rows.push(r);
+  }
+  return rows;
+}
+
+function processarCSV(file) {
+  const reader = new FileReader();
+  reader.onload = e => {
+    try {
+      const rows = parseCSV(e.target.result);
+      if (!rows.length) { toast('Arquivo vazio', 'Nenhum cliente válido encontrado no CSV.', 'warning'); return; }
+      importRows = rows;
+      document.getElementById('im-s1').style.display = 'none';
+      document.getElementById('im-s2').style.display = 'block';
+      document.getElementById('im-n').textContent = rows.length;
+      document.getElementById('im-info').innerHTML =
+        `<p style="font-size:13px;color:var(--tx2)"><strong>${rows.length}</strong> cliente(s) encontrado(s). Prévia dos primeiros 5:</p>`;
+      const cols = ['name','phone','seller_name','status','produto','peso'];
+      const lab  = {name:'Nome',phone:'Telefone',seller_name:'Vendedor',status:'Status',produto:'Produto',peso:'Peso'};
+      document.getElementById('im-prev').innerHTML =
+        `<table class="im-table"><thead><tr>${cols.map(c=>`<th>${lab[c]}</th>`).join('')}</tr></thead><tbody>`
+        + rows.slice(0,5).map(r=>`<tr>${cols.map(c=>`<td>${r[c]||'—'}</td>`).join('')}</tr>`).join('')
+        + '</tbody></table>';
+    } catch(err) {
+      toast('Erro ao ler CSV', err.message, 'warning');
+    }
+  };
+  reader.readAsText(file, 'UTF-8');
+}
+
+async function doImport() {
+  if (!importRows.length) return;
+  document.getElementById('im-s2').style.display = 'none';
+  document.getElementById('im-s3').style.display = 'block';
+  document.getElementById('im-bar').style.width = '30%';
+  document.getElementById('im-res').textContent = `Importando ${importRows.length} cliente(s)...`;
+  try {
+    await api('POST','clients',null,importRows);
+    document.getElementById('im-bar').style.width = '100%';
+    document.getElementById('im-res').innerHTML = `<span style="color:var(--ok);font-size:22px">✓</span><br><strong>${importRows.length}</strong> cliente(s) importado(s) com sucesso!`;
+    CL = await fetchCl();
+    try { localStorage.setItem('crm_cl',JSON.stringify(CL)); } catch {}
+    renderCl();
+    toast(`${importRows.length} clientes importados`,'','success');
+    setTimeout(fechaImport, 2500);
+  } catch(e) {
+    document.getElementById('im-bar').style.width = '100%';
+    document.getElementById('im-bar').style.background = 'var(--er)';
+    document.getElementById('im-res').innerHTML = `<span style="color:var(--er)">Erro: ${e.message}</span>`;
+    toast('Erro na importação', e.message, 'warning');
+  }
+}
+
+// Eventos do import
+document.getElementById('im-file').addEventListener('change', e => { if(e.target.files[0]) processarCSV(e.target.files[0]); });
+document.getElementById('im-ok').addEventListener('click', doImport);
+document.getElementById('im').addEventListener('click', e => { if(e.target===e.currentTarget) fechaImport(); });
+
+// Drag and drop
+const drop = document.getElementById('im-drop');
+drop.addEventListener('dragover', e => { e.preventDefault(); drop.classList.add('over'); });
+drop.addEventListener('dragleave', () => drop.classList.remove('over'));
+drop.addEventListener('drop', e => {
+  e.preventDefault(); drop.classList.remove('over');
+  if (e.dataTransfer.files[0]) processarCSV(e.dataTransfer.files[0]);
 });
 
 // ── Busca Global ─────────────────────────────────────────────────────────

@@ -400,23 +400,28 @@ function populateSellers(ids) {
   });
 }
 
-function openAddModal() {
+async function openAddModal() {
   editingClientId = null;
   document.getElementById('modal-title').textContent    = 'Novo Cliente';
   document.getElementById('modal-save-btn').textContent = 'Criar Cliente';
   document.getElementById('client-form').reset();
   document.getElementById('field-status').value = 'Pendente';
+  document.getElementById('modal-save-error').textContent = '';
+  // Sempre recarrega perfis ao abrir o modal
+  try { allProfiles = await fetchProfiles(); } catch {}
   populateSellers(['field-seller']);
   document.getElementById('client-modal-overlay').classList.add('open');
   setTimeout(() => document.getElementById('field-name').focus(), 80);
 }
 
-function openEditModal(clientId) {
+async function openEditModal(clientId) {
   const c = allClients.find(x => x.id === clientId);
   if (!c) return;
   editingClientId = clientId;
   document.getElementById('modal-title').textContent    = 'Editar Cliente';
   document.getElementById('modal-save-btn').textContent = 'Salvar Alteracoes';
+  document.getElementById('modal-save-error').textContent = '';
+  try { allProfiles = await fetchProfiles(); } catch {}
   populateSellers(['field-seller']);
   document.getElementById('field-name').value          = c.name || '';
   document.getElementById('field-phone').value         = c.phone || '';
@@ -570,22 +575,23 @@ document.getElementById('client-modal-overlay').addEventListener('click', e => {
 // Client form submit
 document.getElementById('client-form').addEventListener('submit', async e => {
   e.preventDefault();
-  const btn = document.getElementById('modal-save-btn');
-  btn.disabled = true; btn.textContent = 'Salvando...';
-
-  const payload = {
-    name:            document.getElementById('field-name').value.trim(),
-    phone:           document.getElementById('field-phone').value.trim() || null,
-    seller_id:       document.getElementById('field-seller').value || null,
-    status:          document.getElementById('field-status').value,
-    callback_date:   document.getElementById('field-callback-date').value || null,
-    estimated_value: document.getElementById('field-value').value ? parseFloat(document.getElementById('field-value').value) : null,
-    produto:         document.getElementById('field-produto').value.trim() || null,
-    peso:            document.getElementById('field-peso').value.trim() || null,
-    observation:     document.getElementById('field-observation').value.trim() || null,
-  };
+  const btn      = document.getElementById('modal-save-btn');
+  const errorEl  = document.getElementById('modal-save-error');
+  btn.disabled = true; btn.textContent = 'Salvando...'; errorEl.textContent = '';
 
   try {
+    const payload = {
+      name:            document.getElementById('field-name').value.trim(),
+      phone:           document.getElementById('field-phone').value.trim() || null,
+      seller_id:       document.getElementById('field-seller').value || null,
+      status:          document.getElementById('field-status').value,
+      callback_date:   document.getElementById('field-callback-date').value || null,
+      estimated_value: document.getElementById('field-value').value ? parseFloat(document.getElementById('field-value').value) : null,
+      produto:         document.getElementById('field-produto').value.trim() || null,
+      peso:            document.getElementById('field-peso').value.trim() || null,
+      observation:     document.getElementById('field-observation').value.trim() || null,
+    };
+
     await saveClient(payload, editingClientId);
     allClients = await fetchClients();
     renderClients();
@@ -597,7 +603,9 @@ document.getElementById('client-form').addEventListener('submit', async e => {
     );
   } catch (err) {
     console.error('saveClient:', err);
-    toast('Erro ao salvar', err.message, 'warning');
+    const msg = err.message || 'Erro desconhecido. Tente novamente.';
+    errorEl.textContent = msg;
+    toast('Erro ao salvar', msg, 'warning');
   } finally {
     btn.disabled = false;
     btn.textContent = editingClientId ? 'Salvar Alteracoes' : 'Criar Cliente';

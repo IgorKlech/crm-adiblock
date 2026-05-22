@@ -103,9 +103,7 @@
           <option>Nao comprou</option>
           <option>Inativo</option>
         </select>
-        <select class="filter-select" id="seller-filter">
-          <option value="">Todos os vendedores</option>
-        </select>
+        <input type="text" class="filter-select" id="seller-filter" placeholder="Filtrar por vendedor..." style="min-width:180px">
       </div>
 
       <div class="table-wrap">
@@ -286,7 +284,8 @@
         <div class="form-row">
           <div class="form-group">
             <label>Vendedor</label>
-            <select id="field-seller"><option value="">Sem vendedor</option></select>
+            <input type="text" id="field-seller-name" placeholder="Nome do vendedor" list="sellers-list" autocomplete="off">
+            <datalist id="sellers-list"></datalist>
           </div>
           <div class="form-group">
             <label>Status</label>

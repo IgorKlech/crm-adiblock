@@ -32,6 +32,18 @@ let sortCol         = 'created_at';
 let sortDir         = 'desc';
 let confirmCb       = null;
 
+// Nomes conhecidos dos vendedores (fallback para autocomplete)
+const VENDEDORES = ['Igor','Nádia','Letícia','Gracielle'];
+
+function atualizarSugestoes() {
+  const dl = document.getElementById('sellers-list');
+  if (!dl) return;
+  const nomes = allProfiles.length > 0
+    ? allProfiles.map(p => p.name)
+    : VENDEDORES;
+  dl.innerHTML = nomes.map(n => `<option value="${n}">`).join('');
+}
+
 // ── Avatares ─────────────────────────────────────────────────────────────
 const CORES = ['#1F4E78','#0891b2','#7c3aed','#059669','#dc2626','#d97706','#0284c7','#c026d3'];
 const cor    = n => CORES[(n||'A').toUpperCase().charCodeAt(0) % CORES.length];
@@ -188,12 +200,13 @@ function atualizarCabecalhos() {
 function filtrados() {
   const q  = (document.getElementById('search-input').value||'').toLowerCase();
   const sf = document.getElementById('status-filter').value;
-  const vf = document.getElementById('seller-filter').value;
-  return allClients.filter(c =>
-    ((c.name||'').toLowerCase().includes(q)||(c.phone||'').includes(q)) &&
-    (!sf||c.status===sf) &&
-    (!vf||(c.seller&&c.seller.id===vf))
-  );
+  const vf = (document.getElementById('seller-filter').value||'').toLowerCase();
+  return allClients.filter(c => {
+    const sellerNome = (c.seller_name || c.seller?.name || '').toLowerCase();
+    return ((c.name||'').toLowerCase().includes(q)||(c.phone||'').includes(q)) &&
+      (!sf||c.status===sf) &&
+      (!vf||sellerNome.includes(vf));
+  });
 }
 
 // ── CSV ───────────────────────────────────────────────────────────────────
@@ -232,8 +245,9 @@ function renderClientes() {
     const dataCell = c.callback_date
       ? `${fmtData(c.callback_date)} <small style="color:var(--muted)">(${fmtRelativo(c.callback_date)})</small>${over?`<span class="overdue-badge">Vencido</span>`:''}`
       : '—';
-    const vendedor = c.seller
-      ? `<div class="seller-chip"><div class="seller-avatar" style="background:${cor(c.seller.name)}">${ini(c.seller.name)}</div>${c.seller.name}</div>`
+    const nomeVendedor = c.seller_name || c.seller?.name || '';
+    const vendedor = nomeVendedor
+      ? `<div class="seller-chip"><div class="seller-avatar" style="background:${cor(nomeVendedor)}">${ini(nomeVendedor)}</div>${nomeVendedor}</div>`
       : `<span style="color:var(--muted)">—</span>`;
     const prodInfo = [c.produto, c.peso].filter(Boolean).join(' · ');
     return `<tr class="${over?'overdue':''}" data-id="${c.id}">
@@ -376,7 +390,7 @@ function abrirNovoCliente() {
   document.getElementById('field-status').value = 'Pendente';
   const errEl = document.getElementById('modal-save-error');
   if (errEl) errEl.textContent = '';
-  preencherVendedores(['field-seller']);
+  atualizarSugestoes();
   document.getElementById('client-modal-overlay').classList.add('open');
   setTimeout(() => document.getElementById('field-name').focus(), 80);
 }
@@ -389,10 +403,10 @@ function abrirEdicao(id) {
   document.getElementById('modal-save-btn').textContent = 'Salvar Alterações';
   const errEl = document.getElementById('modal-save-error');
   if (errEl) errEl.textContent = '';
-  preencherVendedores(['field-seller']);
+  atualizarSugestoes();
   document.getElementById('field-name').value          = c.name||'';
   document.getElementById('field-phone').value         = c.phone||'';
-  document.getElementById('field-seller').value        = c.seller_id||'';
+  document.getElementById('field-seller-name').value   = c.seller_name || c.seller?.name || '';
   document.getElementById('field-status').value        = c.status||'Pendente';
   document.getElementById('field-callback-date').value = c.callback_date||'';
   document.getElementById('field-value').value         = c.estimated_value||'';
@@ -473,7 +487,7 @@ async function iniciar(user, token) {
     allProfiles.sort((a,b)=>a.name.localeCompare(b.name));
   }
 
-  preencherVendedores(['seller-filter','field-seller']);
+  atualizarSugestoes();
   renderClientes();
   notificarVencidos();
 }
@@ -558,7 +572,7 @@ document.getElementById('client-form').addEventListener('submit', async e => {
     const dados = {
       name:            document.getElementById('field-name').value.trim(),
       phone:           document.getElementById('field-phone').value.trim()||null,
-      seller_id:       document.getElementById('field-seller').value||null,
+      seller_name:     document.getElementById('field-seller-name').value.trim()||null,
       status:          document.getElementById('field-status').value,
       callback_date:   document.getElementById('field-callback-date').value||null,
       estimated_value: document.getElementById('field-value').value ? parseFloat(document.getElementById('field-value').value) : null,

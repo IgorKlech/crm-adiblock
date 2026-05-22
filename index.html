@@ -362,6 +362,58 @@ td strong{color:var(--tx);font-weight:600}
 .fg label .req{color:var(--er);margin-left:2px}
 @keyframes shake{0%,100%{transform:translateX(0)}20%,60%{transform:translateX(-4px)}40%,80%{transform:translateX(4px)}}
 .shake{animation:shake .35s ease}
+
+/* ── Página de Perfil ── */
+#pfpage{display:none;position:fixed;inset:0;background:var(--bg);z-index:280;overflow-y:auto;flex-direction:column}
+#pfpage.op{display:flex}
+.pf-topbar{display:flex;align-items:center;justify-content:space-between;padding:12px 24px;background:var(--sur);border-bottom:1px solid var(--bdr);position:sticky;top:0;z-index:10;gap:12px}
+.pf-back{display:flex;align-items:center;gap:6px;padding:6px 14px;background:none;border:1.5px solid var(--bdr);border-radius:var(--rs);font-size:13px;cursor:pointer;color:var(--tx2);font-family:inherit;transition:all .15s}
+.pf-back:hover{background:var(--bg);border-color:var(--bdr2);color:var(--tx)}
+.pf-hero{background:var(--sur);border-bottom:1px solid var(--bdr);padding:20px 24px}
+.pf-hero-inner{max-width:960px;margin:0 auto;display:flex;align-items:flex-start;gap:18px}
+.pf-av{width:52px;height:52px;border-radius:50%;color:#fff;font-size:20px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.pf-name{font-size:20px;font-weight:700;color:var(--tx);margin-bottom:6px}
+.pf-sub{display:flex;align-items:center;gap:10px;flex-wrap:wrap;font-size:13px;color:var(--mt);margin-bottom:14px}
+.pf-metrics{display:flex;gap:24px;flex-wrap:wrap}
+.pf-met{display:flex;flex-direction:column;gap:2px}
+.pf-met-l{font-size:10px;font-weight:600;color:var(--mt);text-transform:uppercase;letter-spacing:.04em}
+.pf-met-v{font-size:13px;font-weight:600;color:var(--tx)}
+.pf-tabs{background:var(--sur);border-bottom:1px solid var(--bdr);padding:0 24px;display:flex;gap:2px;position:sticky;top:53px;z-index:9}
+.pf-tab{padding:11px 16px;background:none;border:none;border-bottom:2px solid transparent;font-size:13px;font-weight:500;color:var(--mt);cursor:pointer;font-family:inherit;transition:all .15s;margin-bottom:-1px;white-space:nowrap}
+.pf-tab:hover{color:var(--tx)}
+.pf-tab.ac{color:var(--p);border-bottom-color:var(--p);font-weight:600}
+.pf-body{max-width:960px;margin:0 auto;padding:24px;width:100%}
+.pf-panel{display:none}.pf-panel.ac{display:block}
+.pf-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+@media(max-width:680px){.pf-grid{grid-template-columns:1fr}}
+.pf-row{display:flex;align-items:flex-start;padding:8px 0;border-bottom:1px solid var(--bdr);gap:12px}
+.pf-row:last-child{border-bottom:none}
+.pf-rk{font-size:12px;color:var(--mt);font-weight:500;width:140px;flex-shrink:0}
+.pf-rv{font-size:13px;color:var(--tx)}
+
+/* ── Audit Log ── */
+.al-item{display:flex;align-items:flex-start;gap:12px;padding:12px 0;border-bottom:1px solid var(--bdr)}
+.al-item:last-child{border-bottom:none;padding-bottom:0}
+.al-dot{width:8px;height:8px;border-radius:50%;background:var(--p);flex-shrink:0;margin-top:5px}
+.al-cr{background:var(--ok)}.al-ed{background:var(--wr)}.al-dl{background:var(--er)}
+.al-header{font-size:12px;color:var(--mt);margin-bottom:5px}
+.al-header strong{color:var(--tx2);font-weight:600}
+.al-change{font-size:12px;color:var(--tx2);margin-top:3px;line-height:1.5}
+.al-from{color:var(--er)}.al-to{color:var(--ok);font-weight:500}
+
+/* ── Notas internas ── */
+.notes-area{width:100%;min-height:200px;border:1.5px solid var(--bdr);border-radius:var(--r);padding:14px;font-size:13px;font-family:inherit;color:var(--tx);resize:vertical;outline:none;line-height:1.7;transition:border-color .15s;background:var(--sur)}
+.notes-area:focus{border-color:var(--p);box-shadow:0 0 0 3px rgba(37,99,235,.1)}
+
+/* ── Status do vendedor ── */
+.vs-wrap{display:flex;align-items:center;gap:6px}
+.vs-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0;transition:background .2s}
+.vs-disp{background:#22c55e}.vs-em{background:#f59e0b}.vs-aus{background:#94a3b8}
+.vs-sel{border:none;background:transparent;color:rgba(255,255,255,.65);font-size:12px;cursor:pointer;font-family:inherit;outline:none;appearance:none;padding-right:4px;-webkit-appearance:none}
+
+/* Nome clicável na tabela */
+.cl-name{cursor:pointer;color:var(--p);text-decoration:none}
+.cl-name:hover{text-decoration:underline}
 </style>
 </head>
 <body>
@@ -402,7 +454,17 @@ td strong{color:var(--tx);font-weight:600}
     <div class="nbr">
       <div class="uc">
         <div class="ua" id="uav">?</div>
-        <div><div class="un" id="unm">-</div><div class="ur" id="url">-</div></div>
+        <div>
+          <div class="un" id="unm">-</div>
+          <div class="vs-wrap">
+            <div class="vs-dot vs-disp" id="vs-dot"></div>
+            <select class="vs-sel" id="vs-sel" onchange="atualizarStatus(this.value)">
+              <option value="Disponível">Disponível</option>
+              <option value="Em ligação">Em ligação</option>
+              <option value="Ausente">Ausente</option>
+            </select>
+          </div>
+        </div>
       </div>
       <button class="bn" id="gs-btn" title="Busca rápida (Ctrl+K)" style="display:flex;align-items:center;gap:5px;font-size:12px;padding:5px 12px">
         <svg width="13" height="13" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2"><circle cx="8.5" cy="8.5" r="5.5"/><path d="M15 15l-3-3"/></svg>
@@ -599,6 +661,42 @@ td strong{color:var(--tx);font-weight:600}
       <button class="btn bg" id="cono">Cancelar</button>
       <button class="btn bd" id="cosi">Sim, excluir</button>
     </div>
+  </div>
+</div>
+
+<!-- PÁGINA DE PERFIL DO CLIENTE -->
+<div id="pfpage">
+  <div class="pf-topbar">
+    <div style="display:flex;align-items:center;gap:12px">
+      <button class="pf-back" onclick="fechaPerfil()">← Voltar</button>
+      <span id="pf-topname" style="font-size:15px;font-weight:600;color:var(--tx)"></span>
+    </div>
+    <div style="display:flex;gap:8px">
+      <button class="btn bg sm" onclick="abrPainelFromPerfil()">Ver Histórico</button>
+      <button class="btn bp sm" onclick="abrEditFromPerfil()">Editar</button>
+    </div>
+  </div>
+  <div class="pf-hero">
+    <div class="pf-hero-inner">
+      <div class="pf-av" id="pf-av"></div>
+      <div style="flex:1">
+        <div class="pf-name" id="pf-name"></div>
+        <div class="pf-sub" id="pf-sub"></div>
+        <div class="pf-metrics" id="pf-metrics"></div>
+      </div>
+    </div>
+  </div>
+  <div class="pf-tabs">
+    <button class="pf-tab ac" data-pt="resumo">Resumo</button>
+    <button class="pf-tab" data-pt="historico">Histórico de Contatos</button>
+    <button class="pf-tab" data-pt="notas">Notas Internas</button>
+    <button class="pf-tab" data-pt="alteracoes">Log de Alterações</button>
+  </div>
+  <div class="pf-body">
+    <div class="pf-panel ac" id="pf-resumo"></div>
+    <div class="pf-panel" id="pf-historico"></div>
+    <div class="pf-panel" id="pf-notas"></div>
+    <div class="pf-panel" id="pf-alteracoes"></div>
   </div>
 </div>
 
@@ -893,7 +991,7 @@ function renderCl() {
     const waBtn = waNum
       ? '<a class="btn wa-btn sm" href="https://wa.me/'+waNum+'" target="_blank" title="Abrir WhatsApp">📱</a>'
       : '';
-    return '<tr class="'+(ov?'ov':'')+'"><td><strong>'+c.name+'</strong>'+(pi?'<div class="pi">'+pi+'</div>':'')+'</td>'
+    return '<tr class="'+(ov?'ov':'')+'"><td><strong><a class="cl-name" onclick="abrPerfil(\''+id+'\')" title="Ver perfil completo">'+c.name+'</a></strong>'+(pi?'<div class="pi">'+pi+'</div>':'')+'</td>'
       +'<td class="tp">'+(c.phone||'—')+'</td><td>'+vc+'</td><td>'+statusCell+'</td>'
       +'<td>'+dc+'</td><td>'+fMoeda(c.estimated_value)+'</td>'
       +'<td><div class="ac2">'
@@ -1071,9 +1169,14 @@ async function iniciar(user) {
   try { MEP = await fetchMePf(user.id); } catch { MEP={name:user.email.split('@')[0],role:'vendedor'}; }
   const nm = MEP?.name||user.email;
   document.getElementById('unm').textContent = nm;
-  document.getElementById('url').textContent = MEP?.role==='admin'?'Admin':'Vendedor';
   document.getElementById('uav').textContent = ini(nm);
   document.getElementById('uav').style.background = cor(nm);
+  // Status do vendedor
+  const st = MEP?.seller_status || 'Disponível';
+  const vsSel = document.getElementById('vs-sel');
+  const vsDot = document.getElementById('vs-dot');
+  if (vsSel) vsSel.value = st;
+  if (vsDot) vsDot.className = 'vs-dot '+(st==='Disponível'?'vs-disp':st==='Em ligação'?'vs-em':'vs-aus');
   // Dados em paralelo
   const [rp,rc] = await Promise.allSettled([fetchPf(),fetchCl()]);
   if (rc.status==='fulfilled') {
@@ -1183,10 +1286,24 @@ document.getElementById('clf').addEventListener('submit', async e => {
       observation:document.getElementById('fob').value.trim()||null,
       ...(statusMudou && {status_changed_at: new Date().toISOString()}),
     };
-    await saveCl(d, EID);
+    const oldC = EID ? (CL.find(c=>c.id===EID)||{}) : {};
+    const saved = await saveCl(d, EID);
+    const savedId = EID || saved?.id;
+    // Audit log (não bloqueia)
+    if (EID) {
+      const changes = detectChanges(oldC, d);
+      if (changes.length) logAudit(EID, 'editado', changes);
+    } else if (savedId) {
+      logAudit(savedId, 'criado', []);
+    }
     CL = await fetchCl();
     try{localStorage.setItem('crm_cl',JSON.stringify(CL));}catch{}
     renderCl(); fechaModal();
+    // Atualiza perfil se estiver aberto
+    if (pfClientId && pfClientId===EID) {
+      const atualizado = CL.find(c=>c.id===pfClientId);
+      if (atualizado) { renderPfResumo(atualizado); loadPfNotas(atualizado); }
+    }
     toast(EID?'Cliente atualizado':'Cliente criado','"'+d.name+'" salvo com sucesso.','success');
   } catch(e) {
     err.textContent = e.message||'Erro ao salvar.';
@@ -1251,6 +1368,187 @@ document.addEventListener('keydown', e => {
   if (document.getElementById('co').classList.contains('op')) { fechaConf(); return; }
   if (document.getElementById('sp').classList.contains('op')) { fechaPainel(); return; }
 });
+
+// ── Status do Vendedor ────────────────────────────────────────────────────
+async function atualizarStatus(status) {
+  const dot = document.getElementById('vs-dot');
+  dot.className = 'vs-dot ' + (status==='Disponível'?'vs-disp':status==='Em ligação'?'vs-em':'vs-aus');
+  try {
+    await api('PATCH','profiles',`id=eq.${ME.id}`,{seller_status:status});
+  } catch(e) { toast('Erro ao atualizar status',e.message,'warning'); }
+}
+
+// ── Audit Log ─────────────────────────────────────────────────────────────
+function detectChanges(oldC, newC) {
+  const labels = {
+    name:'Nome', phone:'Telefone', status:'Status', seller_name:'Vendedor',
+    callback_date:'Data Retorno', estimated_value:'Valor Est.',
+    produto:'Produto', peso:'Peso', observation:'Observação', loss_reason:'Motivo Perda'
+  };
+  return Object.keys(labels)
+    .filter(k => String(oldC[k]||'') !== String(newC[k]||''))
+    .map(k => ({field:k, label:labels[k], from:oldC[k]||null, to:newC[k]||null}));
+}
+
+async function logAudit(clientId, action, changes) {
+  try {
+    await api('POST','audit_log',null,{
+      client_id:clientId, user_id:ME?.id,
+      user_name:MEP?.name||ME?.email||'Usuário',
+      action, changes
+    });
+  } catch {} // não bloqueia o fluxo principal
+}
+
+// ── Página de Perfil ──────────────────────────────────────────────────────
+let pfClientId = null;
+
+function abrPerfil(id) {
+  pfClientId = id;
+  const c = CL.find(x=>x.id===id);
+  if (!c) return;
+
+  // Header
+  const nv = c.seller_name||c.seller?.name||'Sem vendedor';
+  document.getElementById('pf-topname').textContent = c.name;
+  document.getElementById('pf-av').textContent = ini(c.name);
+  document.getElementById('pf-av').style.background = cor(c.name);
+  document.getElementById('pf-name').textContent = c.name;
+  document.getElementById('pf-sub').innerHTML =
+    bStatus(c.status)+'<span>•</span><span>'+nv+'</span>'
+    +(c.callback_date?'<span>•</span><span>Retorno: '+fData(c.callback_date)+' ('+fRel(c.callback_date)+')</span>':'');
+  document.getElementById('pf-metrics').innerHTML = [
+    ['Telefone', c.phone||'—'],
+    ['Valor Est.', fMoeda(c.estimated_value)],
+    ['Produto', c.produto||'—'],
+    ['Peso', c.peso||'—'],
+    ['Cadastrado', fData((c.created_at||'').split('T')[0])],
+  ].map(([l,v])=>`<div class="pf-met"><div class="pf-met-l">${l}</div><div class="pf-met-v">${v}</div></div>`).join('');
+
+  // Reset tabs
+  document.querySelectorAll('.pf-tab').forEach(t=>t.classList.remove('ac'));
+  document.querySelectorAll('.pf-panel').forEach(p=>p.classList.remove('ac'));
+  document.querySelector('.pf-tab[data-pt="resumo"]').classList.add('ac');
+  document.getElementById('pf-resumo').classList.add('ac');
+
+  document.getElementById('pfpage').classList.add('op');
+  document.body.style.overflow = 'hidden';
+
+  renderPfResumo(c);
+  loadPfHistorico(id);
+  loadPfNotas(c);
+  loadPfAlteracoes(id);
+}
+
+function fechaPerfil() {
+  document.getElementById('pfpage').classList.remove('op');
+  document.body.style.overflow = '';
+  pfClientId = null;
+}
+
+function abrPainelFromPerfil() {
+  if (!pfClientId) return;
+  fechaPerfil();
+  setTimeout(() => abrPainel(pfClientId), 100);
+}
+
+function abrEditFromPerfil() {
+  if (!pfClientId) return;
+  abrEdit(pfClientId); // modal abre por cima da página de perfil (z-index maior)
+}
+
+function renderPfResumo(c) {
+  const rows = [
+    ['Nome', c.name], ['Telefone', c.phone||'—'], ['Vendedor', c.seller_name||c.seller?.name||'—'],
+    ['Status', c.status], ['Produto', c.produto||'—'], ['Peso', c.peso||'—'],
+    ['Valor Estimado', fMoeda(c.estimated_value)], ['Data de Retorno', c.callback_date?fData(c.callback_date):'—'],
+    ['Motivo da Perda', c.loss_reason||'—'],
+  ];
+  document.getElementById('pf-resumo').innerHTML = `
+    <div class="pf-grid">
+      <div class="dc2">
+        <div class="dch"><h3>Dados Cadastrais</h3></div>
+        ${rows.map(([k,v])=>`<div class="pf-row"><div class="pf-rk">${k}</div><div class="pf-rv">${v}</div></div>`).join('')}
+      </div>
+      <div class="dc2">
+        <div class="dch"><h3>Observação</h3></div>
+        <div style="font-size:13px;color:var(--tx2);line-height:1.7">${c.observation||'<em style="color:var(--mt)">Sem observação.</em>'}</div>
+      </div>
+    </div>`;
+}
+
+async function loadPfHistorico(id) {
+  const el = document.getElementById('pf-historico');
+  el.innerHTML = '<div class="sl"><div class="sp"></div></div>';
+  try {
+    const h = await fetchHistorico(id);
+    if (!h.length) { el.innerHTML='<div class="se"><h3>Sem histórico</h3><p>Nenhum contato registrado.</p></div>'; return; }
+    const dotCls = r=>({Comprou:'dc',Falou:'df','Nao atendeu':'dn','Nao tem interesse':'di','WhatsApp enviado':'dw','Caixa postal':'dcp'}[r]||'');
+    const rCls = r=>r==='Comprou'?'rc':r==='Nao tem interesse'?'rni':r==='Nao atendeu'?'rna':'';
+    el.innerHTML = `<div class="tl" style="max-width:700px">${h.map(x=>`
+      <div class="tli"><div class="tld ${dotCls(x.result)}"></div>
+      <div class="tlc"><div class="tlm"><span class="tlt">${fDH(x.datetime)}</span><span class="tls">${x.seller?.name||'—'}</span></div>
+      <span class="tlr ${rCls(x.result)}">${x.result}</span>
+      ${x.notes?`<div class="tln">${x.notes}</div>`:''}
+      ${x.next_callback?`<div class="tlx">Próximo: <strong>${fData(x.next_callback)}</strong> (${fRel(x.next_callback)})</div>`:''}</div></div>`).join('')}</div>`;
+  } catch(e) { el.innerHTML=`<div class="se"><p style="color:var(--er)">${e.message}</p></div>`; }
+}
+
+function loadPfNotas(c) {
+  document.getElementById('pf-notas').innerHTML = `
+    <div style="max-width:700px">
+      <p style="font-size:13px;color:var(--mt);margin-bottom:14px">
+        Anotações permanentes sobre o cliente — visíveis por toda a equipe. Diferentes do histórico de ligações.
+      </p>
+      <textarea class="notes-area" id="notes-txt" placeholder="Ex: Prefere contato à tarde. Tem sócio chamado João. Indicado por Pedro em 03/2024...">${c.internal_notes||''}</textarea>
+      <div style="display:flex;justify-content:flex-end;margin-top:10px;gap:8px">
+        <button class="btn bp sm" onclick="salvarNotas()">Salvar Notas</button>
+      </div>
+    </div>`;
+}
+
+async function salvarNotas() {
+  const texto = document.getElementById('notes-txt')?.value||'';
+  try {
+    await api('PATCH','clients',`id=eq.${pfClientId}`,{internal_notes:texto});
+    const idx = CL.findIndex(c=>c.id===pfClientId);
+    if (idx>=0) CL[idx].internal_notes = texto;
+    try{localStorage.setItem('crm_cl',JSON.stringify(CL));}catch{}
+    toast('Notas salvas','','success');
+  } catch(e) { toast('Erro ao salvar',e.message,'warning'); }
+}
+
+async function loadPfAlteracoes(id) {
+  const el = document.getElementById('pf-alteracoes');
+  el.innerHTML = '<div class="sl"><div class="sp"></div></div>';
+  try {
+    const log = await api('GET','audit_log',`client_id=eq.${id}&order=created_at.desc&select=*`);
+    if (!log.length) {
+      el.innerHTML='<div class="se"><h3>Sem registros</h3><p>O log começa a ser gerado a partir de agora.</p></div>';
+      return;
+    }
+    const aLabel = {criado:'criou o cliente',editado:'editou o cliente'};
+    const aDot = {criado:'al-cr',editado:'al-ed'};
+    el.innerHTML = `<div style="max-width:700px">${log.map(l=>{
+      const changes = l.changes ? (typeof l.changes==='string'?JSON.parse(l.changes):l.changes) : [];
+      return `<div class="al-item">
+        <div class="al-dot ${aDot[l.action]||''}"></div>
+        <div style="flex:1">
+          <div class="al-header"><strong>${l.user_name||'Usuário'}</strong> ${aLabel[l.action]||l.action} — ${fDH(l.created_at)}</div>
+          ${Array.isArray(changes)?changes.map(ch=>`<div class="al-change"><strong>${ch.label}</strong>: <span class="al-from">${ch.from||'(vazio)'}</span> → <span class="al-to">${ch.to||'(vazio)'}</span></div>`).join(''):''}
+        </div>
+      </div>`;
+    }).join('')}</div>`;
+  } catch(e) { el.innerHTML=`<div class="se"><p style="color:var(--er)">${e.message}</p></div>`; }
+}
+
+// Tabs da página de perfil
+document.querySelectorAll('.pf-tab').forEach(t => t.addEventListener('click', () => {
+  document.querySelectorAll('.pf-tab').forEach(x=>x.classList.remove('ac'));
+  document.querySelectorAll('.pf-panel').forEach(x=>x.classList.remove('ac'));
+  t.classList.add('ac');
+  document.getElementById('pf-'+t.dataset.pt).classList.add('ac');
+}));
 
 // ── Filtro por Período ────────────────────────────────────────────────────
 let periodoFiltro = 0;

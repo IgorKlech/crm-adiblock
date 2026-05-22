@@ -406,12 +406,18 @@ async function openAddModal() {
   document.getElementById('modal-save-btn').textContent = 'Criar Cliente';
   document.getElementById('client-form').reset();
   document.getElementById('field-status').value = 'Pendente';
-  document.getElementById('modal-save-error').textContent = '';
-  // Sempre recarrega perfis ao abrir o modal
-  try { allProfiles = await fetchProfiles(); } catch {}
-  populateSellers(['field-seller']);
+  const errEl = document.getElementById('modal-save-error');
+  if (errEl) errEl.textContent = '';
+
+  // Abre o modal imediatamente
   document.getElementById('client-modal-overlay').classList.add('open');
   setTimeout(() => document.getElementById('field-name').focus(), 80);
+
+  // Carrega vendedores em background
+  try {
+    if (!allProfiles.length) allProfiles = await fetchProfiles();
+  } catch {}
+  populateSellers(['field-seller']);
 }
 
 async function openEditModal(clientId) {
@@ -420,12 +426,12 @@ async function openEditModal(clientId) {
   editingClientId = clientId;
   document.getElementById('modal-title').textContent    = 'Editar Cliente';
   document.getElementById('modal-save-btn').textContent = 'Salvar Alteracoes';
-  document.getElementById('modal-save-error').textContent = '';
-  try { allProfiles = await fetchProfiles(); } catch {}
-  populateSellers(['field-seller']);
+  const errEl = document.getElementById('modal-save-error');
+  if (errEl) errEl.textContent = '';
+
+  // Preenche e abre imediatamente
   document.getElementById('field-name').value          = c.name || '';
   document.getElementById('field-phone').value         = c.phone || '';
-  document.getElementById('field-seller').value        = c.seller_id || '';
   document.getElementById('field-status').value        = c.status || 'Pendente';
   document.getElementById('field-callback-date').value = c.callback_date || '';
   document.getElementById('field-value').value         = c.estimated_value || '';
@@ -433,6 +439,13 @@ async function openEditModal(clientId) {
   document.getElementById('field-peso').value          = c.peso || '';
   document.getElementById('field-observation').value   = c.observation || '';
   document.getElementById('client-modal-overlay').classList.add('open');
+
+  // Carrega vendedores em background e seleciona o correto
+  try {
+    if (!allProfiles.length) allProfiles = await fetchProfiles();
+  } catch {}
+  populateSellers(['field-seller']);
+  document.getElementById('field-seller').value = c.seller_id || '';
 }
 
 function closeModal() {

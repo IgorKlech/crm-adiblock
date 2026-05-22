@@ -245,6 +245,33 @@ td strong{color:var(--tx);font-weight:600}
 .tcl{background:var(--bg);border:none;cursor:pointer;color:var(--mt);font-size:14px;padding:0;flex-shrink:0;width:24px;height:24px;border-radius:50%;display:flex;align-items:center;justify-content:center;box-shadow:var(--neu-sm);transition:all .15s}
 .tcl:hover{color:var(--er);box-shadow:var(--neu-in-sm)}
 @keyframes tIn{from{opacity:0;transform:translateX(12px)}to{opacity:1;transform:none}}
+
+/* ── Melhorias comerciais ── */
+.wa-btn{background:#25D366;color:#fff;box-shadow:4px 4px 10px rgba(37,211,102,.35),-2px -2px 8px rgba(255,255,255,.6)}
+.wa-btn:hover{background:#20bb5a;transform:translateY(-1px)}
+.ts-badge{font-size:10px;color:var(--mt);margin-top:3px;display:block}
+.lr-field{display:none}
+.sg5{display:grid;grid-template-columns:repeat(5,1fr);gap:16px;margin-bottom:22px}
+@media(max-width:1100px){.sg5{grid-template-columns:repeat(3,1fr)}}
+@media(max-width:700px){.sg5{grid-template-columns:1fr 1fr}}
+.sk-pipe{border-top-color:var(--ac);background:var(--bg)}
+.funnel-wrap{background:var(--bg);border-radius:var(--r);padding:22px;box-shadow:var(--neu);margin-bottom:18px}
+.funnel-title{font-size:13px;font-weight:700;color:var(--tx);margin-bottom:16px;display:flex;align-items:center;justify-content:space-between}
+.funnel-row{display:flex;align-items:center;gap:12px;margin-bottom:10px}
+.funnel-label{width:110px;font-size:12px;font-weight:600;color:var(--tx2);flex-shrink:0;text-align:right}
+.funnel-bar-wrap{flex:1;height:28px;background:var(--bg);border-radius:8px;box-shadow:var(--neu-in-sm);overflow:hidden;position:relative}
+.funnel-bar{height:100%;border-radius:8px;transition:width .8s cubic-bezier(.4,0,.2,1);display:flex;align-items:center;padding-left:10px}
+.funnel-n{font-size:11px;font-weight:700;color:#fff;text-shadow:0 1px 2px rgba(0,0,0,.2)}
+.funnel-pct{width:44px;font-size:12px;font-weight:700;color:var(--mt);text-align:right;flex-shrink:0}
+.meta-row{display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid rgba(184,192,204,.3)}
+.meta-row:last-child{border-bottom:none}
+.meta-name{font-size:13px;font-weight:600;flex:1}
+.meta-bar-wrap{flex:2;height:8px;background:var(--bg);border-radius:99px;box-shadow:var(--neu-in-sm);overflow:hidden}
+.meta-bar-fill{height:100%;border-radius:99px;transition:width .6s ease;background:linear-gradient(90deg,var(--ac),#7c9eef)}
+.meta-bar-fill.done{background:linear-gradient(90deg,var(--ok),#68d391)}
+.meta-nums{font-size:12px;font-weight:700;color:var(--mt);white-space:nowrap;min-width:60px;text-align:right}
+.meta-input-wrap{display:flex;align-items:center;gap:6px}
+.meta-input{width:60px;padding:4px 8px;border:none;border-radius:8px;font-size:12px;font-family:inherit;background:var(--bg);box-shadow:var(--neu-in-sm);outline:none;text-align:center}
 </style>
 </head>
 <body>
@@ -337,15 +364,28 @@ td strong{color:var(--tx);font-weight:600}
         <div><h2>Dashboard</h2><span class="ps">Visão geral do comercial</span></div>
         <button class="btn bg sm" id="dref">↺ Atualizar</button>
       </div>
-      <div class="sg">
+      <div class="sg5">
         <div class="sk"><div class="sic sb2"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg></div><div><div class="sv" id="d1">-</div><div class="sl2">Total de Clientes</div></div></div>
         <div class="sk ss"><div class="sic sg2"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg></div><div><div class="sv" id="d2">-</div><div class="sl2">Compraram</div><div class="sprg"><div class="sprf sg" id="d2b" style="width:0%"></div></div></div></div>
         <div class="sk sw2"><div class="sic sy"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></div><div><div class="sv" id="d3">-</div><div class="sl2">Pendentes</div><div class="sprg"><div class="sprf sy" id="d3b" style="width:0%"></div></div></div></div>
         <div class="sk sd"><div class="sic sr"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg></div><div><div class="sv" id="d4">-</div><div class="sl2">Retornos Vencidos</div></div></div>
+        <div class="sk sk-pipe"><div class="sic" style="color:var(--ac)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/></svg></div><div><div class="sv" id="d5" style="font-size:18px;margin-top:4px">-</div><div class="sl2">Valor do Pipeline</div></div></div>
       </div>
+      <!-- Funil de Conversão -->
+      <div class="funnel-wrap">
+        <div class="funnel-title">
+          <span>Funil de Conversão</span>
+          <span id="funil-taxa" style="font-size:12px;color:var(--ok);font-weight:700"></span>
+        </div>
+        <div id="funil-body"></div>
+      </div>
+
       <div class="dg">
         <div class="dc2"><div class="dch"><h3>Alertas de Retorno</h3><span class="bpill" id="dob">0</span></div><div id="dol"><div class="sl"><div class="sp"></div></div></div></div>
-        <div class="dc2"><div class="dch"><h3>Ranking de Vendedores</h3><span class="dt">por conversões</span></div><div id="drl"><div class="sl"><div class="sp"></div></div></div></div>
+        <div class="dc2">
+          <div class="dch"><h3>Ranking com Meta</h3><span class="dt">conversões / meta mensal</span></div>
+          <div id="drl"><div class="sl"><div class="sp"></div></div></div>
+        </div>
       </div>
     </div>
   </div>
@@ -412,11 +452,24 @@ td strong{color:var(--tx);font-weight:600}
             <datalist id="vlist"></datalist>
           </div>
           <div class="fg"><label>Status</label>
-            <select id="fst">
+            <select id="fst" onchange="toggleLossReason(this.value)">
               <option>Pendente</option><option>Em contato</option><option>Comprou</option>
               <option>Nao comprou</option><option>Inativo</option>
             </select>
           </div>
+        </div>
+        <div class="fg lr-field" id="lr-wrap">
+          <label>Motivo da perda *</label>
+          <select id="flr">
+            <option value="">Selecione o motivo...</option>
+            <option>Preço alto</option>
+            <option>Comprou do concorrente</option>
+            <option>Prazo não atendido</option>
+            <option>Produto não adequado</option>
+            <option>Sem verba no momento</option>
+            <option>Sem retorno do cliente</option>
+            <option>Outro</option>
+          </select>
         </div>
         <div class="fr">
           <div class="fg"><label>Ligar de volta em</label><input type="date" id="fcb"></div>
@@ -532,6 +585,15 @@ const CORES = ['#1F4E78','#0891b2','#7c3aed','#059669','#dc2626','#d97706','#028
 const cor = n => CORES[(n||'A').toUpperCase().charCodeAt(0) % CORES.length];
 const ini = n => (n||'?')[0].toUpperCase();
 
+// ── Metas dos vendedores (persistidas localmente) ─────────────────────────
+function getMetas() {
+  try { return JSON.parse(localStorage.getItem('crm_metas') || '{}'); } catch { return {}; }
+}
+function setMeta(nome, valor) {
+  const m = getMetas(); m[nome] = parseInt(valor) || 0;
+  localStorage.setItem('crm_metas', JSON.stringify(m));
+}
+
 // ── Helpers ───────────────────────────────────────────────────────────────
 const hj = () => new Date().toISOString().split('T')[0];
 const venc = d => !!d && d <= hj();
@@ -556,6 +618,28 @@ function fDH(dt) {
 function fMoeda(v) {
   if (v==null||v==='') return '—';
   return Number(v).toLocaleString('pt-BR',{style:'currency',currency:'BRL'});
+}
+function fMoedaK(v) {
+  if (!v) return '—';
+  return v >= 1000
+    ? 'R$ ' + (v/1000).toFixed(1).replace('.',',') + 'k'
+    : 'R$ ' + Number(v).toLocaleString('pt-BR');
+}
+function tempoStatus(c) {
+  const dt = c.status_changed_at || c.updated_at;
+  if (!dt) return '';
+  const d = Math.round((new Date() - new Date(dt)) / 86400000);
+  if (d === 0) return 'hoje';
+  if (d === 1) return 'há 1 dia';
+  return `há ${d} dias`;
+}
+function foneLink(tel) {
+  if (!tel) return null;
+  return '55' + tel.replace(/\D/g,'');
+}
+function toggleLossReason(status) {
+  const el = document.getElementById('lr-wrap');
+  if (el) el.style.display = status === 'Nao comprou' ? 'block' : 'none';
 }
 function bStatus(s) {
   const m={'Pendente':'bp2','Em contato':'bec','Comprou':'bc','Nao comprou':'bnc','Inativo':'bi2'};
@@ -649,10 +733,18 @@ function renderCl() {
       : '—';
     const id = c.id;
     const nm = (c.name||'').replace(/'/g,"\\'");
+    const ts = tempoStatus(c);
+    const waNum = foneLink(c.phone);
+    const statusCell = bStatus(c.status) + (ts ? '<span class="ts-badge">'+ts+'</span>' : '')
+      + (c.status==='Nao comprou' && c.loss_reason ? '<span class="ts-badge" style="color:var(--er)">'+c.loss_reason+'</span>' : '');
+    const waBtn = waNum
+      ? '<a class="btn wa-btn sm" href="https://wa.me/'+waNum+'" target="_blank" title="Abrir WhatsApp">📱</a>'
+      : '';
     return '<tr class="'+(ov?'ov':'')+'"><td><strong>'+c.name+'</strong>'+(pi?'<div class="pi">'+pi+'</div>':'')+'</td>'
-      +'<td class="tp">'+(c.phone||'—')+'</td><td>'+vc+'</td><td>'+bStatus(c.status)+'</td>'
+      +'<td class="tp">'+(c.phone||'—')+'</td><td>'+vc+'</td><td>'+statusCell+'</td>'
       +'<td>'+dc+'</td><td>'+fMoeda(c.estimated_value)+'</td>'
       +'<td><div class="ac2">'
+      +waBtn
       +'<button class="btn bg sm" onclick="abrPainel(\''+id+'\')">Histórico</button>'
       +'<button class="btn bp sm" onclick="abrEdit(\''+id+'\')">Editar</button>'
       +'<button class="btn bod sm" onclick="abrDel(\''+id+'\',\''+nm+'\')">Excluir</button>'
@@ -667,25 +759,74 @@ async function renderDb() {
   const pend = CL.filter(c=>c.status==='Pendente').length;
   const vl   = CL.filter(c=>venc(c.callback_date)&&c.status!=='Comprou'&&c.status!=='Inativo');
   const pct  = v => tot ? Math.round(v/tot*100) : 0;
+
+  // Cards principais
   document.getElementById('d1').textContent = tot;
   document.getElementById('d2').textContent = comp;
   document.getElementById('d3').textContent = pend;
   document.getElementById('d4').textContent = vl.length;
   document.getElementById('d2b').style.width = pct(comp)+'%';
   document.getElementById('d3b').style.width = pct(pend)+'%';
+
+  // Valor do pipeline (ativos)
+  const pipeline = CL
+    .filter(c=>['Pendente','Em contato'].includes(c.status))
+    .reduce((s,c)=>s+(parseFloat(c.estimated_value)||0), 0);
+  document.getElementById('d5').textContent = fMoedaK(pipeline);
+
+  // Alertas
   const ob = document.getElementById('dob'); if(ob) ob.textContent = vl.length;
   const ol = document.getElementById('dol');
-  ol.innerHTML = vl.length ? vl.slice(0,10).map(c=>'<div class="ari"><div class="ad"></div><div><div class="an">'+c.name+'</div><div class="as">'+(c.seller_name||c.seller?.name||'Sem vendedor')+' — '+fData(c.callback_date)+' ('+fRel(c.callback_date)+')</div></div></div>').join('')
+  ol.innerHTML = vl.length
+    ? vl.slice(0,10).map(c=>'<div class="ari"><div class="ad"></div><div><div class="an">'+c.name+'</div><div class="as">'+(c.seller_name||c.seller?.name||'Sem vendedor')+' — '+fData(c.callback_date)+' ('+fRel(c.callback_date)+')</div></div></div>').join('')
     : '<div class="se" style="padding:12px 0"><p>Nenhum retorno vencido!</p></div>';
+
+  // Funil de conversão
+  const stages = [
+    {k:'Pendente',     color:'#6c7a89'},
+    {k:'Em contato',   color:'#5b7fdb'},
+    {k:'Comprou',      color:'#38a169'},
+    {k:'Nao comprou',  color:'#e53e3e'},
+    {k:'Inativo',      color:'#a0aec0'},
+  ];
+  const mx2 = Math.max(...stages.map(s=>CL.filter(c=>c.status===s.k).length), 1);
+  const taxaConv = tot > 0 ? Math.round(comp/tot*100) : 0;
+  document.getElementById('funil-taxa').textContent = 'Taxa de conversão: '+taxaConv+'%';
+  document.getElementById('funil-body').innerHTML = stages.map(s=>{
+    const n = CL.filter(c=>c.status===s.k).length;
+    const p = Math.round(n/mx2*100);
+    return '<div class="funnel-row">'
+      +'<div class="funnel-label">'+s.k+'</div>'
+      +'<div class="funnel-bar-wrap"><div class="funnel-bar" style="width:'+p+'%;background:'+s.color+'"><span class="funnel-n">'+n+'</span></div></div>'
+      +'<div class="funnel-pct">'+Math.round(n/(tot||1)*100)+'%</div>'
+      +'</div>';
+  }).join('');
+
+  // Ranking com metas
   try {
     const h = await api('GET','call_history','result=eq.Comprou&select=seller_id,seller:profiles(name)');
     const cnt={},nms={};
     (h||[]).forEach(x=>{cnt[x.seller_id]=(cnt[x.seller_id]||0)+1;if(x.seller)nms[x.seller_id]=x.seller.name;});
-    const t3 = Object.entries(cnt).sort((a,b)=>b[1]-a[1]).slice(0,3);
-    const mx = t3[0]?.[1]||1;
+    const metas = getMetas();
+    const t3 = Object.entries(cnt).sort((a,b)=>b[1]-a[1]).slice(0,4);
     const md = ['r1','r2','r3'];
     document.getElementById('drl').innerHTML = t3.length
-      ? t3.map(([s,n],i)=>'<div class="rri"><div class="rp '+md[i]+'">'+(i+1)+'</div><div class="rb"><div class="rn">'+(nms[s]||'?')+'</div><div class="rbr"><div class="rbf" style="width:'+Math.round(n/mx*100)+'%"></div></div></div><div><div class="rc2">'+n+'</div><div class="ru">vendas</div></div></div>').join('')
+      ? t3.map(([s,n],i)=>{
+          const nome = nms[s]||'?';
+          const meta = metas[nome] || 10;
+          const prog = Math.min(Math.round(n/meta*100),100);
+          const done = n >= meta;
+          return '<div class="meta-row">'
+            +'<div class="rp '+md[i]+'">'+(i+1)+'</div>'
+            +'<div style="flex:1;margin:0 10px">'
+              +'<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:5px">'
+                +'<div class="meta-name">'+nome+(done?' ✓':'')+' </div>'
+                +'<div class="meta-nums">'+n+' / <input class="meta-input" type="number" min="1" max="999" value="'+meta+'" onchange="setMeta(\''+nome+'\',this.value);renderDb()" title="Meta mensal"> vendas</div>'
+              +'</div>'
+              +'<div class="meta-bar-wrap"><div class="meta-bar-fill'+(done?' done':'')+'" style="width:'+prog+'%"></div></div>'
+            +'</div>'
+            +'</div>';
+        }).join('')
       : '<div class="se" style="padding:12px 0"><p>Nenhuma conversão ainda.</p></div>';
   } catch{}
 }
@@ -726,6 +867,7 @@ function abrNovo() {
   document.getElementById('msav').textContent='Criar Cliente';
   document.getElementById('clf').reset();
   document.getElementById('fst').value='Pendente';
+  toggleLossReason('Pendente');
   document.getElementById('serr').textContent='';
   updSug();
   document.getElementById('cm').classList.add('op');
@@ -744,6 +886,8 @@ function abrEdit(id) {
   document.getElementById('fpe').value=c.peso||'';
   document.getElementById('fv').value=c.seller_name||c.seller?.name||'';
   document.getElementById('fst').value=c.status||'Pendente';
+  toggleLossReason(c.status||'Pendente');
+  document.getElementById('flr').value=c.loss_reason||'';
   document.getElementById('fcb').value=c.callback_date||'';
   document.getElementById('fvl').value=c.estimated_value||'';
   document.getElementById('fob').value=c.observation||'';
@@ -860,16 +1004,21 @@ document.getElementById('clf').addEventListener('submit', async e => {
   const btn=document.getElementById('msav'), err=document.getElementById('serr');
   btn.disabled=true; btn.textContent='Salvando...'; err.textContent='';
   try {
+    const novoStatus = document.getElementById('fst').value;
+    const clienteAtual = EID ? CL.find(c=>c.id===EID) : null;
+    const statusMudou = !clienteAtual || clienteAtual.status !== novoStatus;
     const d={
       name:document.getElementById('fn').value.trim(),
       phone:document.getElementById('ft').value.trim()||null,
       produto:document.getElementById('fpro').value.trim()||null,
       peso:document.getElementById('fpe').value.trim()||null,
       seller_name:document.getElementById('fv').value.trim()||null,
-      status:document.getElementById('fst').value,
+      status:novoStatus,
+      loss_reason:novoStatus==='Nao comprou'?(document.getElementById('flr').value||null):null,
       callback_date:document.getElementById('fcb').value||null,
       estimated_value:document.getElementById('fvl').value?parseFloat(document.getElementById('fvl').value):null,
       observation:document.getElementById('fob').value.trim()||null,
+      ...(statusMudou && {status_changed_at: new Date().toISOString()}),
     };
     await saveCl(d, EID);
     CL = await fetchCl();
@@ -904,7 +1053,7 @@ document.getElementById('cf').addEventListener('submit', async e => {
     else if(res==='Nao tem interesse') upd.status='Nao comprou';
     else if(res==='Ligar de volta'){upd.status='Em contato';if(prx)upd.callback_date=prx;}
     else{const cl=CL.find(c=>c.id===PID);if(cl?.status==='Pendente')upd.status='Em contato';if(prx)upd.callback_date=prx;}
-    if(Object.keys(upd).length) await saveCl(upd,PID);
+    if(Object.keys(upd).length){upd.status_changed_at=new Date().toISOString();await saveCl(upd,PID);}
     CL=await fetchCl();
     try{localStorage.setItem('crm_cl',JSON.stringify(CL));}catch{}
     renderCl(); document.getElementById('cf').reset(); await loadTl(PID);

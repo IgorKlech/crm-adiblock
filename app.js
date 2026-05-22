@@ -23,13 +23,16 @@ function avatarColor(name) {
 function avatarInitial(name) { return (name || '?')[0].toUpperCase(); }
 
 // ── Query helper com timeout ──────────────────────────────────────────────
-async function sq(builder, ms = 8000) {
-  const timeout = new Promise((_, reject) =>
-    setTimeout(() => reject(new Error('Servidor nao respondeu (timeout). Verifique sua internet.')), ms)
+function sq(builderFn, ms = 10000) {
+  const queryPromise = (async () => {
+    const { data, error } = await builderFn();
+    if (error) throw error;
+    return data || [];
+  })();
+  const timeoutPromise = new Promise((_, reject) =>
+    setTimeout(() => reject(new Error('Sem resposta do servidor. Verifique sua internet.')), ms)
   );
-  const result = await Promise.race([builder, timeout]);
-  if (result && result.error) throw result.error;
-  return result ? (result.data ?? result) : [];
+  return Promise.race([queryPromise, timeoutPromise]);
 }
 
 // ── Utils ─────────────────────────────────────────────────────────────────
@@ -133,30 +136,30 @@ document.getElementById('confirm-cancel').addEventListener('click', closeConfirm
 
 // ── Supabase DB ───────────────────────────────────────────────────────────
 async function fetchClients() {
-  return sq(db.from('clients').select('*, seller:profiles(id,name)').order('created_at', { ascending: false }));
+  return sq(() => db.from('clients').select('*, seller:profiles(id,name)').order('created_at', { ascending: false }));
 }
 
 async function fetchProfiles() {
-  return sq(db.from('profiles').select('*').order('name'));
+  return sq(() => db.from('profiles').select('*').order('name'));
 }
 
 async function saveClient(payload, id = null) {
   const rows = id
-    ? await sq(db.from('clients').update(payload).eq('id', id).select())
-    : await sq(db.from('clients').insert([payload]).select());
+    ? await sq(() => db.from('clients').update(payload).eq('id', id).select())
+    : await sq(() => db.from('clients').insert([payload]).select());
   return rows[0];
 }
 
 async function deleteClientById(id) {
-  await sq(db.from('clients').delete().eq('id', id));
+  await sq(() => db.from('clients').delete().eq('id', id));
 }
 
 async function fetchHistory(clientId) {
-  return sq(db.from('call_history').select('*, seller:profiles(id,name)').eq('client_id', clientId).order('datetime', { ascending: false }));
+  return sq(() => db.from('call_history').select('*, seller:profiles(id,name)').eq('client_id', clientId).order('datetime', { ascending: false }));
 }
 
 async function insertHistory(payload) {
-  const rows = await sq(db.from('call_history').insert([payload]).select());
+  const rows = await sq(() => db.from('call_history').insert([payload]).select());
   return rows[0];
 }
 
@@ -448,10 +451,10 @@ async function doDelete(id, name) {
 }
 
 // ── Debug badge ───────────────────────────────────────────────────────────
-function updateDebugBadge() {
+function updateDebugBadge(msg) {
   const el = document.getElementById('debug-badge');
   if (!el) return;
-  el.textContent = `${allProfiles.length} vendedor(es) | ${allClients.length} cliente(s)`;
+  el.textContent = msg || `${allProfiles.length} vendedor(es) | ${allClients.length} cliente(s)`;
   el.style.display = 'block';
 }
 
@@ -468,9 +471,30 @@ function checkOverdueNotification() {
     );
 }
 
+// ── Teste direto de conexao ───────────────────────────────────────────────
+async function testeConexao(token) {
+  try {
+    const res = await fetch(`${SUPABASE_URL}/rest/v1/profiles?select=id,name&limit=10`, {
+      headers: {
+        'apikey': SUPABASE_ANON_KEY,
+        'Authorization': `Bearer ${token}`,
+      }
+    });
+    const json = await res.json();
+    updateDebugBadge(`Fetch direto: ${res.status} | ${JSON.stringify(json).slice(0,80)}`);
+  } catch(e) {
+    updateDebugBadge(`Fetch direto ERRO: ${e.message}`);
+  }
+}
+
 // ── Init App ──────────────────────────────────────────────────────────────
 async function initApp(user) {
   currentUser = user;
+
+  // Teste imediato de conexao via fetch nativo
+  const { data: sessionData } = await db.auth.getSession();
+  const token = sessionData?.session?.access_token || SUPABASE_ANON_KEY;
+  testeConexao(token);
 
   // Load profile
   try {

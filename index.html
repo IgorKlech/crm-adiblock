@@ -273,6 +273,70 @@ td strong{color:var(--tx);font-weight:600}
 .meta-bar-fill.done{background:var(--ok)}
 .meta-nums{font-size:12px;color:var(--mt);white-space:nowrap;min-width:55px;text-align:right}
 .meta-input{width:36px;padding:2px 4px;border:1px solid var(--bdr);border-radius:4px;font-size:12px;font-family:inherit;background:var(--sur);outline:none;text-align:center;color:var(--tx)}
+
+/* ── Busca Global ── */
+#gs-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:500;padding:60px 20px 20px;backdrop-filter:blur(4px)}
+#gs-overlay.op{display:flex;flex-direction:column;align-items:center}
+#gs-box{background:var(--sur);border-radius:var(--r);width:100%;max-width:560px;box-shadow:0 24px 64px rgba(0,0,0,.18);border:1px solid var(--bdr);overflow:hidden}
+#gs-input-wrap{display:flex;align-items:center;gap:10px;padding:14px 16px;border-bottom:1px solid var(--bdr)}
+#gs-input-wrap svg{width:18px;height:18px;color:var(--mt);flex-shrink:0}
+#gs-input{flex:1;border:none;outline:none;font-size:15px;font-family:inherit;color:var(--tx);background:transparent}
+#gs-input::placeholder{color:var(--mt)}
+#gs-kbd{font-size:10px;color:var(--mt);background:var(--bg);border:1px solid var(--bdr);border-radius:4px;padding:2px 6px;white-space:nowrap;flex-shrink:0}
+#gs-results{max-height:380px;overflow-y:auto}
+.gs-item{display:flex;align-items:center;gap:12px;padding:11px 16px;cursor:pointer;transition:background .1s;border-bottom:1px solid var(--bdr)}
+.gs-item:last-child{border-bottom:none}
+.gs-item:hover,.gs-item.gs-sel{background:var(--ps)}
+.gs-av{width:32px;height:32px;border-radius:50%;color:#fff;font-size:13px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.gs-info{flex:1;min-width:0}
+.gs-name{font-size:13px;font-weight:600;color:var(--tx);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.gs-sub{font-size:12px;color:var(--mt);margin-top:1px}
+.gs-empty{padding:32px;text-align:center;color:var(--mt);font-size:13px}
+.gs-footer{padding:10px 16px;display:flex;align-items:center;gap:16px;background:var(--bg);border-top:1px solid var(--bdr)}
+.gs-hint{font-size:11px;color:var(--mt);display:flex;align-items:center;gap:5px}
+.gs-key{background:var(--sur);border:1px solid var(--bdr);border-radius:3px;padding:1px 5px;font-size:10px;color:var(--tx2)}
+
+/* ── Auto-refresh indicator ── */
+#upd-ind{font-size:11px;color:rgba(255,255,255,.4);margin-left:8px;display:none}
+
+/* ── Responsivo Mobile ── */
+@media(max-width:768px){
+  #nb{padding:0 14px;height:52px}
+  .bn2{display:none}
+  #tabs .tb span{display:none}
+  .tb{padding:7px 11px}
+  .un{display:none}
+  .ur{display:none}
+  #mc{padding:14px}
+  .ph{flex-wrap:wrap;gap:10px}
+  .ph h2{font-size:16px}
+  .pa{gap:6px}
+  .pa .btn span{display:none}
+  .fb{gap:8px}
+  .sw{min-width:100%;order:-1}
+  .fs2,.fi{min-width:calc(50% - 4px);flex:1}
+  .tw{border-radius:var(--rs)}
+  .tw{overflow-x:auto}
+  table{min-width:700px}
+  .sg5{grid-template-columns:1fr 1fr;gap:10px}
+  .sk{padding:14px}
+  .sv{font-size:22px}
+  .dg{grid-template-columns:1fr}
+  .funnel-wrap{padding:14px}
+  .funnel-label{width:80px;font-size:11px}
+  #sp{width:100vw;right:-100vw}
+  .md{padding:20px}
+  .fr{grid-template-columns:1fr}
+  .fa{flex-wrap:wrap}
+  #gs-overlay{padding:20px 10px}
+  #gs-box{max-width:100%}
+}
+@media(max-width:480px){
+  .sg5{grid-template-columns:1fr}
+  .fs2,.fi{min-width:100%}
+  .tb{padding:7px 8px}
+  .ac2 .btn span{display:none}
+}
 </style>
 </head>
 <body>
@@ -315,6 +379,12 @@ td strong{color:var(--tx);font-weight:600}
         <div class="ua" id="uav">?</div>
         <div><div class="un" id="unm">-</div><div class="ur" id="url">-</div></div>
       </div>
+      <button class="bn" id="gs-btn" title="Busca rápida (Ctrl+K)" style="display:flex;align-items:center;gap:5px;font-size:12px;padding:5px 12px">
+        <svg width="13" height="13" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2"><circle cx="8.5" cy="8.5" r="5.5"/><path d="M15 15l-3-3"/></svg>
+        <span>Busca</span>
+        <span style="font-size:10px;opacity:.6;background:rgba(255,255,255,.15);border-radius:3px;padding:1px 5px">Ctrl K</span>
+      </button>
+      <span id="upd-ind">● ao vivo</span>
       <button class="bn" id="lob">Sair</button>
     </div>
   </nav>
@@ -501,6 +571,23 @@ td strong{color:var(--tx);font-weight:600}
 </div>
 
 <div id="tc"></div>
+
+<!-- BUSCA GLOBAL -->
+<div id="gs-overlay">
+  <div id="gs-box">
+    <div id="gs-input-wrap">
+      <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2"><circle cx="8.5" cy="8.5" r="5.5"/><path d="M15 15l-3-3"/></svg>
+      <input id="gs-input" placeholder="Buscar cliente por nome, telefone ou vendedor..." autocomplete="off">
+      <span id="gs-kbd">ESC para fechar</span>
+    </div>
+    <div id="gs-results"></div>
+    <div class="gs-footer">
+      <span class="gs-hint"><span class="gs-key">↑↓</span> navegar</span>
+      <span class="gs-hint"><span class="gs-key">Enter</span> abrir</span>
+      <span class="gs-hint"><span class="gs-key">Esc</span> fechar</span>
+    </div>
+  </div>
+</div>
 
 <script>
 // ── Config ────────────────────────────────────────────────────────────────
@@ -932,6 +1019,7 @@ async function iniciar(user) {
   updSug(); renderCl();
   const n=CL.filter(c=>venc(c.callback_date)&&c.status!=='Comprou'&&c.status!=='Inativo').length;
   if (n>0) toast(n+' retorno(s) vencido(s)',n+' cliente(s) com data vencida.','warning');
+  startAutoRefresh();
 }
 
 // ── Eventos ───────────────────────────────────────────────────────────────
@@ -951,6 +1039,7 @@ document.getElementById('lf').addEventListener('submit', async e => {
 
 // Logout
 document.getElementById('lob').addEventListener('click', async () => {
+  stopAutoRefresh();
   localStorage.removeItem('crm_cl');
   try { await Promise.race([sb.auth.signOut(),new Promise(r=>setTimeout(r,2000))]); } catch {}
   window.location.reload();
@@ -1063,13 +1152,114 @@ document.getElementById('cf').addEventListener('submit', async e => {
   finally{btn.disabled=false;btn.textContent='Registrar Contato';}
 });
 
-// ESC
-document.addEventListener('keydown',e=>{
-  if(e.key!=='Escape')return;
-  if(document.getElementById('cm').classList.contains('op')){fechaModal();return;}
-  if(document.getElementById('co').classList.contains('op')){fechaConf();return;}
-  if(document.getElementById('sp').classList.contains('op')){fechaPainel();return;}
+// Teclado global
+document.addEventListener('keydown', e => {
+  const searchAberto = document.getElementById('gs-overlay').classList.contains('op');
+
+  // Ctrl+K ou / abre busca
+  if ((e.ctrlKey && e.key === 'k') || (e.key === '/' && !searchAberto && document.activeElement.tagName === 'BODY')) {
+    e.preventDefault(); showSearch(); return;
+  }
+  // Navegação dentro da busca
+  if (searchAberto) {
+    if (e.key === 'Escape') { hideSearch(); return; }
+    if (e.key === 'ArrowDown') { e.preventDefault(); gsMove(1); return; }
+    if (e.key === 'ArrowUp')   { e.preventDefault(); gsMove(-1); return; }
+    if (e.key === 'Enter') {
+      const sel = document.querySelector('.gs-item.gs-sel');
+      if (sel) gsOpen(sel.dataset.id);
+      return;
+    }
+    return;
+  }
+  // ESC fecha modais
+  if (e.key !== 'Escape') return;
+  if (document.getElementById('cm').classList.contains('op')) { fechaModal(); return; }
+  if (document.getElementById('co').classList.contains('op')) { fechaConf(); return; }
+  if (document.getElementById('sp').classList.contains('op')) { fechaPainel(); return; }
 });
+
+// ── Busca Global ─────────────────────────────────────────────────────────
+let gsIdx = -1;
+
+function showSearch() {
+  document.getElementById('gs-overlay').classList.add('op');
+  document.getElementById('gs-input').value = '';
+  renderSearch('');
+  setTimeout(() => document.getElementById('gs-input').focus(), 50);
+}
+function hideSearch() {
+  document.getElementById('gs-overlay').classList.remove('op');
+  gsIdx = -1;
+}
+function renderSearch(q) {
+  const el = document.getElementById('gs-results');
+  const term = q.toLowerCase();
+  const res = !term ? CL.slice(0, 8) : CL.filter(c =>
+    (c.name||'').toLowerCase().includes(term) ||
+    (c.phone||'').includes(term) ||
+    (c.seller_name||c.seller?.name||'').toLowerCase().includes(term)
+  ).slice(0, 10);
+  gsIdx = -1;
+  if (!res.length) {
+    el.innerHTML = '<div class="gs-empty">Nenhum cliente encontrado</div>';
+    return;
+  }
+  el.innerHTML = res.map((c,i) => {
+    const nv = c.seller_name||c.seller?.name||'';
+    const sub = [c.phone, nv, c.status].filter(Boolean).join(' · ');
+    return `<div class="gs-item" data-id="${c.id}" onclick="gsOpen('${c.id}')">
+      <div class="gs-av" style="background:${cor(c.name)}">${ini(c.name)}</div>
+      <div class="gs-info">
+        <div class="gs-name">${c.name}</div>
+        <div class="gs-sub">${sub}</div>
+      </div>
+      ${bStatus(c.status)}
+    </div>`;
+  }).join('');
+}
+function gsOpen(id) {
+  hideSearch();
+  abrEdit(id);
+}
+function gsMove(dir) {
+  const items = document.querySelectorAll('.gs-item');
+  if (!items.length) return;
+  items.forEach(i => i.classList.remove('gs-sel'));
+  gsIdx = Math.max(0, Math.min(items.length - 1, gsIdx + dir));
+  items[gsIdx].classList.add('gs-sel');
+  items[gsIdx].scrollIntoView({block:'nearest'});
+}
+
+document.getElementById('gs-input').addEventListener('input', e => renderSearch(e.target.value));
+document.getElementById('gs-btn').addEventListener('click', showSearch);
+document.getElementById('gs-overlay').addEventListener('click', e => { if(e.target===e.currentTarget) hideSearch(); });
+
+// ── Auto-refresh ──────────────────────────────────────────────────────────
+let refreshTimer = null;
+
+function startAutoRefresh() {
+  const ind = document.getElementById('upd-ind');
+  if (ind) ind.style.display = 'inline';
+  refreshTimer = setInterval(async () => {
+    const modalOpen = document.getElementById('cm').classList.contains('op');
+    const panelOpen = document.getElementById('sp').classList.contains('op');
+    if (modalOpen || panelOpen) return;
+    try {
+      const fresh = await fetchCl();
+      CL = fresh;
+      try { localStorage.setItem('crm_cl', JSON.stringify(CL)); } catch {}
+      renderCl();
+      const now = new Date().toLocaleTimeString('pt-BR', {hour:'2-digit',minute:'2-digit'});
+      if (ind) ind.title = 'Atualizado às ' + now;
+    } catch {}
+  }, 120000); // 2 minutos
+}
+function stopAutoRefresh() {
+  if (refreshTimer) { clearInterval(refreshTimer); refreshTimer = null; }
+  const ind = document.getElementById('upd-ind');
+  if (ind) ind.style.display = 'none';
+}
 
 // ── Auth ──────────────────────────────────────────────────────────────────
 function showApp(){document.getElementById('ls').style.display='none';document.getElementById('app').style.display='flex';}

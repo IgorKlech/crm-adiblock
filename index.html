@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta http-equiv="Cache-Control" content="no-store, max-age=0">
 <meta http-equiv="Pragma" content="no-cache">
-<title>CRM Adiblock</title>
+<title>Controle Comercial — Adiblock</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.3"></script>
@@ -488,7 +488,12 @@ td strong{color:var(--tx);font-weight:600}
 <div id="app">
   <nav id="nb">
     <div class="nbl">
-      <div class="br"><div class="bi">A</div><span class="bn2">CRM <strong>Adiblock</strong></span></div>
+      <div class="br">
+        <div style="background:#fff;border-radius:8px;padding:3px 8px;display:flex;align-items:center;height:38px">
+          <img src="logo.png" alt="Adiblock" style="height:30px;width:auto;display:block">
+        </div>
+        <span class="bn2"><strong>Controle Comercial</strong></span>
+      </div>
       <div id="tabs">
         <button class="tb ac" data-tab="cl">
           <svg width="14" height="14" viewBox="0 0 20 20" fill="currentColor"><path d="M9 6a3 3 0 11-6 0 3 3 0 016 0zM17 6a3 3 0 11-6 0 3 3 0 016 0zM12.93 17c.046-.327.07-.66.07-1a6.97 6.97 0 00-1.5-4.33A5 5 0 0119 16v1h-6.07zM6 11a5 5 0 015 5v1H1v-1a5 5 0 015-5z"/></svg>
@@ -561,6 +566,7 @@ td strong{color:var(--tx);font-weight:600}
             <tr>
               <th class="so" data-col="name">Cliente <span class="sa">↕</span></th>
               <th>Telefone</th>
+              <th class="so" data-col="produto">Produto / Qtd <span class="sa">↕</span></th>
               <th class="so" data-col="seller_name">Vendedor <span class="sa">↕</span></th>
               <th class="so" data-col="status">Status <span class="sa">↕</span></th>
               <th class="so" data-col="callback_date">Retorno <span class="sa">↕</span></th>
@@ -568,7 +574,7 @@ td strong{color:var(--tx);font-weight:600}
               <th>Ações</th>
             </tr>
           </thead>
-          <tbody id="ctb"><tr><td colspan="7"><div class="sl"><div class="sp"></div>Carregando...</div></td></tr></tbody>
+          <tbody id="ctb"><tr><td colspan="8"><div class="sl"><div class="sp"></div>Carregando...</div></td></tr></tbody>
         </table>
       </div>
     </div>
@@ -1047,14 +1053,18 @@ function renderCl() {
   if (el) el.textContent = lst.length===tot ? tot+' cliente(s)' : lst.length+' de '+tot;
   const tb = document.getElementById('ctb');
   if (!lst.length) {
-    tb.innerHTML = '<tr><td colspan="7"><div class="se"><h3>Nenhum cliente encontrado</h3><p>Ajuste os filtros ou cadastre um novo.</p></div></td></tr>';
+    tb.innerHTML = '<tr><td colspan="8"><div class="se"><h3>Nenhum cliente encontrado</h3><p>Ajuste os filtros ou cadastre um novo.</p></div></td></tr>';
     return;
   }
   tb.innerHTML = lst.map(c => {
     const ov = venc(c.callback_date);
     const nv = c.seller_name||c.seller?.name||'';
     const vc = nv ? '<div class="sch"><div class="sav" style="background:'+cor(nv)+'">'+ini(nv)+'</div>'+nv+'</div>' : '<span style="color:var(--mt)">—</span>';
-    const pi = [c.produto,c.peso].filter(Boolean).join(' · ');
+    // Coluna produto dedicada
+    const prodCell = c.produto
+      ? '<span style="font-weight:500;color:var(--tx)">'+(c.produto)+'</span>'
+        + (c.peso ? '<div style="font-size:11px;color:var(--mt);margin-top:2px">'+c.peso+'</div>' : '')
+      : '<span style="color:var(--mt2)">—</span>';
     const dc = c.callback_date
       ? fData(c.callback_date)+' <small style="color:var(--mt)">('+fRel(c.callback_date)+')</small>'+(ov?'<span class="ob">Vencido</span>':'')
       : '—';
@@ -1067,8 +1077,10 @@ function renderCl() {
     const waBtn = waNum
       ? '<a class="btn wa-btn sm" href="https://wa.me/'+waNum+'" target="_blank" title="Abrir WhatsApp">📱</a>'
       : '';
-    return '<tr class="'+(ov?'ov':'')+'"><td><strong><a class="cl-name" onclick="abrPerfil(\''+id+'\')" title="Ver perfil completo">'+c.name+'</a></strong>'+(pi?'<div class="pi">'+pi+'</div>':'')+'</td>'
-      +'<td class="tp">'+(c.phone||'—')+'</td><td>'+vc+'</td><td>'+statusCell+'</td>'
+    return '<tr class="'+(ov?'ov':'')+'"><td><strong><a class="cl-name" onclick="abrPerfil(\''+id+'\')" title="Ver perfil completo">'+c.name+'</a></strong></td>'
+      +'<td class="tp">'+(c.phone||'—')+'</td>'
+      +'<td>'+prodCell+'</td>'
+      +'<td>'+vc+'</td><td>'+statusCell+'</td>'
       +'<td>'+dc+'</td><td>'+fMoeda(c.estimated_value)+'</td>'
       +'<td><div class="ac2">'
       +waBtn
@@ -1561,8 +1573,10 @@ async function gerarRelatorio() {
     corpo.innerHTML = `
       <!-- Capa -->
       <div class="rel-cover">
-        <div class="rel-logo">A</div>
-        <h1>Relatório Semanal — CRM Adiblock</h1>
+        <div class="rel-logo" style="background:transparent;padding:0;width:auto;height:auto;border-radius:0">
+          <img src="logo.png" alt="Adiblock" style="height:56px;width:auto">
+        </div>
+        <h1>Relatório Semanal — Controle Comercial Adiblock</h1>
         <p>${fmtPer(inicioSemana)} até ${fmtPer(agora)} &nbsp;•&nbsp; Gerado em ${fmtPer(agora)}</p>
       </div>
 

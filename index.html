@@ -414,6 +414,55 @@ td strong{color:var(--tx);font-weight:600}
 /* Nome clicável na tabela */
 .cl-name{cursor:pointer;color:var(--p);text-decoration:none}
 .cl-name:hover{text-decoration:underline}
+
+/* ── Alertas de Inatividade ── */
+.inact-wrap{background:var(--sur);border-radius:var(--r);border:1px solid var(--bdr);box-shadow:var(--sh);margin-bottom:16px;overflow:hidden}
+.inact-header{display:flex;align-items:center;justify-content:space-between;padding:14px 18px;border-bottom:1px solid var(--bdr);background:var(--wr2)}
+.inact-title{font-size:13px;font-weight:700;color:#92400e;display:flex;align-items:center;gap:8px}
+.inact-badge{background:var(--wr);color:#fff;font-size:11px;font-weight:700;padding:2px 8px;border-radius:99px}
+.inact-body{padding:0}
+.inact-row{display:flex;align-items:center;justify-content:space-between;padding:11px 18px;border-bottom:1px solid var(--bdr);gap:12px}
+.inact-row:last-child{border-bottom:none}
+.inact-info{flex:1;min-width:0}
+.inact-name{font-size:13px;font-weight:600;color:var(--tx);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.inact-meta{font-size:12px;color:var(--mt);margin-top:2px}
+.inact-days{font-size:12px;font-weight:700;color:var(--wr);white-space:nowrap}
+#nb-alert{display:none;background:var(--wr);color:#fff;font-size:10px;font-weight:700;padding:2px 7px;border-radius:99px;margin-left:4px}
+
+/* ── Relatório Semanal ── */
+#rel-page{display:none;position:fixed;inset:0;background:var(--bg);z-index:280;overflow-y:auto}
+#rel-page.op{display:block}
+.rel-topbar{display:flex;align-items:center;justify-content:space-between;padding:12px 24px;background:var(--sur);border-bottom:1px solid var(--bdr);position:sticky;top:0;z-index:10}
+.rel-body{max-width:900px;margin:0 auto;padding:28px 24px}
+.rel-cover{text-align:center;margin-bottom:32px;padding:32px;background:var(--sur);border-radius:var(--r);border:1px solid var(--bdr)}
+.rel-logo{width:48px;height:48px;border-radius:12px;background:var(--p);color:#fff;font-size:20px;font-weight:800;display:flex;align-items:center;justify-content:center;margin:0 auto 14px}
+.rel-cover h1{font-size:22px;font-weight:700;color:var(--tx);margin-bottom:6px}
+.rel-cover p{font-size:13px;color:var(--mt)}
+.rel-section{margin-bottom:22px}
+.rel-section-title{font-size:11px;font-weight:700;color:var(--p);text-transform:uppercase;letter-spacing:.06em;margin-bottom:12px;padding-bottom:8px;border-bottom:2px solid var(--ps)}
+.rel-cards{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:6px}
+@media(max-width:680px){.rel-cards{grid-template-columns:1fr 1fr}}
+.rel-card{background:var(--sur);border:1px solid var(--bdr);border-radius:var(--r);padding:16px;text-align:center;border-top:3px solid var(--bdr2)}
+.rel-card.blue{border-top-color:var(--p)}.rel-card.green{border-top-color:var(--ok)}.rel-card.yellow{border-top-color:var(--wr)}.rel-card.red{border-top-color:var(--er)}
+.rel-num{font-size:28px;font-weight:700;color:var(--tx);line-height:1;margin-bottom:4px}
+.rel-lbl{font-size:11px;color:var(--mt)}
+.rel-table{width:100%;border-collapse:collapse;background:var(--sur);border-radius:var(--r);overflow:hidden;border:1px solid var(--bdr)}
+.rel-table th{background:var(--bg);padding:9px 14px;text-align:left;font-size:11px;font-weight:600;color:var(--mt);text-transform:uppercase;letter-spacing:.04em;border-bottom:1px solid var(--bdr)}
+.rel-table td{padding:9px 14px;font-size:13px;color:var(--tx2);border-bottom:1px solid var(--bdr)}
+.rel-table tr:last-child td{border-bottom:none}
+.rel-alert-box{background:var(--wr2);border:1px solid var(--wr);border-radius:var(--r);padding:14px 18px;font-size:13px;color:#92400e;display:flex;align-items:center;gap:10px}
+.rel-ok-box{background:var(--ok2);border:1px solid var(--ok);border-radius:var(--r);padding:14px 18px;font-size:13px;color:var(--ok);display:flex;align-items:center;gap:10px}
+.rel-footer{text-align:center;font-size:11px;color:var(--mt);margin-top:28px;padding-top:16px;border-top:1px solid var(--bdr)}
+
+/* ── @media print ── */
+@media print{
+  #nb,#nav-tabs,.pf-topbar,.rel-topbar,#tc,#gs-overlay,#pfpage,#sp,#po,.mo,.ac2,#sidebar{display:none!important}
+  #rel-page{position:static!important;overflow:visible!important}
+  .rel-topbar{display:none!important}
+  body{background:#fff!important}
+  .rel-card,.rel-table,.rel-section{break-inside:avoid}
+  @page{margin:2cm}
+}
 </style>
 </head>
 <body>
@@ -456,7 +505,8 @@ td strong{color:var(--tx);font-weight:600}
         <div class="ua" id="uav">?</div>
         <div>
           <div class="un" id="unm">-</div>
-          <div class="vs-wrap">
+          <span id="nb-alert" title="Clientes inativos">⚠</span>
+      <div class="vs-wrap">
             <div class="vs-dot vs-disp" id="vs-dot"></div>
             <select class="vs-sel" id="vs-sel" onchange="atualizarStatus(this.value)">
               <option value="Disponível">Disponível</option>
@@ -528,6 +578,7 @@ td strong{color:var(--tx);font-weight:600}
       <div class="ph">
         <div><h2>Dashboard</h2><span class="ps">Visão geral do comercial</span></div>
         <button class="btn bg sm" id="dref">↺ Atualizar</button>
+        <button class="btn bg sm" onclick="abrRelatorio()">📊 Relatório Semanal</button>
       </div>
       <div class="sg5">
         <div class="sk"><div class="sic sb2"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg></div><div><div class="sv" id="d1">-</div><div class="sl2">Total de Clientes</div></div></div>
@@ -536,6 +587,15 @@ td strong{color:var(--tx);font-weight:600}
         <div class="sk sd"><div class="sic sr"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg></div><div><div class="sv" id="d4">-</div><div class="sl2">Retornos Vencidos</div></div></div>
         <div class="sk sk-pipe"><div class="sic" style="color:var(--ac)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/></svg></div><div><div class="sv" id="d5" style="font-size:18px;margin-top:4px">-</div><div class="sl2">Valor do Pipeline</div></div></div>
       </div>
+      <!-- Alertas de Inatividade -->
+      <div id="inact-wrap" style="display:none" class="inact-wrap">
+        <div class="inact-header">
+          <div class="inact-title">⚠ Clientes sem contato há 7+ dias <span class="inact-badge" id="inact-badge">0</span></div>
+          <span style="font-size:12px;color:#92400e">Entre em contato para não perder esses leads</span>
+        </div>
+        <div id="inact-body"></div>
+      </div>
+
       <!-- Funil de Conversão -->
       <div class="funnel-wrap">
         <div class="funnel-title">
@@ -661,6 +721,22 @@ td strong{color:var(--tx);font-weight:600}
       <button class="btn bg" id="cono">Cancelar</button>
       <button class="btn bd" id="cosi">Sim, excluir</button>
     </div>
+  </div>
+</div>
+
+<!-- RELATÓRIO SEMANAL -->
+<div id="rel-page">
+  <div class="rel-topbar">
+    <div style="display:flex;align-items:center;gap:12px">
+      <button class="pf-back" onclick="fecharRelatorio()">← Voltar</button>
+      <span style="font-size:15px;font-weight:600;color:var(--tx)">Relatório Semanal</span>
+    </div>
+    <div style="display:flex;gap:8px">
+      <button class="btn bg sm" onclick="window.print()">🖨 Imprimir / PDF</button>
+    </div>
+  </div>
+  <div class="rel-body" id="rel-body">
+    <div class="sl"><div class="sp"></div>Gerando relatório...</div>
   </div>
 </div>
 
@@ -1027,6 +1103,7 @@ async function renderDb() {
 
   // Alertas
   const ob = document.getElementById('dob'); if(ob) ob.textContent = vl.length;
+  loadAlertasInatividade();
   const ol = document.getElementById('dol');
   ol.innerHTML = vl.length
     ? vl.slice(0,10).map(c=>'<div class="ari"><div class="ad"></div><div><div class="an">'+c.name+'</div><div class="as">'+(c.seller_name||c.seller?.name||'Sem vendedor')+' — '+fData(c.callback_date)+' ('+fRel(c.callback_date)+')</div></div></div>').join('')
@@ -1190,6 +1267,7 @@ async function iniciar(user) {
   const n=CL.filter(c=>venc(c.callback_date)&&c.status!=='Comprou'&&c.status!=='Inativo').length;
   if (n>0) toast(n+' retorno(s) vencido(s)',n+' cliente(s) com data vencida.','warning');
   startAutoRefresh();
+  loadAlertasInatividade();
 }
 
 // ── Eventos ───────────────────────────────────────────────────────────────
@@ -1368,6 +1446,228 @@ document.addEventListener('keydown', e => {
   if (document.getElementById('co').classList.contains('op')) { fechaConf(); return; }
   if (document.getElementById('sp').classList.contains('op')) { fechaPainel(); return; }
 });
+
+// ── Alertas de Inatividade ────────────────────────────────────────────────
+async function loadAlertasInatividade() {
+  try {
+    const corte = new Date(Date.now() - 7 * 86400000).toISOString();
+    // Busca clientes que tiveram contato nos últimos 7 dias
+    const recentes = await api('GET','call_history',`datetime=gte.${corte}&select=client_id`);
+    const comContato = new Set((recentes||[]).map(h=>h.client_id));
+
+    // Clientes ativos sem contato recente
+    const inativos = CL.filter(c =>
+      ['Pendente','Em contato'].includes(c.status) && !comContato.has(c.id)
+    ).sort((a,b) => {
+      // Ordena pelos mais antigos primeiro (sem status_changed_at, usa created_at)
+      const da = a.status_changed_at || a.created_at || '';
+      const db2 = b.status_changed_at || b.created_at || '';
+      return da < db2 ? -1 : 1;
+    });
+
+    const wrap  = document.getElementById('inact-wrap');
+    const badge = document.getElementById('inact-badge');
+    const nb    = document.getElementById('nb-alert');
+
+    if (!inativos.length) {
+      if (wrap) wrap.style.display = 'none';
+      if (nb)   nb.style.display   = 'none';
+      return;
+    }
+
+    if (badge) badge.textContent = inativos.length;
+    if (nb) { nb.textContent = inativos.length + ' inativo(s)'; nb.style.display = 'inline'; }
+    if (wrap) {
+      wrap.style.display = 'block';
+      document.getElementById('inact-body').innerHTML = inativos.slice(0,8).map(c => {
+        const nv = c.seller_name||c.seller?.name||'Sem vendedor';
+        const dt = c.status_changed_at || c.created_at || '';
+        const diasSemContato = dt ? Math.floor((Date.now()-new Date(dt))/86400000) : '?';
+        return `<div class="inact-row">
+          <div class="inact-info">
+            <div class="inact-name">${c.name}</div>
+            <div class="inact-meta">${nv} • ${c.status}${c.phone?' • '+c.phone:''}</div>
+          </div>
+          <div style="display:flex;align-items:center;gap:10px">
+            <div class="inact-days">${diasSemContato}d sem contato</div>
+            <button class="btn bp sm" onclick="abrPainel('${c.id}')">Contatar</button>
+          </div>
+        </div>`;
+      }).join('') + (inativos.length > 8 ? `<div style="padding:10px 18px;font-size:12px;color:var(--mt)">+ ${inativos.length-8} outros clientes inativos</div>` : '');
+    }
+  } catch(e) { console.error('Inatividade:', e.message); }
+}
+
+// ── Relatório Semanal ─────────────────────────────────────────────────────
+function abrRelatorio() {
+  document.getElementById('rel-page').classList.add('op');
+  document.body.style.overflow = 'hidden';
+  gerarRelatorio();
+}
+function fecharRelatorio() {
+  document.getElementById('rel-page').classList.remove('op');
+  document.body.style.overflow = '';
+}
+
+async function gerarRelatorio() {
+  const corpo = document.getElementById('rel-body');
+  corpo.innerHTML = '<div class="sl"><div class="sp"></div>Gerando relatório...</div>';
+
+  try {
+    const agora   = new Date();
+    const inicioSemana = new Date(Date.now() - 7 * 86400000);
+    const fmtPer  = d => d.toLocaleDateString('pt-BR',{day:'2-digit',month:'2-digit',year:'numeric'});
+    const iniStr  = inicioSemana.toISOString();
+
+    // Dados da semana
+    const [histSemana, novosClientes] = await Promise.allSettled([
+      api('GET','call_history',`datetime=gte.${iniStr}&select=*,seller:profiles(name)`),
+      api('GET','clients',`created_at=gte.${iniStr}&select=id,name,status,seller_name,seller:profiles(name)`)
+    ]);
+
+    const hist  = histSemana.status==='fulfilled' ? histSemana.value : [];
+    const novos = novosClientes.status==='fulfilled' ? novosClientes.value : [];
+
+    // Métricas
+    const totalBase    = CL.length;
+    const novosCont    = novos.length;
+    const contatosSem  = hist.length;
+    const conversoesSem = hist.filter(h=>h.result==='Comprou').length;
+    const ativos       = CL.filter(c=>['Pendente','Em contato'].includes(c.status)).length;
+    const vencidos     = CL.filter(c=>venc(c.callback_date)&&c.status!=='Comprou'&&c.status!=='Inativo').length;
+    const taxaConv     = totalBase > 0 ? Math.round(CL.filter(c=>c.status==='Comprou').length/totalBase*100) : 0;
+
+    // Ranking da semana
+    const rankSem = {};
+    hist.forEach(h => {
+      const nm = h.seller?.name || 'Sem vendedor';
+      if (!rankSem[nm]) rankSem[nm] = {contatos:0,conversoes:0};
+      rankSem[nm].contatos++;
+      if (h.result==='Comprou') rankSem[nm].conversoes++;
+    });
+    const topSem = Object.entries(rankSem).sort((a,b)=>b[1].contatos-a[1].contatos);
+
+    // Motivos de perda
+    const motivos = {};
+    CL.filter(c=>c.loss_reason).forEach(c=>{
+      motivos[c.loss_reason] = (motivos[c.loss_reason]||0)+1;
+    });
+    const topMotivos = Object.entries(motivos).sort((a,b)=>b[1]-a[1]);
+
+    // Funil geral
+    const funil = ['Pendente','Em contato','Comprou','Nao comprou','Inativo']
+      .map(s => ({ s, n: CL.filter(c=>c.status===s).length }));
+
+    corpo.innerHTML = `
+      <!-- Capa -->
+      <div class="rel-cover">
+        <div class="rel-logo">A</div>
+        <h1>Relatório Semanal — CRM Adiblock</h1>
+        <p>${fmtPer(inicioSemana)} até ${fmtPer(agora)} &nbsp;•&nbsp; Gerado em ${fmtPer(agora)}</p>
+      </div>
+
+      <!-- Resumo geral -->
+      <div class="rel-section">
+        <div class="rel-section-title">Resumo Geral</div>
+        <div class="rel-cards">
+          <div class="rel-card blue"><div class="rel-num">${totalBase}</div><div class="rel-lbl">Total na Base</div></div>
+          <div class="rel-card green"><div class="rel-num">${novosCont}</div><div class="rel-lbl">Novos esta semana</div></div>
+          <div class="rel-card blue"><div class="rel-num">${ativos}</div><div class="rel-lbl">Ativos (Pendente + Em contato)</div></div>
+          <div class="rel-card green"><div class="rel-num">${taxaConv}%</div><div class="rel-lbl">Taxa de Conversão Total</div></div>
+        </div>
+      </div>
+
+      <!-- Atividade da semana -->
+      <div class="rel-section">
+        <div class="rel-section-title">Atividade da Semana</div>
+        <div class="rel-cards">
+          <div class="rel-card blue"><div class="rel-num">${contatosSem}</div><div class="rel-lbl">Contatos Realizados</div></div>
+          <div class="rel-card green"><div class="rel-num">${conversoesSem}</div><div class="rel-lbl">Conversões (Comprou)</div></div>
+          <div class="rel-card yellow"><div class="rel-num">${vencidos}</div><div class="rel-lbl">Retornos Vencidos</div></div>
+          <div class="rel-card ${novosCont>0?'green':'blue'}"><div class="rel-num">${novosCont}</div><div class="rel-lbl">Novos Cadastros</div></div>
+        </div>
+      </div>
+
+      <!-- Alertas -->
+      <div class="rel-section">
+        <div class="rel-section-title">Pontos de Atenção</div>
+        ${vencidos > 0
+          ? `<div class="rel-alert-box" style="margin-bottom:10px">⚠ <strong>${vencidos} cliente(s)</strong> com data de retorno vencida aguardando contato.</div>`
+          : `<div class="rel-ok-box" style="margin-bottom:10px">✓ Nenhum retorno vencido. Ótimo!</div>`}
+        ${contatosSem === 0
+          ? `<div class="rel-alert-box">⚠ Nenhum contato registrado esta semana. Verifique a atividade da equipe.</div>`
+          : `<div class="rel-ok-box">✓ ${contatosSem} contato(s) registrado(s) esta semana.</div>`}
+      </div>
+
+      <!-- Ranking semanal -->
+      <div class="rel-section">
+        <div class="rel-section-title">Ranking de Vendedores — Semana</div>
+        ${topSem.length ? `
+          <table class="rel-table">
+            <thead><tr><th>#</th><th>Vendedor</th><th>Contatos</th><th>Conversões</th><th>Taxa</th></tr></thead>
+            <tbody>${topSem.map(([nm,d],i)=>`
+              <tr>
+                <td>${['🥇','🥈','🥉'][i]||i+1}</td>
+                <td style="font-weight:600">${nm}</td>
+                <td>${d.contatos}</td>
+                <td style="color:var(--ok);font-weight:600">${d.conversoes}</td>
+                <td>${d.contatos>0?Math.round(d.conversoes/d.contatos*100):0}%</td>
+              </tr>`).join('')}
+            </tbody>
+          </table>` : '<p style="font-size:13px;color:var(--mt)">Nenhum contato registrado esta semana.</p>'}
+      </div>
+
+      <!-- Funil atual -->
+      <div class="rel-section">
+        <div class="rel-section-title">Funil de Status Atual</div>
+        <table class="rel-table">
+          <thead><tr><th>Status</th><th>Clientes</th><th>% da Base</th></tr></thead>
+          <tbody>${funil.map(f=>`
+            <tr>
+              <td>${f.s}</td>
+              <td style="font-weight:600">${f.n}</td>
+              <td>${totalBase>0?Math.round(f.n/totalBase*100):0}%</td>
+            </tr>`).join('')}
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Novos clientes da semana -->
+      ${novos.length ? `
+      <div class="rel-section">
+        <div class="rel-section-title">Novos Clientes Cadastrados na Semana (${novos.length})</div>
+        <table class="rel-table">
+          <thead><tr><th>Nome</th><th>Vendedor</th><th>Status</th></tr></thead>
+          <tbody>${novos.slice(0,10).map(c=>`
+            <tr>
+              <td style="font-weight:600">${c.name}</td>
+              <td>${c.seller_name||c.seller?.name||'—'}</td>
+              <td>${c.status}</td>
+            </tr>`).join('')}
+          </tbody>
+        </table>
+      </div>` : ''}
+
+      <!-- Motivos de perda -->
+      ${topMotivos.length ? `
+      <div class="rel-section">
+        <div class="rel-section-title">Motivos de Perda (Acumulado)</div>
+        <table class="rel-table">
+          <thead><tr><th>Motivo</th><th>Ocorrências</th></tr></thead>
+          <tbody>${topMotivos.map(([m,n])=>`
+            <tr><td>${m}</td><td style="font-weight:600;color:var(--er)">${n}</td></tr>`).join('')}
+          </tbody>
+        </table>
+      </div>` : ''}
+
+      <div class="rel-footer">
+        Relatório gerado automaticamente pelo CRM Adiblock em ${agora.toLocaleString('pt-BR')}
+      </div>`;
+
+  } catch(e) {
+    corpo.innerHTML = `<div class="se"><h3>Erro ao gerar relatório</h3><p style="color:var(--er)">${e.message}</p></div>`;
+  }
+}
 
 // ── Status do Vendedor ────────────────────────────────────────────────────
 async function atualizarStatus(status) {

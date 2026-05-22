@@ -22,6 +22,16 @@ function avatarColor(name) {
 }
 function avatarInitial(name) { return (name || '?')[0].toUpperCase(); }
 
+// ── Query helper com timeout ──────────────────────────────────────────────
+async function sq(builder, ms = 8000) {
+  const timeout = new Promise((_, reject) =>
+    setTimeout(() => reject(new Error('Servidor nao respondeu (timeout). Verifique sua internet.')), ms)
+  );
+  const result = await Promise.race([builder, timeout]);
+  if (result && result.error) throw result.error;
+  return result ? (result.data ?? result) : [];
+}
+
 // ── Utils ─────────────────────────────────────────────────────────────────
 function todayStr() { return new Date().toISOString().split('T')[0]; }
 
@@ -123,50 +133,31 @@ document.getElementById('confirm-cancel').addEventListener('click', closeConfirm
 
 // ── Supabase DB ───────────────────────────────────────────────────────────
 async function fetchClients() {
-  const { data, error } = await db
-    .from('clients')
-    .select('*, seller:profiles(id,name)')
-    .order('created_at', { ascending: false });
-  if (error) throw error;
-  return data || [];
+  return sq(db.from('clients').select('*, seller:profiles(id,name)').order('created_at', { ascending: false }));
 }
 
 async function fetchProfiles() {
-  const { data, error } = await db.from('profiles').select('*').order('name');
-  if (error) throw error;
-  return data || [];
+  return sq(db.from('profiles').select('*').order('name'));
 }
 
 async function saveClient(payload, id = null) {
-  if (id) {
-    const { data, error } = await db.from('clients').update(payload).eq('id', id).select().single();
-    if (error) throw error;
-    return data;
-  }
-  const { data, error } = await db.from('clients').insert([payload]).select().single();
-  if (error) throw error;
-  return data;
+  const rows = id
+    ? await sq(db.from('clients').update(payload).eq('id', id).select())
+    : await sq(db.from('clients').insert([payload]).select());
+  return rows[0];
 }
 
 async function deleteClientById(id) {
-  const { error } = await db.from('clients').delete().eq('id', id);
-  if (error) throw error;
+  await sq(db.from('clients').delete().eq('id', id));
 }
 
 async function fetchHistory(clientId) {
-  const { data, error } = await db
-    .from('call_history')
-    .select('*, seller:profiles(id,name)')
-    .eq('client_id', clientId)
-    .order('datetime', { ascending: false });
-  if (error) throw error;
-  return data || [];
+  return sq(db.from('call_history').select('*, seller:profiles(id,name)').eq('client_id', clientId).order('datetime', { ascending: false }));
 }
 
 async function insertHistory(payload) {
-  const { data, error } = await db.from('call_history').insert([payload]).select().single();
-  if (error) throw error;
-  return data;
+  const rows = await sq(db.from('call_history').insert([payload]).select());
+  return rows[0];
 }
 
 // ── Sort ──────────────────────────────────────────────────────────────────
@@ -400,7 +391,7 @@ function populateSellers(ids) {
   });
 }
 
-async function openAddModal() {
+function openAddModal() {
   editingClientId = null;
   document.getElementById('modal-title').textContent    = 'Novo Cliente';
   document.getElementById('modal-save-btn').textContent = 'Criar Cliente';
@@ -408,19 +399,12 @@ async function openAddModal() {
   document.getElementById('field-status').value = 'Pendente';
   const errEl = document.getElementById('modal-save-error');
   if (errEl) errEl.textContent = '';
-
-  // Abre o modal imediatamente
+  populateSellers(['field-seller']);
   document.getElementById('client-modal-overlay').classList.add('open');
   setTimeout(() => document.getElementById('field-name').focus(), 80);
-
-  // Carrega vendedores em background
-  try {
-    if (!allProfiles.length) allProfiles = await fetchProfiles();
-  } catch {}
-  populateSellers(['field-seller']);
 }
 
-async function openEditModal(clientId) {
+function openEditModal(clientId) {
   const c = allClients.find(x => x.id === clientId);
   if (!c) return;
   editingClientId = clientId;
@@ -428,10 +412,10 @@ async function openEditModal(clientId) {
   document.getElementById('modal-save-btn').textContent = 'Salvar Alteracoes';
   const errEl = document.getElementById('modal-save-error');
   if (errEl) errEl.textContent = '';
-
-  // Preenche e abre imediatamente
+  populateSellers(['field-seller']);
   document.getElementById('field-name').value          = c.name || '';
   document.getElementById('field-phone').value         = c.phone || '';
+  document.getElementById('field-seller').value        = c.seller_id || '';
   document.getElementById('field-status').value        = c.status || 'Pendente';
   document.getElementById('field-callback-date').value = c.callback_date || '';
   document.getElementById('field-value').value         = c.estimated_value || '';
@@ -439,13 +423,6 @@ async function openEditModal(clientId) {
   document.getElementById('field-peso').value          = c.peso || '';
   document.getElementById('field-observation').value   = c.observation || '';
   document.getElementById('client-modal-overlay').classList.add('open');
-
-  // Carrega vendedores em background e seleciona o correto
-  try {
-    if (!allProfiles.length) allProfiles = await fetchProfiles();
-  } catch {}
-  populateSellers(['field-seller']);
-  document.getElementById('field-seller').value = c.seller_id || '';
 }
 
 function closeModal() {
@@ -468,6 +445,14 @@ async function doDelete(id, name) {
       }
     }
   );
+}
+
+// ── Debug badge ───────────────────────────────────────────────────────────
+function updateDebugBadge() {
+  const el = document.getElementById('debug-badge');
+  if (!el) return;
+  el.textContent = `${allProfiles.length} vendedor(es) | ${allClients.length} cliente(s)`;
+  el.style.display = 'block';
 }
 
 // ── Overdue notification on login ─────────────────────────────────────────
@@ -501,25 +486,28 @@ async function initApp(user) {
   document.getElementById('user-avatar').textContent        = avatarInitial(name);
   document.getElementById('user-avatar').style.background   = avatarColor(name);
 
-  // Load profiles for dropdowns
-  try {
-    allProfiles = await fetchProfiles();
+  // Carrega perfis e clientes em paralelo
+  const [profResult, cliResult] = await Promise.allSettled([fetchProfiles(), fetchClients()]);
+
+  if (profResult.status === 'fulfilled') {
+    allProfiles = profResult.value;
     populateSellers(['seller-filter', 'field-seller']);
-  } catch (e) {
-    console.error('fetchProfiles:', e.message);
-    toast('Aviso', 'Nao foi possivel carregar a lista de vendedores.', 'warning');
+    updateDebugBadge();
+  } else {
+    console.error('fetchProfiles:', profResult.reason?.message);
+    toast('Erro ao carregar vendedores', profResult.reason?.message, 'warning');
   }
 
-  // Load clients
-  try {
-    allClients = await fetchClients();
+  if (cliResult.status === 'fulfilled') {
+    allClients = cliResult.value;
     renderClients();
     checkOverdueNotification();
-  } catch (e) {
-    console.error('fetchClients:', e.message);
+    updateDebugBadge();
+  } else {
+    console.error('fetchClients:', cliResult.reason?.message);
     document.getElementById('clients-tbody').innerHTML =
-      `<tr><td colspan="7"><div class="state-empty"><h3>Erro ao carregar clientes</h3><p style="color:var(--danger)">${e.message}</p></div></td></tr>`;
-    toast('Erro de banco de dados', e.message, 'warning');
+      `<tr><td colspan="7"><div class="state-empty"><h3>Erro ao carregar clientes</h3><p style="color:var(--danger)">${cliResult.reason?.message}</p></div></td></tr>`;
+    toast('Erro de banco de dados', cliResult.reason?.message, 'warning');
   }
 }
 

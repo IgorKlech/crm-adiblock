@@ -206,10 +206,11 @@ function getFiltered() {
 function exportCSV() {
   const rows = getFiltered();
   if (!rows.length) { toast('Nada para exportar', 'Sem clientes com os filtros atuais.', 'warning'); return; }
-  const headers = ['Nome','Telefone','Vendedor','Status','Data Retorno','Valor Estimado','Observacao'];
+  const headers = ['Nome','Telefone','Vendedor','Status','Produto','Peso','Data Retorno','Valor Estimado','Observacao'];
   const lines = rows.map(c => [
     c.name, c.phone||'', c.seller?.name||'', c.status,
-    c.callback_date||'', c.estimated_value||'', (c.observation||'').replace(/\n/g,' ')
+    c.produto||'', c.peso||'', c.callback_date||'',
+    c.estimated_value||'', (c.observation||'').replace(/\n/g,' ')
   ].map(v => `"${String(v).replace(/"/g,'""')}"`).join(','));
   const csv  = [headers.join(','), ...lines].join('\n');
   const blob = new Blob(['﻿' + csv], { type: 'text/csv;charset=utf-8' });
@@ -247,8 +248,12 @@ function renderClients() {
       ? `<div class="seller-chip"><div class="seller-avatar" style="background:${avatarColor(c.seller.name)}">${avatarInitial(c.seller.name)}</div>${c.seller.name}</div>`
       : `<span style="color:var(--muted)">—</span>`;
 
+    const prodLine = [c.produto, c.peso ? c.peso + ' kg' : ''].filter(Boolean).join(' · ');
     return `<tr class="${over ? 'overdue' : ''}" data-id="${c.id}">
-      <td><strong>${c.name}</strong></td>
+      <td>
+        <strong>${c.name}</strong>
+        ${prodLine ? `<div style="font-size:11px;color:var(--muted);margin-top:2px">${prodLine}</div>` : ''}
+      </td>
       <td class="td-phone">${c.phone || '—'}</td>
       <td>${sellerCell}</td>
       <td>${statusBadge(c.status)}</td>
@@ -419,6 +424,8 @@ function openEditModal(clientId) {
   document.getElementById('field-status').value        = c.status || 'Pendente';
   document.getElementById('field-callback-date').value = c.callback_date || '';
   document.getElementById('field-value').value         = c.estimated_value || '';
+  document.getElementById('field-produto').value       = c.produto || '';
+  document.getElementById('field-peso').value          = c.peso || '';
   document.getElementById('field-observation').value   = c.observation || '';
   document.getElementById('client-modal-overlay').classList.add('open');
 }
@@ -479,9 +486,10 @@ async function initApp(user) {
   // Load profiles for dropdowns
   try {
     allProfiles = await fetchProfiles();
-    populateSellers(['seller-filter']);
+    populateSellers(['seller-filter', 'field-seller']);
   } catch (e) {
     console.error('fetchProfiles:', e.message);
+    toast('Aviso', 'Nao foi possivel carregar a lista de vendedores.', 'warning');
   }
 
   // Load clients
@@ -572,6 +580,8 @@ document.getElementById('client-form').addEventListener('submit', async e => {
     status:          document.getElementById('field-status').value,
     callback_date:   document.getElementById('field-callback-date').value || null,
     estimated_value: document.getElementById('field-value').value ? parseFloat(document.getElementById('field-value').value) : null,
+    produto:         document.getElementById('field-produto').value.trim() || null,
+    peso:            document.getElementById('field-peso').value.trim() || null,
     observation:     document.getElementById('field-observation').value.trim() || null,
   };
 

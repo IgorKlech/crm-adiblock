@@ -1,146 +1,313 @@
 -- =========================================================================
--- CRM Adiblock — Setup completo (rodar uma vez no SQL Editor do Supabase)
--- Resolve o erro: relation "public.client_products" does not exist
--- E cria o catálogo de produtos (Tabela de Preços 2025) para autocomplete
+-- CRM Adiblock — Setup completo (Sprint 3: modelo B2B)
+-- Empresa → Contatos → Oportunidades, com tier automático
+-- =========================================================================
+--
+-- ⚠⚠⚠  NÃO RODE AINDA  ⚠⚠⚠
+--
+-- Este script APAGA todos os dados de clientes/contatos/propostas antigos
+-- para começar do zero no novo modelo. Catálogo de produtos e perfis de
+-- usuários são preservados.
+--
+-- O JavaScript do CRM ainda não foi adaptado para o novo modelo. Se você
+-- rodar este script agora, o app vai mostrar erros e não funcionará.
+--
+-- Aguarde o aviso de "pode rodar agora" depois do refactor do JS estar
+-- completo (próximos commits).
 -- =========================================================================
 
 -- -------------------------------------------------------------------------
--- 0) Garante todas as colunas que o app envia (idempotente)
---    Resolve: "Could not find the 'loss_reason' column of 'clients'..."
+-- 0) Profiles (vendedores) — preservados, só garante colunas
 -- -------------------------------------------------------------------------
-ALTER TABLE public.clients
-  ADD COLUMN IF NOT EXISTS produto            text,
-  ADD COLUMN IF NOT EXISTS peso               text,
-  ADD COLUMN IF NOT EXISTS seller_name        text,
-  ADD COLUMN IF NOT EXISTS status             text DEFAULT 'Pendente',
-  ADD COLUMN IF NOT EXISTS loss_reason        text,
-  ADD COLUMN IF NOT EXISTS callback_date      date,
-  ADD COLUMN IF NOT EXISTS estimated_value    numeric(12,2),
-  ADD COLUMN IF NOT EXISTS observation        text,
-  ADD COLUMN IF NOT EXISTS internal_notes     text,
-  ADD COLUMN IF NOT EXISTS status_changed_at  timestamptz,
-  ADD COLUMN IF NOT EXISTS created_at         timestamptz DEFAULT now(),
-  -- Fase 4: dados fiscais e da obra (usados nas cotações)
-  ADD COLUMN IF NOT EXISTS endereco           text,
-  ADD COLUMN IF NOT EXISTS cidade             text,
-  ADD COLUMN IF NOT EXISTS uf                 text,
-  ADD COLUMN IF NOT EXISTS cep                text,
-  ADD COLUMN IF NOT EXISTS cnpj               text,
-  ADD COLUMN IF NOT EXISTS ie                 text,
-  ADD COLUMN IF NOT EXISTS obra               text,
-  ADD COLUMN IF NOT EXISTS contato_outros     text, -- usado como "Solicitante" na proposta
-  ADD COLUMN IF NOT EXISTS email              text,
-  -- Sprint 1: LGPD
-  ADD COLUMN IF NOT EXISTS lgpd_consent_at    timestamptz,
-  ADD COLUMN IF NOT EXISTS lgpd_consent_by    text,
-  ADD COLUMN IF NOT EXISTS lgpd_delete_requested_at timestamptz,
-  ADD COLUMN IF NOT EXISTS lgpd_delete_requested_by text;
+ALTER TABLE public.profiles
+  ADD COLUMN IF NOT EXISTS seller_status      text DEFAULT 'Disponível',
+  ADD COLUMN IF NOT EXISTS telefone           text,
+  ADD COLUMN IF NOT EXISTS office_nome        text,
+  ADD COLUMN IF NOT EXISTS office_email       text,
+  ADD COLUMN IF NOT EXISTS office_telefone    text;
 
--- Tabela de auditoria das solicitações LGPD (log imutável)
-CREATE TABLE IF NOT EXISTS public.lgpd_requests (
-  id            uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-  client_id     uuid REFERENCES public.clients(id) ON DELETE SET NULL,
-  client_name   text NOT NULL, -- snapshot do nome (pra log mesmo após delete)
-  acao          text NOT NULL CHECK (acao IN ('consentimento','exclusao_solicitada','exclusao_executada','revogacao_consentimento')),
-  detalhes      text,
-  requested_by  uuid REFERENCES public.profiles(id) ON DELETE SET NULL,
-  requested_by_name text,
-  created_at    timestamptz NOT NULL DEFAULT now()
+
+-- -------------------------------------------------------------------------
+-- 1) DROP do modelo antigo (clients + tabelas dependentes)
+-- -------------------------------------------------------------------------
+-- Remove tabelas antigas do realtime antes de dropar (evita lock)
+DO $$ BEGIN ALTER PUBLICATION supabase_realtime DROP TABLE public.clients;         EXCEPTION WHEN OTHERS THEN NULL; END $$;
+DO $$ BEGIN ALTER PUBLICATION supabase_realtime DROP TABLE public.client_products; EXCEPTION WHEN OTHERS THEN NULL; END $$;
+DO $$ BEGIN ALTER PUBLICATION supabase_realtime DROP TABLE public.call_history;    EXCEPTION WHEN OTHERS THEN NULL; END $$;
+DO $$ BEGIN ALTER PUBLICATION supabase_realtime DROP TABLE public.proposals;       EXCEPTION WHEN OTHERS THEN NULL; END $$;
+
+DROP TABLE IF EXISTS public.lgpd_requests    CASCADE;
+DROP TABLE IF EXISTS public.client_products  CASCADE;
+DROP TABLE IF EXISTS public.call_history     CASCADE;
+DROP TABLE IF EXISTS public.proposals        CASCADE;
+DROP TABLE IF EXISTS public.clients          CASCADE;
+DROP VIEW  IF EXISTS public.companies_with_tier;
+
+
+-- -------------------------------------------------------------------------
+-- 2) companies — empresa B2B (substitui clients)
+-- -------------------------------------------------------------------------
+CREATE TABLE public.companies (
+  id                       uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  razao_social             text NOT NULL,
+  nome_fantasia            text,
+  cnpj                     text,
+  ie                       text,
+  email                    text,
+  telefone                 text,
+  website                  text,
+  industria                text,        -- ex: "Construtora", "Pré-fabricado", "Indústria química"
+  faturamento_estimado     numeric(14,2),
+  endereco                 text,
+  cidade                   text,
+  uf                       text,
+  cep                      text,
+  observacoes              text,
+  internal_notes           text,
+  -- LGPD
+  lgpd_consent_at          timestamptz,
+  lgpd_consent_by          text,
+  lgpd_delete_requested_at timestamptz,
+  lgpd_delete_requested_by text,
+  -- Audit
+  created_by               uuid REFERENCES public.profiles(id) ON DELETE SET NULL,
+  created_at               timestamptz NOT NULL DEFAULT now(),
+  updated_at               timestamptz NOT NULL DEFAULT now(),
+  UNIQUE (cnpj)
 );
 
-CREATE INDEX IF NOT EXISTS idx_lgpd_requests_client_id ON public.lgpd_requests(client_id);
+CREATE INDEX idx_companies_razao_social ON public.companies(razao_social);
+CREATE INDEX idx_companies_cidade_uf    ON public.companies(cidade, uf);
+
+ALTER TABLE public.companies ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "auth_all_companies" ON public.companies;
+CREATE POLICY "auth_all_companies" ON public.companies
+  FOR ALL TO authenticated USING (true) WITH CHECK (true);
+
+
+-- -------------------------------------------------------------------------
+-- 3) contacts — pessoas dentro de uma empresa (N por empresa)
+-- -------------------------------------------------------------------------
+CREATE TABLE public.contacts (
+  id          uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  company_id  uuid NOT NULL REFERENCES public.companies(id) ON DELETE CASCADE,
+  nome        text NOT NULL,
+  cargo       text,
+  email       text,
+  telefone    text,
+  papel       text CHECK (papel IN ('comprador','decisor','tecnico','engenheiro','financeiro','outro')),
+  principal   boolean NOT NULL DEFAULT false,
+  observacoes text,
+  created_at  timestamptz NOT NULL DEFAULT now()
+);
+
+CREATE INDEX idx_contacts_company_id ON public.contacts(company_id);
+
+ALTER TABLE public.contacts ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "auth_all_contacts" ON public.contacts;
+CREATE POLICY "auth_all_contacts" ON public.contacts
+  FOR ALL TO authenticated USING (true) WITH CHECK (true);
+
+
+-- -------------------------------------------------------------------------
+-- 4) opportunities — negociações ativas (N por empresa)
+--    Estágios do funil B2B: Lead → Qualificado → Proposta → Negociação → Ganha/Perdida
+-- -------------------------------------------------------------------------
+CREATE TABLE public.opportunities (
+  id                  uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  company_id          uuid NOT NULL REFERENCES public.companies(id) ON DELETE CASCADE,
+  contact_id          uuid REFERENCES public.contacts(id) ON DELETE SET NULL,
+  seller_id           uuid REFERENCES public.profiles(id) ON DELETE SET NULL,
+  seller_name         text,
+  titulo              text NOT NULL,         -- ex: "Aditivo p/ obra Mirataia"
+  obra                text,                  -- nome/identificação da obra
+  estagio             text NOT NULL DEFAULT 'lead' CHECK (estagio IN ('lead','qualificado','proposta_enviada','em_negociacao','ganha','perdida')),
+  valor_estimado      numeric(12,2),
+  callback_date       date,
+  perda_motivo        text,
+  observation         text,
+  estagio_changed_at  timestamptz DEFAULT now(),
+  closed_at           timestamptz,           -- preenchido quando estagio = ganha/perdida
+  created_at          timestamptz NOT NULL DEFAULT now(),
+  updated_at          timestamptz NOT NULL DEFAULT now()
+);
+
+CREATE INDEX idx_opportunities_company_id ON public.opportunities(company_id);
+CREATE INDEX idx_opportunities_seller_id  ON public.opportunities(seller_id);
+CREATE INDEX idx_opportunities_estagio    ON public.opportunities(estagio);
+
+-- Trigger: quando estágio vira ganha/perdida, marca closed_at automaticamente
+CREATE OR REPLACE FUNCTION public.opportunity_estagio_changed()
+RETURNS trigger LANGUAGE plpgsql AS $$
+BEGIN
+  IF NEW.estagio IS DISTINCT FROM OLD.estagio THEN
+    NEW.estagio_changed_at = now();
+    IF NEW.estagio IN ('ganha','perdida') AND OLD.estagio NOT IN ('ganha','perdida') THEN
+      NEW.closed_at = now();
+    ELSIF NEW.estagio NOT IN ('ganha','perdida') THEN
+      NEW.closed_at = NULL;
+    END IF;
+  END IF;
+  NEW.updated_at = now();
+  RETURN NEW;
+END;
+$$;
+
+DROP TRIGGER IF EXISTS tg_opportunity_estagio_changed ON public.opportunities;
+CREATE TRIGGER tg_opportunity_estagio_changed
+  BEFORE UPDATE ON public.opportunities
+  FOR EACH ROW EXECUTE FUNCTION public.opportunity_estagio_changed();
+
+ALTER TABLE public.opportunities ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "auth_all_opportunities" ON public.opportunities;
+CREATE POLICY "auth_all_opportunities" ON public.opportunities
+  FOR ALL TO authenticated USING (true) WITH CHECK (true);
+
+
+-- -------------------------------------------------------------------------
+-- 5) opportunity_products — produtos de uma oportunidade
+-- -------------------------------------------------------------------------
+CREATE TABLE public.opportunity_products (
+  id              uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  opportunity_id  uuid NOT NULL REFERENCES public.opportunities(id) ON DELETE CASCADE,
+  produto         text NOT NULL,
+  embalagem       text,
+  qtd_kg          numeric(12,2),
+  preco_kg        numeric(10,2),
+  created_at      timestamptz NOT NULL DEFAULT now()
+);
+
+CREATE INDEX idx_opportunity_products_opp_id ON public.opportunity_products(opportunity_id);
+
+ALTER TABLE public.opportunity_products ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "auth_all_opp_products" ON public.opportunity_products;
+CREATE POLICY "auth_all_opp_products" ON public.opportunity_products
+  FOR ALL TO authenticated USING (true) WITH CHECK (true);
+
+
+-- -------------------------------------------------------------------------
+-- 6) interactions — histórico de contatos por oportunidade
+-- -------------------------------------------------------------------------
+CREATE TABLE public.interactions (
+  id              uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  opportunity_id  uuid NOT NULL REFERENCES public.opportunities(id) ON DELETE CASCADE,
+  contact_id      uuid REFERENCES public.contacts(id) ON DELETE SET NULL,
+  seller_id       uuid REFERENCES public.profiles(id) ON DELETE SET NULL,
+  datetime        timestamptz NOT NULL DEFAULT now(),
+  result          text,
+  next_callback   date,
+  notes           text,
+  created_at      timestamptz NOT NULL DEFAULT now()
+);
+
+CREATE INDEX idx_interactions_opp_id ON public.interactions(opportunity_id);
+
+ALTER TABLE public.interactions ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "auth_all_interactions" ON public.interactions;
+CREATE POLICY "auth_all_interactions" ON public.interactions
+  FOR ALL TO authenticated USING (true) WITH CHECK (true);
+
+
+-- -------------------------------------------------------------------------
+-- 7) proposals — propostas comerciais (agora ligadas à oportunidade)
+-- -------------------------------------------------------------------------
+CREATE TABLE public.proposals (
+  id              uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  ano             int  NOT NULL DEFAULT EXTRACT(YEAR FROM now())::int,
+  numero          int  NOT NULL,
+  opportunity_id  uuid REFERENCES public.opportunities(id) ON DELETE SET NULL,
+  company_id      uuid REFERENCES public.companies(id) ON DELETE SET NULL, -- redundante p/ análise
+  seller_id       uuid REFERENCES public.profiles(id) ON DELETE SET NULL,
+  snapshot        jsonb,
+  created_at      timestamptz NOT NULL DEFAULT now(),
+  UNIQUE (ano, numero)
+);
+
+CREATE INDEX idx_proposals_opp_id ON public.proposals(opportunity_id);
+CREATE INDEX idx_proposals_company_id ON public.proposals(company_id);
+CREATE INDEX idx_proposals_ano_numero ON public.proposals(ano, numero DESC);
+
+-- Trigger: numeração sequencial atômica por ano (mesma lógica de antes)
+CREATE OR REPLACE FUNCTION public.atribui_numero_proposta()
+RETURNS trigger LANGUAGE plpgsql AS $$
+BEGIN
+  IF NEW.numero IS NULL OR NEW.numero = 0 THEN
+    PERFORM pg_advisory_xact_lock(hashtext('proposta_ano_' || NEW.ano));
+    SELECT COALESCE(MAX(numero), 0) + 1 INTO NEW.numero
+      FROM public.proposals WHERE ano = NEW.ano;
+  END IF;
+  RETURN NEW;
+END;
+$$;
+
+DROP TRIGGER IF EXISTS tg_atribui_numero_proposta ON public.proposals;
+CREATE TRIGGER tg_atribui_numero_proposta
+  BEFORE INSERT ON public.proposals
+  FOR EACH ROW EXECUTE FUNCTION public.atribui_numero_proposta();
+
+ALTER TABLE public.proposals ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "auth_all_proposals" ON public.proposals;
+CREATE POLICY "auth_all_proposals" ON public.proposals
+  FOR ALL TO authenticated USING (true) WITH CHECK (true);
+
+
+-- -------------------------------------------------------------------------
+-- 8) lgpd_requests — log de ações LGPD (agora liga a empresa)
+-- -------------------------------------------------------------------------
+CREATE TABLE public.lgpd_requests (
+  id                uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  company_id        uuid REFERENCES public.companies(id) ON DELETE SET NULL,
+  company_name      text NOT NULL,
+  acao              text NOT NULL CHECK (acao IN ('consentimento','exclusao_solicitada','exclusao_executada','revogacao_consentimento')),
+  detalhes          text,
+  requested_by      uuid REFERENCES public.profiles(id) ON DELETE SET NULL,
+  requested_by_name text,
+  created_at        timestamptz NOT NULL DEFAULT now()
+);
+
+CREATE INDEX idx_lgpd_requests_company_id ON public.lgpd_requests(company_id);
 
 ALTER TABLE public.lgpd_requests ENABLE ROW LEVEL SECURITY;
 DROP POLICY IF EXISTS "auth_all_lgpd" ON public.lgpd_requests;
 CREATE POLICY "auth_all_lgpd" ON public.lgpd_requests
   FOR ALL TO authenticated USING (true) WITH CHECK (true);
 
-ALTER TABLE public.profiles
-  ADD COLUMN IF NOT EXISTS seller_status      text DEFAULT 'Disponível',
-  -- Fase 4: dados do contato Office e Solicitação que aparecem no rodapé da cotação
-  ADD COLUMN IF NOT EXISTS telefone           text,
-  ADD COLUMN IF NOT EXISTS office_nome        text,
-  ADD COLUMN IF NOT EXISTS office_email       text,
-  ADD COLUMN IF NOT EXISTS office_telefone    text,
-  ADD COLUMN IF NOT EXISTS solic_nome         text,
-  ADD COLUMN IF NOT EXISTS solic_email        text,
-  ADD COLUMN IF NOT EXISTS solic_telefone     text;
 
--- call_history (usado pelo histórico de contatos)
-CREATE TABLE IF NOT EXISTS public.call_history (
-  id            uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-  client_id     uuid NOT NULL REFERENCES public.clients(id) ON DELETE CASCADE,
-  seller_id     uuid REFERENCES public.profiles(id) ON DELETE SET NULL,
-  datetime      timestamptz NOT NULL DEFAULT now(),
-  result        text,
-  next_callback date,
-  notes         text,
-  created_at    timestamptz NOT NULL DEFAULT now()
-);
-ALTER TABLE public.call_history
-  ADD COLUMN IF NOT EXISTS next_callback date,
-  ADD COLUMN IF NOT EXISTS notes         text;
-
-CREATE INDEX IF NOT EXISTS idx_call_history_client_id ON public.call_history(client_id);
-
-ALTER TABLE public.call_history ENABLE ROW LEVEL SECURITY;
-DROP POLICY IF EXISTS "auth_all_ch" ON public.call_history;
-CREATE POLICY "auth_all_ch" ON public.call_history FOR ALL TO authenticated USING (true) WITH CHECK (true);
+-- -------------------------------------------------------------------------
+-- 9) View companies_with_tier — calcula tier automático
+--    Lead: 0 oportunidades ganhas
+--    Cliente: 1+ ganhas em qualquer época
+--    Conta: 3+ ganhas nos últimos 12 meses
+-- -------------------------------------------------------------------------
+CREATE OR REPLACE VIEW public.companies_with_tier AS
+SELECT
+  c.*,
+  COALESCE(s.opps_total,        0) AS opps_total,
+  COALESCE(s.opps_abertas,      0) AS opps_abertas,
+  COALESCE(s.opps_ganhas,       0) AS opps_ganhas_total,
+  COALESCE(s.opps_ganhas_12m,   0) AS opps_ganhas_12m,
+  COALESCE(s.valor_pipeline,    0) AS valor_pipeline,
+  CASE
+    WHEN COALESCE(s.opps_ganhas_12m, 0) >= 3 THEN 'conta'
+    WHEN COALESCE(s.opps_ganhas,     0) >= 1 THEN 'cliente'
+    ELSE 'lead'
+  END AS tier
+FROM public.companies c
+LEFT JOIN (
+  SELECT
+    company_id,
+    COUNT(*)                                                                       AS opps_total,
+    COUNT(*) FILTER (WHERE estagio NOT IN ('ganha','perdida'))                     AS opps_abertas,
+    COUNT(*) FILTER (WHERE estagio = 'ganha')                                      AS opps_ganhas,
+    COUNT(*) FILTER (WHERE estagio = 'ganha' AND closed_at >= now() - interval '12 months') AS opps_ganhas_12m,
+    SUM(valor_estimado) FILTER (WHERE estagio NOT IN ('ganha','perdida'))          AS valor_pipeline
+  FROM public.opportunities
+  GROUP BY company_id
+) s ON s.company_id = c.id;
 
 
 -- -------------------------------------------------------------------------
--- 1) client_products  (1 cliente → N produtos)
--- -------------------------------------------------------------------------
-CREATE TABLE IF NOT EXISTS public.client_products (
-  id          uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-  client_id   uuid NOT NULL REFERENCES public.clients(id) ON DELETE CASCADE,
-  produto     text NOT NULL,
-  embalagem   text,
-  peso        text,
-  created_at  timestamptz NOT NULL DEFAULT now()
-);
-
--- Fase 2: garante a coluna embalagem em bancos antigos
-ALTER TABLE public.client_products
-  ADD COLUMN IF NOT EXISTS embalagem text;
-
--- Backfill: linhas legadas têm produto = "NOME (Embalagem)"
--- → separar em produto + embalagem (idempotente: só roda em linhas sem embalagem ainda)
-UPDATE public.client_products
-SET
-  embalagem = TRIM(SUBSTRING(produto FROM '\(([^)]+)\)\s*$')),
-  produto   = TRIM(REGEXP_REPLACE(produto, '\s*\([^)]+\)\s*$', ''))
-WHERE embalagem IS NULL
-  AND produto ~ '\([^)]+\)\s*$';
-
--- Fase 3: quantidade numérica (kg) e preço negociado por kg
-ALTER TABLE public.client_products
-  ADD COLUMN IF NOT EXISTS qtd_kg   numeric(12,2),
-  ADD COLUMN IF NOT EXISTS preco_kg numeric(10,2);
-
--- Backfill qtd_kg: tenta extrair primeiro número de peso (ex: "60 Kg" → 60)
-UPDATE public.client_products
-SET qtd_kg = NULLIF(REPLACE(SUBSTRING(peso FROM '([0-9]+(?:[.,][0-9]+)?)'), ',', '.'), '')::numeric
-WHERE qtd_kg IS NULL AND peso IS NOT NULL AND peso ~ '[0-9]';
-
-CREATE INDEX IF NOT EXISTS idx_client_products_client_id
-  ON public.client_products(client_id);
-
-ALTER TABLE public.client_products ENABLE ROW LEVEL SECURITY;
-
-DROP POLICY IF EXISTS "auth_read_cp"   ON public.client_products;
-DROP POLICY IF EXISTS "auth_insert_cp" ON public.client_products;
-DROP POLICY IF EXISTS "auth_update_cp" ON public.client_products;
-DROP POLICY IF EXISTS "auth_delete_cp" ON public.client_products;
-
-CREATE POLICY "auth_read_cp"   ON public.client_products FOR SELECT TO authenticated USING (true);
-CREATE POLICY "auth_insert_cp" ON public.client_products FOR INSERT TO authenticated WITH CHECK (true);
-CREATE POLICY "auth_update_cp" ON public.client_products FOR UPDATE TO authenticated USING (true) WITH CHECK (true);
-CREATE POLICY "auth_delete_cp" ON public.client_products FOR DELETE TO authenticated USING (true);
-
-
--- -------------------------------------------------------------------------
--- 2) products  (catálogo da Tabela de Preços 2025)
+-- 10) products — catálogo Tabela de Preços 2025 (preservado, recria se faltar)
 -- -------------------------------------------------------------------------
 CREATE TABLE IF NOT EXISTS public.products (
   id                   uuid PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -156,14 +323,10 @@ CREATE TABLE IF NOT EXISTS public.products (
 CREATE INDEX IF NOT EXISTS idx_products_nome ON public.products(nome);
 
 ALTER TABLE public.products ENABLE ROW LEVEL SECURITY;
-
 DROP POLICY IF EXISTS "auth_read_products" ON public.products;
 CREATE POLICY "auth_read_products" ON public.products FOR SELECT TO authenticated USING (true);
 
-
--- -------------------------------------------------------------------------
--- 3) Seed dos produtos (re-runnable via ON CONFLICT)
--- -------------------------------------------------------------------------
+-- Seed do catálogo (re-runnable via ON CONFLICT). Só insere se ainda não houver.
 INSERT INTO public.products (nome, embalagem, preco_materia_prima, preco_office, preco_pj) VALUES
 ('ACCELIK AS','Bombona 20',1.492,6.98,7.12),
 ('ACCELIK AS','Bombona 50',1.492,6.68,6.82),
@@ -407,68 +570,23 @@ ON CONFLICT (nome, embalagem) DO UPDATE SET
 
 
 -- -------------------------------------------------------------------------
--- 4) proposals — propostas comerciais com numeração sequencial por ano
---    Numero formato: NNNN-AA (ex: 0142-26 = proposta 142 de 2026)
+-- 11) Realtime — adiciona as novas tabelas à publicação
 -- -------------------------------------------------------------------------
-CREATE TABLE IF NOT EXISTS public.proposals (
-  id          uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-  ano         int  NOT NULL DEFAULT EXTRACT(YEAR FROM now())::int,
-  numero      int  NOT NULL,
-  client_id   uuid REFERENCES public.clients(id) ON DELETE SET NULL,
-  seller_id   uuid REFERENCES public.profiles(id) ON DELETE SET NULL,
-  snapshot    jsonb,
-  created_at  timestamptz NOT NULL DEFAULT now(),
-  UNIQUE (ano, numero)
-);
-
-CREATE INDEX IF NOT EXISTS idx_proposals_client_id ON public.proposals(client_id);
-CREATE INDEX IF NOT EXISTS idx_proposals_ano_numero ON public.proposals(ano, numero DESC);
-
--- Trigger: atribui o próximo numero sequencial para o ano, atomicamente
--- (advisory lock evita race condition entre vendedores criando ao mesmo tempo)
-CREATE OR REPLACE FUNCTION public.atribui_numero_proposta()
-RETURNS trigger LANGUAGE plpgsql AS $$
-BEGIN
-  IF NEW.numero IS NULL OR NEW.numero = 0 THEN
-    PERFORM pg_advisory_xact_lock(hashtext('proposta_ano_' || NEW.ano));
-    SELECT COALESCE(MAX(numero), 0) + 1 INTO NEW.numero
-      FROM public.proposals WHERE ano = NEW.ano;
-  END IF;
-  RETURN NEW;
-END;
-$$;
-
-DROP TRIGGER IF EXISTS tg_atribui_numero_proposta ON public.proposals;
-CREATE TRIGGER tg_atribui_numero_proposta
-  BEFORE INSERT ON public.proposals
-  FOR EACH ROW EXECUTE FUNCTION public.atribui_numero_proposta();
-
-ALTER TABLE public.proposals ENABLE ROW LEVEL SECURITY;
-DROP POLICY IF EXISTS "auth_all_proposals" ON public.proposals;
-CREATE POLICY "auth_all_proposals" ON public.proposals
-  FOR ALL TO authenticated USING (true) WITH CHECK (true);
-
-
--- -------------------------------------------------------------------------
--- 5) Realtime (Sprint 1) — adiciona as tabelas à publicação supabase_realtime
---    para que o WebSocket dispare eventos quando outro vendedor altera dados
--- -------------------------------------------------------------------------
-DO $$
-BEGIN
-  -- Cria a publicação se ainda não existir (Supabase normalmente já tem)
+DO $$ BEGIN
   IF NOT EXISTS (SELECT 1 FROM pg_publication WHERE pubname = 'supabase_realtime') THEN
     CREATE PUBLICATION supabase_realtime;
   END IF;
 END $$;
 
--- Adiciona cada tabela à publicação (ignora se já está)
-DO $$ BEGIN ALTER PUBLICATION supabase_realtime ADD TABLE public.clients;         EXCEPTION WHEN duplicate_object THEN NULL; END $$;
-DO $$ BEGIN ALTER PUBLICATION supabase_realtime ADD TABLE public.client_products; EXCEPTION WHEN duplicate_object THEN NULL; END $$;
-DO $$ BEGIN ALTER PUBLICATION supabase_realtime ADD TABLE public.call_history;    EXCEPTION WHEN duplicate_object THEN NULL; END $$;
-DO $$ BEGIN ALTER PUBLICATION supabase_realtime ADD TABLE public.proposals;       EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+DO $$ BEGIN ALTER PUBLICATION supabase_realtime ADD TABLE public.companies;            EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+DO $$ BEGIN ALTER PUBLICATION supabase_realtime ADD TABLE public.contacts;             EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+DO $$ BEGIN ALTER PUBLICATION supabase_realtime ADD TABLE public.opportunities;        EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+DO $$ BEGIN ALTER PUBLICATION supabase_realtime ADD TABLE public.opportunity_products; EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+DO $$ BEGIN ALTER PUBLICATION supabase_realtime ADD TABLE public.interactions;         EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+DO $$ BEGIN ALTER PUBLICATION supabase_realtime ADD TABLE public.proposals;            EXCEPTION WHEN duplicate_object THEN NULL; END $$;
 
 
 -- -------------------------------------------------------------------------
--- 6) Recarrega o schema do PostgREST (necessário para o embed funcionar já)
+-- 12) Recarrega o schema do PostgREST
 -- -------------------------------------------------------------------------
 NOTIFY pgrst, 'reload schema';

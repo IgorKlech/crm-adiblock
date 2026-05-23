@@ -454,6 +454,13 @@ td strong{color:var(--tx);font-weight:600}
 .rel-ok-box{background:var(--ok2);border:1px solid var(--ok);border-radius:var(--r);padding:14px 18px;font-size:13px;color:var(--ok);display:flex;align-items:center;gap:10px}
 .rel-footer{text-align:center;font-size:11px;color:var(--mt);margin-top:28px;padding-top:16px;border-top:1px solid var(--bdr)}
 
+/* ── LGPD ── */
+.lgpd-row{padding:10px 12px;background:var(--bg);border:1px solid var(--bdr);border-radius:8px}
+.lgpd-check{display:flex;align-items:flex-start;gap:8px;font-size:13px;color:var(--tx);cursor:pointer;line-height:1.4}
+.lgpd-check input{margin-top:2px;cursor:pointer;flex-shrink:0}
+.lgpd-badge{display:inline-block;background:#dcfce7;color:#166534;font-size:10px;font-weight:600;padding:2px 8px;border-radius:99px;text-transform:uppercase;letter-spacing:.04em}
+.lgpd-badge-pending{background:#fee2e2;color:#991b1b}
+
 /* ── Banner de aviso de schema desatualizado ── */
 #schema-banner{position:fixed;top:60px;left:50%;transform:translateX(-50%);z-index:400;background:#fef3c7;border:2px solid #f59e0b;border-radius:8px;padding:14px 18px;max-width:720px;width:calc(100% - 40px);box-shadow:0 10px 30px rgba(0,0,0,.18);font-size:13px;color:#78350f}
 .schema-banner-title{font-weight:700;font-size:14px;margin-bottom:6px;color:#92400e}
@@ -846,6 +853,21 @@ td strong{color:var(--tx);font-weight:600}
           <div class="fg" style="flex:1"><label>CEP</label><input type="text" id="f-cep" placeholder="00000-000"></div>
         </div>
         <div class="fg"><label>Obra</label><input type="text" id="f-obra" placeholder="Nome / identificação da obra"></div>
+      </div>
+      <div class="fs"><div class="fsl">Privacidade (LGPD)</div>
+        <div class="lgpd-row">
+          <label class="lgpd-check">
+            <input type="checkbox" id="f-lgpd-consent">
+            <span>Cliente autorizou contato comercial e armazenamento dos dados</span>
+          </label>
+          <div id="f-lgpd-info" style="font-size:11px;color:var(--mt);margin-top:6px"></div>
+        </div>
+        <div id="f-lgpd-del-zone" style="display:none;margin-top:10px;padding:10px 12px;background:#fef2f2;border:1px solid #fca5a5;border-radius:8px">
+          <div style="font-size:12px;color:#991b1b;margin-bottom:6px"><b>⚠ Exclusão solicitada:</b> <span id="f-lgpd-del-info"></span></div>
+          <button type="button" class="btn bod sm" onclick="executarExclusaoLgpd()">Executar exclusão definitiva agora</button>
+          <button type="button" class="btn bg sm" onclick="cancelarExclusaoLgpd()">Cancelar solicitação</button>
+        </div>
+        <button type="button" id="f-lgpd-del-btn" class="btn bg sm" style="margin-top:8px" onclick="solicitarExclusaoLgpd()">Solicitar exclusão definitiva</button>
       </div>
       <div class="fs">
         <div class="fsl">Produtos</div>
@@ -1655,6 +1677,11 @@ function abrNovo() {
   valorTouched = false;
   renderProdutoRows([]); // lista de produtos vazia
   recalcValorEstimado();
+  // LGPD reset
+  document.getElementById('f-lgpd-consent').checked = false;
+  document.getElementById('f-lgpd-info').innerHTML = '<span style="color:var(--mt2)">Marque se o cliente autoriza armazenamento e contato.</span>';
+  document.getElementById('f-lgpd-del-zone').style.display = 'none';
+  document.getElementById('f-lgpd-del-btn').style.display = '';
   document.getElementById('cm').classList.add('op');
   setTimeout(()=>document.getElementById('fn').focus(),80);
 }
@@ -1684,6 +1711,26 @@ function abrEdit(id) {
   document.getElementById('f-obra').value  = c.obra  || '';
   document.getElementById('f-outros').value= c.contato_outros || '';
   document.getElementById('f-email').value = c.email || '';
+  // LGPD
+  document.getElementById('f-lgpd-consent').checked = !!c.lgpd_consent_at;
+  const consInfo = document.getElementById('f-lgpd-info');
+  if (c.lgpd_consent_at) {
+    const dt = new Date(c.lgpd_consent_at).toLocaleString('pt-BR');
+    consInfo.innerHTML = `<span class="lgpd-badge">Consentimento ativo</span> registrado em ${dt}${c.lgpd_consent_by?' por '+escHtml(c.lgpd_consent_by):''}`;
+  } else {
+    consInfo.innerHTML = '<span style="color:var(--mt2)">Sem consentimento registrado.</span>';
+  }
+  const delZone = document.getElementById('f-lgpd-del-zone');
+  const delBtn  = document.getElementById('f-lgpd-del-btn');
+  if (c.lgpd_delete_requested_at) {
+    const dt2 = new Date(c.lgpd_delete_requested_at).toLocaleString('pt-BR');
+    document.getElementById('f-lgpd-del-info').textContent = `solicitada em ${dt2}${c.lgpd_delete_requested_by?' por '+c.lgpd_delete_requested_by:''}`;
+    delZone.style.display = '';
+    delBtn.style.display = 'none';
+  } else {
+    delZone.style.display = 'none';
+    delBtn.style.display = '';
+  }
   // Se já tinha valor estimado salvo, considera manualmente sobrescrito
   // (não vamos auto-recalcular em cima e perder o ajuste do vendedor)
   valorTouched = c.estimated_value != null && c.estimated_value !== '';
@@ -1714,12 +1761,13 @@ async function checkSchema() {
   // Lista de tabelas + colunas que o app precisa. Se o Supabase rejeita
   // o select, sabemos que falta rodar o supabase_setup.sql.
   const PROBES = [
-    ['clients',         'id,name,phone,email,status,loss_reason,callback_date,estimated_value,observation,internal_notes,status_changed_at,seller_name,produto,peso,endereco,cidade,uf,cep,cnpj,ie,obra,contato_outros,created_at'],
+    ['clients',         'id,name,phone,email,status,loss_reason,callback_date,estimated_value,observation,internal_notes,status_changed_at,seller_name,produto,peso,endereco,cidade,uf,cep,cnpj,ie,obra,contato_outros,lgpd_consent_at,lgpd_consent_by,lgpd_delete_requested_at,lgpd_delete_requested_by,created_at'],
     ['profiles',        'id,name,email,role,seller_status,telefone,office_nome,office_email,office_telefone'],
     ['client_products', 'id,client_id,produto,embalagem,qtd_kg,preco_kg,peso,created_at'],
     ['products',        'id,nome,embalagem,preco_materia_prima,preco_office,preco_pj'],
     ['call_history',    'id,client_id,seller_id,datetime,result,next_callback,notes,created_at'],
     ['proposals',       'id,ano,numero,client_id,seller_id,snapshot,created_at'],
+    ['lgpd_requests',   'id,client_id,client_name,acao,detalhes,requested_by,created_at'],
   ];
   const issues = [];
   for (const [tabela, cols] of PROBES) {
@@ -1900,6 +1948,14 @@ document.getElementById('clf').addEventListener('submit', async e => {
       obra:           document.getElementById('f-obra').value.trim()  || null,
       contato_outros: document.getElementById('f-outros').value.trim()|| null,
       email:          document.getElementById('f-email').value.trim() || null,
+      // LGPD: marca timestamp do consentimento apenas quando passa de off→on
+      ...(() => {
+        const cur = document.getElementById('f-lgpd-consent').checked;
+        const old = EID ? (CL.find(c=>c.id===EID)?.lgpd_consent_at) : null;
+        if (cur && !old) return { lgpd_consent_at: new Date().toISOString(), lgpd_consent_by: MEP?.name || ME?.email || null };
+        if (!cur && old) return { lgpd_consent_at: null, lgpd_consent_by: null };
+        return {};
+      })(),
       ...(statusMudou && {status_changed_at: new Date().toISOString()}),
     };
     const oldC = EID ? (CL.find(c=>c.id===EID)||{}) : {};
@@ -1910,6 +1966,11 @@ document.getElementById('clf').addEventListener('submit', async e => {
       console.error('Salvar produtos do cliente:', err);
       toast('Erro ao salvar produtos', err.message||'Tente novamente.', 'warning');
     });
+    // LGPD: log de consentimento se foi dado/revogado neste save
+    if (savedId && d.lgpd_consent_at !== undefined) {
+      const acao = d.lgpd_consent_at ? 'consentimento' : 'revogacao_consentimento';
+      logLgpd(savedId, d.name, acao, d.lgpd_consent_at?'Consentimento dado via cadastro':'Consentimento revogado');
+    }
     // Audit log (não bloqueia)
     if (EID) {
       const changes = detectChanges(oldC, d);
@@ -2963,6 +3024,75 @@ function renderProdutoRows(produtos) {
   if (!lista) return;
   lista.innerHTML = '';
   (produtos || []).forEach(p => addProdRow(p.produto, p.embalagem, p.qtd_kg, p.preco_kg));
+}
+
+// ── LGPD: solicitar / cancelar / executar exclusão ───────────────────────
+async function logLgpd(clientId, clientName, acao, detalhes) {
+  try {
+    await api('POST', 'lgpd_requests', null, {
+      client_id: clientId, client_name: clientName, acao, detalhes,
+      requested_by: ME?.id || null,
+      requested_by_name: MEP?.name || ME?.email || null,
+    });
+  } catch(err) { console.error('logLgpd:', err); }
+}
+
+async function solicitarExclusaoLgpd() {
+  if (!EID) { toast('Salve o cliente primeiro','','warning'); return; }
+  const c = CL.find(x => x.id === EID); if (!c) return;
+  conf('Solicitar exclusão definitiva',
+    `O cliente "${c.name}" será marcado para exclusão. Os dados ficam no sistema até alguém executar a exclusão definitiva (botão vermelho). Deseja continuar?`,
+    async () => {
+      try {
+        const now = new Date().toISOString();
+        const by  = MEP?.name || ME?.email || 'sistema';
+        await api('PATCH', 'clients', `id=eq.${EID}`, {
+          lgpd_delete_requested_at: now, lgpd_delete_requested_by: by,
+        });
+        await logLgpd(EID, c.name, 'exclusao_solicitada', 'Solicitação registrada via CRM');
+        toast('Exclusão solicitada', 'Cliente marcado. Execute a exclusão definitiva quando confirmar.', 'success');
+        CL = await fetchCl(); renderCl(); abrEdit(EID);
+      } catch(err) {
+        console.error('solicitarExclusaoLgpd:', err);
+        toast('Erro ao solicitar exclusão', err.message||'', 'warning');
+      }
+    });
+}
+
+async function cancelarExclusaoLgpd() {
+  if (!EID) return;
+  const c = CL.find(x => x.id === EID); if (!c) return;
+  try {
+    await api('PATCH', 'clients', `id=eq.${EID}`, {
+      lgpd_delete_requested_at: null, lgpd_delete_requested_by: null,
+    });
+    await logLgpd(EID, c.name, 'revogacao_consentimento', 'Solicitação de exclusão cancelada');
+    toast('Solicitação cancelada','','success');
+    CL = await fetchCl(); renderCl(); abrEdit(EID);
+  } catch(err) {
+    console.error('cancelarExclusaoLgpd:', err);
+    toast('Erro','','warning');
+  }
+}
+
+async function executarExclusaoLgpd() {
+  if (!EID) return;
+  const c = CL.find(x => x.id === EID); if (!c) return;
+  conf('⚠ Exclusão DEFINITIVA',
+    `Esta ação remove "${c.name}" e todos os dados relacionados (produtos, histórico, propostas) PERMANENTEMENTE. Não há volta. Confirma?`,
+    async () => {
+      try {
+        await logLgpd(EID, c.name, 'exclusao_executada', 'Exclusão LGPD executada pelo CRM');
+        await apiDelete('clients', `id=eq.${EID}`);
+        toast('Cliente excluído definitivamente','','success');
+        document.getElementById('cm').classList.remove('op');
+        EID = null;
+        CL = await fetchCl(); renderCl();
+      } catch(err) {
+        console.error('executarExclusaoLgpd:', err);
+        toast('Erro ao excluir', err.message||'', 'warning');
+      }
+    });
 }
 
 async function salvarProdutos(clientId) {

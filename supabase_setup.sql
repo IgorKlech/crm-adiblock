@@ -29,7 +29,31 @@ ALTER TABLE public.clients
   ADD COLUMN IF NOT EXISTS ie                 text,
   ADD COLUMN IF NOT EXISTS obra               text,
   ADD COLUMN IF NOT EXISTS contato_outros     text, -- usado como "Solicitante" na proposta
-  ADD COLUMN IF NOT EXISTS email              text;
+  ADD COLUMN IF NOT EXISTS email              text,
+  -- Sprint 1: LGPD
+  ADD COLUMN IF NOT EXISTS lgpd_consent_at    timestamptz,
+  ADD COLUMN IF NOT EXISTS lgpd_consent_by    text,
+  ADD COLUMN IF NOT EXISTS lgpd_delete_requested_at timestamptz,
+  ADD COLUMN IF NOT EXISTS lgpd_delete_requested_by text;
+
+-- Tabela de auditoria das solicitações LGPD (log imutável)
+CREATE TABLE IF NOT EXISTS public.lgpd_requests (
+  id            uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  client_id     uuid REFERENCES public.clients(id) ON DELETE SET NULL,
+  client_name   text NOT NULL, -- snapshot do nome (pra log mesmo após delete)
+  acao          text NOT NULL CHECK (acao IN ('consentimento','exclusao_solicitada','exclusao_executada','revogacao_consentimento')),
+  detalhes      text,
+  requested_by  uuid REFERENCES public.profiles(id) ON DELETE SET NULL,
+  requested_by_name text,
+  created_at    timestamptz NOT NULL DEFAULT now()
+);
+
+CREATE INDEX IF NOT EXISTS idx_lgpd_requests_client_id ON public.lgpd_requests(client_id);
+
+ALTER TABLE public.lgpd_requests ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "auth_all_lgpd" ON public.lgpd_requests;
+CREATE POLICY "auth_all_lgpd" ON public.lgpd_requests
+  FOR ALL TO authenticated USING (true) WITH CHECK (true);
 
 ALTER TABLE public.profiles
   ADD COLUMN IF NOT EXISTS seller_status      text DEFAULT 'Disponível',

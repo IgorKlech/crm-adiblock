@@ -426,6 +426,25 @@ CREATE POLICY "auth_all_proposals" ON public.proposals
 
 
 -- -------------------------------------------------------------------------
--- 5) Recarrega o schema do PostgREST (necessário para o embed funcionar já)
+-- 5) Realtime (Sprint 1) — adiciona as tabelas à publicação supabase_realtime
+--    para que o WebSocket dispare eventos quando outro vendedor altera dados
+-- -------------------------------------------------------------------------
+DO $$
+BEGIN
+  -- Cria a publicação se ainda não existir (Supabase normalmente já tem)
+  IF NOT EXISTS (SELECT 1 FROM pg_publication WHERE pubname = 'supabase_realtime') THEN
+    CREATE PUBLICATION supabase_realtime;
+  END IF;
+END $$;
+
+-- Adiciona cada tabela à publicação (ignora se já está)
+DO $$ BEGIN ALTER PUBLICATION supabase_realtime ADD TABLE public.clients;         EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+DO $$ BEGIN ALTER PUBLICATION supabase_realtime ADD TABLE public.client_products; EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+DO $$ BEGIN ALTER PUBLICATION supabase_realtime ADD TABLE public.call_history;    EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+DO $$ BEGIN ALTER PUBLICATION supabase_realtime ADD TABLE public.proposals;       EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+
+
+-- -------------------------------------------------------------------------
+-- 6) Recarrega o schema do PostgREST (necessário para o embed funcionar já)
 -- -------------------------------------------------------------------------
 NOTIFY pgrst, 'reload schema';

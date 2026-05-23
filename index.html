@@ -1786,6 +1786,7 @@ async function iniciar(user) {
   const n=CL.filter(c=>venc(c.callback_date)&&c.status!=='Comprou'&&c.status!=='Inativo').length;
   if (n>0) toast(n+' retorno(s) vencido(s)',n+' cliente(s) com data vencida.','warning');
   startAutoRefresh();
+  startRealtime();
   loadAlertasInatividade();
 }
 
@@ -1807,6 +1808,7 @@ document.getElementById('lf').addEventListener('submit', async e => {
 // Logout
 document.getElementById('lob').addEventListener('click', async () => {
   stopAutoRefresh();
+  stopRealtime();
   localStorage.removeItem('crm_cl');
   try { await Promise.race([sb.auth.signOut(),new Promise(r=>setTimeout(r,2000))]); } catch {}
   window.location.reload();
@@ -3225,6 +3227,56 @@ function stopAutoRefresh() {
   if (refreshTimer) { clearInterval(refreshTimer); refreshTimer = null; }
   const ind = document.getElementById('upd-ind');
   if (ind) ind.style.display = 'none';
+}
+
+// ── Realtime (Sprint 1) ───────────────────────────────────────────────────
+// Escuta mudanças nas tabelas via WebSocket Supabase e refaz fetch de CL.
+// Debounce de 800ms agrupa rajadas de eventos num único refresh.
+let realtimeChannel = null;
+let realtimeRefreshTimer = null;
+let realtimeLastUpdate = null;
+
+function scheduleRealtimeRefresh() {
+  if (realtimeRefreshTimer) clearTimeout(realtimeRefreshTimer);
+  realtimeRefreshTimer = setTimeout(async () => {
+    realtimeRefreshTimer = null;
+    // Não atualiza se modal de edição está aberto (evita perder digitação)
+    if (document.getElementById('cm')?.classList.contains('op')) return;
+    try {
+      CL = await fetchCl();
+      try { localStorage.setItem('crm_cl', JSON.stringify(CL)); } catch {}
+      renderCl();
+      const dbView = document.getElementById('db-view');
+      if (dbView && dbView.classList.contains('ac')) renderDb();
+      realtimeLastUpdate = new Date();
+      const ind = document.getElementById('upd-ind');
+      if (ind) ind.title = 'Atualizado em tempo real às ' + realtimeLastUpdate.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit',second:'2-digit'});
+    } catch(err) { console.error('Realtime refresh:', err); }
+  }, 800);
+}
+
+function startRealtime() {
+  if (realtimeChannel) return;
+  try {
+    realtimeChannel = sb.channel('crm-changes')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'clients' },         scheduleRealtimeRefresh)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'client_products' }, scheduleRealtimeRefresh)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'call_history' },    scheduleRealtimeRefresh)
+      .subscribe(status => {
+        if (status === 'SUBSCRIBED') console.info('Realtime conectado');
+        else if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT') console.warn('Realtime status:', status);
+      });
+  } catch(err) {
+    console.error('startRealtime falhou:', err);
+  }
+}
+
+function stopRealtime() {
+  if (realtimeChannel) {
+    try { sb.removeChannel(realtimeChannel); } catch(err) { console.error('stopRealtime:', err); }
+    realtimeChannel = null;
+  }
+  if (realtimeRefreshTimer) { clearTimeout(realtimeRefreshTimer); realtimeRefreshTimer = null; }
 }
 
 // ── Auth ──────────────────────────────────────────────────────────────────

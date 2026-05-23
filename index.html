@@ -2134,8 +2134,9 @@ document.getElementById('mcl').addEventListener('click',fechaModal);
 document.getElementById('mcan').addEventListener('click',fechaModal);
 document.getElementById('cm').addEventListener('click',e=>{if(e.target===e.currentTarget)fechaModal();});
 
-// Marca Valor Estimado como manualmente editado quando o vendedor digita nele
-document.getElementById('fvl').addEventListener('input', () => {
+// Sprint 3: campo fvl (Valor Estimado do cliente) foi removido — vai voltar
+// dentro do modal de oportunidade (3.3). Guard pra não crashar o parse.
+document.getElementById('fvl')?.addEventListener('input', () => {
   valorTouched = true;
   const tag = document.getElementById('fvl-auto');
   if (tag) tag.style.display = 'none';

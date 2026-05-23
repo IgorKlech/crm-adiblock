@@ -41,7 +41,7 @@ DROP VIEW  IF EXISTS public.companies_with_tier;
 -- -------------------------------------------------------------------------
 -- 2) companies — empresa B2B (substitui clients)
 -- -------------------------------------------------------------------------
-CREATE TABLE public.companies (
+CREATE TABLE IF NOT EXISTS public.companies (
   id                       uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   razao_social             text NOT NULL,
   nome_fantasia            text,
@@ -70,8 +70,8 @@ CREATE TABLE public.companies (
   UNIQUE (cnpj)
 );
 
-CREATE INDEX idx_companies_razao_social ON public.companies(razao_social);
-CREATE INDEX idx_companies_cidade_uf    ON public.companies(cidade, uf);
+CREATE INDEX IF NOT EXISTS idx_companies_razao_social ON public.companies(razao_social);
+CREATE INDEX IF NOT EXISTS idx_companies_cidade_uf    ON public.companies(cidade, uf);
 
 ALTER TABLE public.companies ENABLE ROW LEVEL SECURITY;
 DROP POLICY IF EXISTS "auth_all_companies" ON public.companies;
@@ -82,7 +82,7 @@ CREATE POLICY "auth_all_companies" ON public.companies
 -- -------------------------------------------------------------------------
 -- 3) contacts — pessoas dentro de uma empresa (N por empresa)
 -- -------------------------------------------------------------------------
-CREATE TABLE public.contacts (
+CREATE TABLE IF NOT EXISTS public.contacts (
   id          uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   company_id  uuid NOT NULL REFERENCES public.companies(id) ON DELETE CASCADE,
   nome        text NOT NULL,
@@ -95,7 +95,7 @@ CREATE TABLE public.contacts (
   created_at  timestamptz NOT NULL DEFAULT now()
 );
 
-CREATE INDEX idx_contacts_company_id ON public.contacts(company_id);
+CREATE INDEX IF NOT EXISTS idx_contacts_company_id ON public.contacts(company_id);
 
 ALTER TABLE public.contacts ENABLE ROW LEVEL SECURITY;
 DROP POLICY IF EXISTS "auth_all_contacts" ON public.contacts;
@@ -107,7 +107,7 @@ CREATE POLICY "auth_all_contacts" ON public.contacts
 -- 4) opportunities — negociações ativas (N por empresa)
 --    Estágios do funil B2B: Lead → Qualificado → Proposta → Negociação → Ganha/Perdida
 -- -------------------------------------------------------------------------
-CREATE TABLE public.opportunities (
+CREATE TABLE IF NOT EXISTS public.opportunities (
   id                  uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   company_id          uuid NOT NULL REFERENCES public.companies(id) ON DELETE CASCADE,
   contact_id          uuid REFERENCES public.contacts(id) ON DELETE SET NULL,
@@ -126,9 +126,9 @@ CREATE TABLE public.opportunities (
   updated_at          timestamptz NOT NULL DEFAULT now()
 );
 
-CREATE INDEX idx_opportunities_company_id ON public.opportunities(company_id);
-CREATE INDEX idx_opportunities_seller_id  ON public.opportunities(seller_id);
-CREATE INDEX idx_opportunities_estagio    ON public.opportunities(estagio);
+CREATE INDEX IF NOT EXISTS idx_opportunities_company_id ON public.opportunities(company_id);
+CREATE INDEX IF NOT EXISTS idx_opportunities_seller_id  ON public.opportunities(seller_id);
+CREATE INDEX IF NOT EXISTS idx_opportunities_estagio    ON public.opportunities(estagio);
 
 -- Trigger: quando estágio vira ganha/perdida, marca closed_at automaticamente
 CREATE OR REPLACE FUNCTION public.opportunity_estagio_changed()
@@ -161,7 +161,7 @@ CREATE POLICY "auth_all_opportunities" ON public.opportunities
 -- -------------------------------------------------------------------------
 -- 5) opportunity_products — produtos de uma oportunidade
 -- -------------------------------------------------------------------------
-CREATE TABLE public.opportunity_products (
+CREATE TABLE IF NOT EXISTS public.opportunity_products (
   id              uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   opportunity_id  uuid NOT NULL REFERENCES public.opportunities(id) ON DELETE CASCADE,
   produto         text NOT NULL,
@@ -171,7 +171,7 @@ CREATE TABLE public.opportunity_products (
   created_at      timestamptz NOT NULL DEFAULT now()
 );
 
-CREATE INDEX idx_opportunity_products_opp_id ON public.opportunity_products(opportunity_id);
+CREATE INDEX IF NOT EXISTS idx_opportunity_products_opp_id ON public.opportunity_products(opportunity_id);
 
 ALTER TABLE public.opportunity_products ENABLE ROW LEVEL SECURITY;
 DROP POLICY IF EXISTS "auth_all_opp_products" ON public.opportunity_products;
@@ -182,7 +182,7 @@ CREATE POLICY "auth_all_opp_products" ON public.opportunity_products
 -- -------------------------------------------------------------------------
 -- 6) interactions — histórico de contatos por oportunidade
 -- -------------------------------------------------------------------------
-CREATE TABLE public.interactions (
+CREATE TABLE IF NOT EXISTS public.interactions (
   id              uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   opportunity_id  uuid NOT NULL REFERENCES public.opportunities(id) ON DELETE CASCADE,
   contact_id      uuid REFERENCES public.contacts(id) ON DELETE SET NULL,
@@ -194,7 +194,7 @@ CREATE TABLE public.interactions (
   created_at      timestamptz NOT NULL DEFAULT now()
 );
 
-CREATE INDEX idx_interactions_opp_id ON public.interactions(opportunity_id);
+CREATE INDEX IF NOT EXISTS idx_interactions_opp_id ON public.interactions(opportunity_id);
 
 ALTER TABLE public.interactions ENABLE ROW LEVEL SECURITY;
 DROP POLICY IF EXISTS "auth_all_interactions" ON public.interactions;
@@ -205,7 +205,7 @@ CREATE POLICY "auth_all_interactions" ON public.interactions
 -- -------------------------------------------------------------------------
 -- 7) proposals — propostas comerciais (agora ligadas à oportunidade)
 -- -------------------------------------------------------------------------
-CREATE TABLE public.proposals (
+CREATE TABLE IF NOT EXISTS public.proposals (
   id              uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   ano             int  NOT NULL DEFAULT EXTRACT(YEAR FROM now())::int,
   numero          int  NOT NULL,
@@ -217,9 +217,9 @@ CREATE TABLE public.proposals (
   UNIQUE (ano, numero)
 );
 
-CREATE INDEX idx_proposals_opp_id ON public.proposals(opportunity_id);
-CREATE INDEX idx_proposals_company_id ON public.proposals(company_id);
-CREATE INDEX idx_proposals_ano_numero ON public.proposals(ano, numero DESC);
+CREATE INDEX IF NOT EXISTS idx_proposals_opp_id ON public.proposals(opportunity_id);
+CREATE INDEX IF NOT EXISTS idx_proposals_company_id ON public.proposals(company_id);
+CREATE INDEX IF NOT EXISTS idx_proposals_ano_numero ON public.proposals(ano, numero DESC);
 
 -- Trigger: numeração sequencial atômica por ano (mesma lógica de antes)
 CREATE OR REPLACE FUNCTION public.atribui_numero_proposta()
@@ -248,7 +248,7 @@ CREATE POLICY "auth_all_proposals" ON public.proposals
 -- -------------------------------------------------------------------------
 -- 8) lgpd_requests — log de ações LGPD (agora liga a empresa)
 -- -------------------------------------------------------------------------
-CREATE TABLE public.lgpd_requests (
+CREATE TABLE IF NOT EXISTS public.lgpd_requests (
   id                uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   company_id        uuid REFERENCES public.companies(id) ON DELETE SET NULL,
   company_name      text NOT NULL,
@@ -259,7 +259,7 @@ CREATE TABLE public.lgpd_requests (
   created_at        timestamptz NOT NULL DEFAULT now()
 );
 
-CREATE INDEX idx_lgpd_requests_company_id ON public.lgpd_requests(company_id);
+CREATE INDEX IF NOT EXISTS idx_lgpd_requests_company_id ON public.lgpd_requests(company_id);
 
 ALTER TABLE public.lgpd_requests ENABLE ROW LEVEL SECURITY;
 DROP POLICY IF EXISTS "auth_all_lgpd" ON public.lgpd_requests;

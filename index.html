@@ -1316,9 +1316,32 @@ document.getElementById('cosi').onclick = () => { const cb = CCB; fechaConf(); i
 document.getElementById('cono').onclick = fechaConf;
 
 // ── DB ────────────────────────────────────────────────────────────────────
-// Sprint 3: lê empresas com tier calculado (view), contatos e oportunidades embedded
-const fetchCl = () => api('GET','companies_with_tier',
-  'select=*,contatos:contacts(id,nome,cargo,email,telefone,papel,principal),oportunidades:opportunities!opportunities_company_id_fkey(id,titulo,estagio,valor_estimado,seller_name,callback_date,closed_at,obra)&order=razao_social.asc');
+// Sprint 3: lê empresas direto da tabela (PostgREST tem problemas com embed em view)
+// e computa tier + métricas client-side a partir das oportunidades embedded.
+async function fetchCl() {
+  const rows = await api('GET', 'companies',
+    'select=*,contatos:contacts(id,nome,cargo,email,telefone,papel,principal),oportunidades:opportunities(id,titulo,estagio,valor_estimado,seller_name,callback_date,closed_at,obra)&order=razao_social.asc');
+  const seisMesesAtras = Date.now() - 365 * 86400000;
+  return (rows||[]).map(c => {
+    const opps = c.oportunidades || [];
+    const ganhas    = opps.filter(o => o.estagio === 'ganha');
+    const ganhas12m = ganhas.filter(o => o.closed_at && new Date(o.closed_at).getTime() >= seisMesesAtras);
+    const abertas   = opps.filter(o => o.estagio !== 'ganha' && o.estagio !== 'perdida');
+    const pipeline  = abertas.reduce((s,o)=>s + (Number(o.valor_estimado)||0), 0);
+    const tier = ganhas12m.length >= 3 ? 'conta'
+               : ganhas.length    >= 1 ? 'cliente'
+               : 'lead';
+    return {
+      ...c,
+      opps_total:        opps.length,
+      opps_abertas:      abertas.length,
+      opps_ganhas_total: ganhas.length,
+      opps_ganhas_12m:   ganhas12m.length,
+      valor_pipeline:    pipeline,
+      tier,
+    };
+  });
+}
 // Helper: nome principal do vendedor "responsável" pela empresa (do owner da última opp aberta)
 function empresaVendedor(c) {
   const opps = c.oportunidades || [];

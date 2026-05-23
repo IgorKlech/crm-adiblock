@@ -3,17 +3,11 @@
 -- Empresa → Contatos → Oportunidades, com tier automático
 -- =========================================================================
 --
--- ⚠⚠⚠  NÃO RODE AINDA  ⚠⚠⚠
+-- ⚠  Atenção: este script APAGA todos os dados de clientes/contatos/
+-- propostas antigos para começar do zero no novo modelo B2B.
+-- Catálogo de produtos e perfis de usuários são preservados.
 --
--- Este script APAGA todos os dados de clientes/contatos/propostas antigos
--- para começar do zero no novo modelo. Catálogo de produtos e perfis de
--- usuários são preservados.
---
--- O JavaScript do CRM ainda não foi adaptado para o novo modelo. Se você
--- rodar este script agora, o app vai mostrar erros e não funcionará.
---
--- Aguarde o aviso de "pode rodar agora" depois do refactor do JS estar
--- completo (próximos commits).
+-- ✓ O JS está sincronizado (Sprint 3.2). Pode rodar com segurança.
 -- =========================================================================
 
 -- -------------------------------------------------------------------------

@@ -485,6 +485,20 @@ td strong{color:var(--tx);font-weight:600}
 .rel-ok-box{background:var(--ok2);border:1px solid var(--ok);border-radius:var(--r);padding:14px 18px;font-size:13px;color:var(--ok);display:flex;align-items:center;gap:10px}
 .rel-footer{text-align:center;font-size:11px;color:var(--mt);margin-top:28px;padding-top:16px;border-top:1px solid var(--bdr)}
 
+/* ── Tier / Estágio badges (Sprint 3) ── */
+.tier-badge{display:inline-block;font-size:10px;font-weight:700;padding:3px 8px;border-radius:99px;text-transform:uppercase;letter-spacing:.05em}
+.tier-lead{background:#fee2e2;color:#991b1b}
+.tier-cliente{background:#dbeafe;color:#1e40af}
+.tier-conta{background:#dcfce7;color:#166534}
+.estagio-badge{display:inline-block;font-size:10px;font-weight:600;padding:3px 8px;border-radius:99px}
+.est-lead{background:#f3f4f6;color:#4b5563}
+.est-qualificado{background:#dbeafe;color:#1e40af}
+.est-proposta_enviada{background:#fef3c7;color:#92400e}
+.est-em_negociacao{background:#fed7aa;color:#9a3412}
+.est-ganha{background:#dcfce7;color:#166534}
+.est-perdida{background:#fee2e2;color:#991b1b}
+.deprecated-msg{padding:18px;text-align:center;color:var(--mt);background:var(--bg);border:1px dashed var(--bdr2);border-radius:var(--rs);font-size:12px;line-height:1.5}
+
 /* ── Bulk actions ── */
 #bulk-bar{display:flex;align-items:center;gap:10px;padding:10px 14px;background:var(--ps);border:1px solid var(--p);border-radius:var(--rs);margin:8px 0;font-size:13px}
 #bulk-bar select,#bulk-bar button{font-size:12px}
@@ -671,7 +685,7 @@ tr.row-selected{background:var(--ps)!important}
       <div id="tabs">
         <button class="tb ac" data-tab="cl">
           <svg width="14" height="14" viewBox="0 0 20 20" fill="currentColor"><path d="M9 6a3 3 0 11-6 0 3 3 0 016 0zM17 6a3 3 0 11-6 0 3 3 0 016 0zM12.93 17c.046-.327.07-.66.07-1a6.97 6.97 0 00-1.5-4.33A5 5 0 0119 16v1h-6.07zM6 11a5 5 0 015 5v1H1v-1a5 5 0 015-5z"/></svg>
-          Clientes
+          Empresas
         </button>
         <button class="tb" data-tab="db">
           <svg width="14" height="14" viewBox="0 0 20 20" fill="currentColor"><path d="M2 11a1 1 0 011-1h2a1 1 0 011 1v5a1 1 0 01-1 1H3a1 1 0 01-1-1v-5zM8 7a1 1 0 011-1h2a1 1 0 011 1v9a1 1 0 01-1 1H9a1 1 0 01-1-1V7zM14 4a1 1 0 011-1h2a1 1 0 011 1v12a1 1 0 01-1 1h-2a1 1 0 01-1-1V4z"/></svg>
@@ -708,27 +722,26 @@ tr.row-selected{background:var(--ps)!important}
   </nav>
 
   <div id="mc">
-    <!-- CLIENTES -->
+    <!-- EMPRESAS -->
     <div id="cl-view" class="vw ac">
       <div class="ph">
-        <div><h2>Clientes</h2><span class="ps" id="cst">Carregando...</span></div>
+        <div><h2>Empresas</h2><span class="ps" id="cst">Carregando...</span></div>
         <div class="pa">
-          <button class="btn bg sm" id="imbtn">↑ Importar CSV</button>
-          <button class="btn bg sm" id="expbtn">↓ Exportar CSV</button>
-          <button class="btn bp" id="ncbtn">+ Novo Cliente</button>
+          <button class="btn bp" id="ncbtn">+ Nova Empresa</button>
         </div>
       </div>
       <div class="fb">
         <div class="sw">
           <span class="si"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="8.5" cy="8.5" r="5.5"/><path d="M15 15l-3-3"/></svg></span>
-          <input type="text" class="sb" id="srch" placeholder="Buscar por nome ou telefone...">
+          <input type="text" class="sb" id="srch" placeholder="Buscar por razão social, CNPJ, email...">
         </div>
-        <select class="fs2" id="stf">
-          <option value="">Todos os status</option>
-          <option>Pendente</option><option>Em contato</option><option>Comprou</option>
-          <option>Nao comprou</option><option>Inativo</option>
+        <select class="fs2" id="stf" onchange="renderCl()">
+          <option value="">Todos os tiers</option>
+          <option value="lead">Lead</option>
+          <option value="cliente">Cliente</option>
+          <option value="conta">Conta</option>
         </select>
-        <input type="text" class="fi" id="svf" placeholder="Filtrar por vendedor...">
+        <input type="text" class="fi" id="svf" placeholder="Filtrar por vendedor..." oninput="renderCl()">
         <div class="period-btns">
           <button class="pdb ac" data-d="0" onclick="setPeriodo(0)">Todos</button>
           <button class="pdb" data-d="7" onclick="setPeriodo(7)">7 dias</button>
@@ -743,29 +756,22 @@ tr.row-selected{background:var(--ps)!important}
       <!-- Barra de ações em massa (aparece quando algo selecionado) -->
       <div id="bulk-bar" style="display:none">
         <span id="bulk-count"></span>
-        <select id="bulk-status" onchange="if(this.value){bulkMudarStatus(this.value);this.value='';}">
-          <option value="">Mudar status para...</option>
-          <option>Pendente</option><option>Em contato</option><option>Comprou</option>
-          <option>Nao comprou</option><option>Inativo</option>
-        </select>
-        <select id="bulk-vend" onchange="if(this.value){bulkMudarVendedor(this.value);this.value='';}">
-          <option value="">Mudar vendedor para...</option>
-        </select>
-        <button class="btn bod sm" onclick="bulkExcluir()">🗑 Excluir selecionados</button>
+        <button class="btn bod sm" onclick="bulkExcluir()">🗑 Excluir selecionadas</button>
         <button class="btn bg sm" onclick="bulkLimpar()">Cancelar</button>
+        <span style="font-size:11px;color:var(--mt);margin-left:auto">Mudar tier/vendedor via oportunidades (Sprint 3.3)</span>
       </div>
       <div class="tw">
         <table>
           <thead>
             <tr>
-              <th style="width:32px"><input type="checkbox" id="bulk-master" onchange="toggleSelecionarTodos(this.checked)" title="Selecionar todos visíveis"></th>
-              <th class="so" data-col="name">Cliente <span class="sa">↕</span></th>
-              <th>Telefone</th>
-              <th class="so" data-col="produto">Produto / Qtd <span class="sa">↕</span></th>
+              <th style="width:32px"><input type="checkbox" id="bulk-master" onchange="toggleSelecionarTodos(this.checked)" title="Selecionar todas visíveis"></th>
+              <th class="so" data-col="name">Empresa <span class="sa">↕</span></th>
+              <th>Cidade/UF</th>
+              <th>CNPJ</th>
+              <th class="so" data-col="status">Tier <span class="sa">↕</span></th>
+              <th>Oportunidades</th>
+              <th class="so" data-col="estimated_value" style="text-align:right">Pipeline R$ <span class="sa">↕</span></th>
               <th class="so" data-col="seller_name">Vendedor <span class="sa">↕</span></th>
-              <th class="so" data-col="status">Status <span class="sa">↕</span></th>
-              <th class="so" data-col="callback_date">Retorno <span class="sa">↕</span></th>
-              <th class="so" data-col="estimated_value">Valor Est. <span class="sa">↕</span></th>
               <th>Ações</th>
             </tr>
           </thead>
@@ -885,39 +891,57 @@ tr.row-selected{background:var(--ps)!important}
   </div>
 </div>
 
-<!-- MODAL CLIENTE -->
+<!-- MODAL EMPRESA (Sprint 3) -->
 <div class="mo" id="cm">
   <div class="md">
-    <div class="mh"><h3 id="mtit">Novo Cliente</h3><button class="mx" id="mcl">✕</button></div>
+    <div class="mh"><h3 id="mtit">Nova Empresa</h3><button class="mx" id="mcl">✕</button></div>
     <form id="clf">
-      <div class="fs"><div class="fsl">Informações básicas</div>
+      <div class="fs"><div class="fsl">Identificação</div>
+        <div class="fg"><label>Razão Social <span class="req">*</span></label><input type="text" id="fn" placeholder="Razão social da empresa"><div class="ferr" id="fn-err">Razão social é obrigatória</div></div>
         <div class="fr">
-          <div class="fg"><label>Nome <span class="req">*</span></label><input type="text" id="fn" placeholder="Nome do cliente"><div class="ferr" id="fn-err">Nome é obrigatório</div></div>
-          <div class="fg"><label>Telefone</label><input type="text" id="ft" placeholder="(11) 99999-9999"></div>
+          <div class="fg"><label>Nome Fantasia</label><input type="text" id="f-fantasia" placeholder="Nome fantasia (opcional)"></div>
+          <div class="fg"><label>CNPJ</label><input type="text" id="f-cnpj" placeholder="00.000.000/0000-00"></div>
         </div>
         <div class="fr">
-          <div class="fg"><label>Email</label><input type="email" id="f-email" placeholder="contato@cliente.com"></div>
-          <div class="fg"><label>Solicitante <span style="font-weight:400;color:var(--mt);font-size:11px">— quem pediu a proposta</span></label><input type="text" id="f-outros" placeholder="Ex: Sr. Gilson — (21) 99999-9999"></div>
+          <div class="fg"><label>Inscrição Estadual</label><input type="text" id="f-ie" placeholder="—"></div>
+          <div class="fg"><label>Indústria / Segmento</label>
+            <input type="text" id="f-industria" placeholder="Ex: Construtora, Pré-fabricado" list="industria-list" autocomplete="off">
+            <datalist id="industria-list">
+              <option>Construtora</option><option>Pré-fabricado</option><option>Concreteira</option>
+              <option>Indústria química</option><option>Distribuidora</option><option>Engenharia</option>
+              <option>Reforma e revestimento</option><option>Outro</option>
+            </datalist>
+          </div>
         </div>
       </div>
-      <div class="fs"><div class="fsl">Dados fiscais e obra <span style="font-weight:400;color:var(--mt);font-size:11px">— usados na cotação</span></div>
+
+      <div class="fs"><div class="fsl">Contato principal</div>
         <div class="fr">
-          <div class="fg"><label>CNPJ / CPF</label><input type="text" id="f-cnpj" placeholder="00.000.000/0000-00"></div>
-          <div class="fg"><label>Inscrição Estadual</label><input type="text" id="f-ie" placeholder="—"></div>
+          <div class="fg"><label>Email</label><input type="email" id="ft-email" placeholder="contato@empresa.com"></div>
+          <div class="fg"><label>Telefone</label><input type="text" id="ft" placeholder="(11) 99999-9999"></div>
         </div>
+        <div class="fg"><label>Website</label><input type="text" id="f-website" placeholder="www.empresa.com.br"></div>
+      </div>
+
+      <div class="fs"><div class="fsl">Endereço</div>
         <div class="fg"><label>Endereço</label><input type="text" id="f-end" placeholder="Rua, número, complemento"></div>
         <div class="fr">
           <div class="fg" style="flex:2"><label>Cidade</label><input type="text" id="f-cid" placeholder="Cidade"></div>
           <div class="fg" style="flex:0.5"><label>UF</label><input type="text" id="f-uf" placeholder="RJ" maxlength="2" style="text-transform:uppercase"></div>
           <div class="fg" style="flex:1"><label>CEP</label><input type="text" id="f-cep" placeholder="00000-000"></div>
         </div>
-        <div class="fg"><label>Obra</label><input type="text" id="f-obra" placeholder="Nome / identificação da obra"></div>
       </div>
+
+      <div class="fs"><div class="fsl">Comercial</div>
+        <div class="fg"><label>Faturamento estimado (R$/ano)</label><input type="number" id="f-fat" placeholder="0,00" step="1000" min="0"></div>
+        <div class="fg"><label>Observações</label><textarea id="fob" placeholder="Notas sobre a empresa, contexto da operação..."></textarea></div>
+      </div>
+
       <div class="fs"><div class="fsl">Privacidade (LGPD)</div>
         <div class="lgpd-row">
           <label class="lgpd-check">
             <input type="checkbox" id="f-lgpd-consent">
-            <span>Cliente autorizou contato comercial e armazenamento dos dados</span>
+            <span>Empresa autorizou contato comercial e armazenamento dos dados</span>
           </label>
           <div id="f-lgpd-info" style="font-size:11px;color:var(--mt);margin-top:6px"></div>
         </div>
@@ -928,56 +952,11 @@ tr.row-selected{background:var(--ps)!important}
         </div>
         <button type="button" id="f-lgpd-del-btn" class="btn bg sm" style="margin-top:8px" onclick="solicitarExclusaoLgpd()">Solicitar exclusão definitiva</button>
       </div>
-      <div class="fs">
-        <div class="fsl">Produtos</div>
-        <div class="prod-headers">
-          <span class="prod-h hn">Nome do Produto</span>
-          <span class="prod-h he">Embalagem</span>
-          <span class="prod-h hq">Qtd (kg)</span>
-          <span class="prod-h hp">Preço (R$/kg)</span>
-          <span class="prod-h hd"></span>
-        </div>
-        <div id="prod-lista"></div>
-        <button type="button" class="prod-add-btn" onclick="addProdRow()">
-          + Adicionar Produto
-        </button>
-      </div>
-      <div class="fs"><div class="fsl">Gestão comercial</div>
-        <div class="fr">
-          <div class="fg">
-            <label>Vendedor</label>
-            <input type="text" id="fv" placeholder="Nome do vendedor" list="vlist" autocomplete="off">
-            <datalist id="vlist"></datalist>
-          </div>
-          <div class="fg"><label>Status</label>
-            <select id="fst" onchange="toggleLossReason(this.value)">
-              <option>Pendente</option><option>Em contato</option><option>Comprou</option>
-              <option>Nao comprou</option><option>Inativo</option>
-            </select>
-          </div>
-        </div>
-        <div class="fg lr-field" id="lr-wrap">
-          <label>Motivo da perda *</label>
-          <select id="flr">
-            <option value="">Selecione o motivo...</option>
-            <option>Preço alto</option>
-            <option>Comprou do concorrente</option>
-            <option>Prazo não atendido</option>
-            <option>Produto não adequado</option>
-            <option>Sem verba no momento</option>
-            <option>Sem retorno do cliente</option>
-            <option>Outro</option>
-          </select>
-        </div>
-        <div class="fr">
-          <div class="fg"><label>Ligar de volta em</label><input type="date" id="fcb"></div>
-          <div class="fg">
-            <label>Valor Estimado R$ <span id="fvl-auto" style="font-weight:400;color:var(--mt);font-size:11px;display:none">— calculado dos produtos</span></label>
-            <input type="number" id="fvl" placeholder="0,00" step="0.01" min="0">
-          </div>
-        </div>
-      </div>
-      <div class="fs"><div class="fg"><label>Observação</label><textarea id="fob" placeholder="Informações relevantes..."></textarea></div></div>
+
+      <div class="fs"><div class="deprecated-msg">
+        💡 <b>Em breve (Sprint 3.3):</b> contatos da empresa, oportunidades, produtos, propostas e histórico de interações em abas no perfil.
+      </div></div>
+
       <div class="fa">
         <p id="serr" class="em" style="flex:1;margin:0;align-self:center"></p>
         <button type="button" class="btn bg" id="mcan">Cancelar</button>
@@ -1337,16 +1316,27 @@ document.getElementById('cosi').onclick = () => { const cb = CCB; fechaConf(); i
 document.getElementById('cono').onclick = fechaConf;
 
 // ── DB ────────────────────────────────────────────────────────────────────
-const fetchCl = () => api('GET','clients','select=*,seller:profiles(id,name),produtos:client_products(id,produto,embalagem,qtd_kg,preco_kg,peso)&order=created_at.desc');
+// Sprint 3: lê empresas com tier calculado (view), contatos e oportunidades embedded
+const fetchCl = () => api('GET','companies_with_tier',
+  'select=*,contatos:contacts(id,nome,cargo,email,telefone,papel,principal),oportunidades:opportunities!opportunities_company_id_fkey(id,titulo,estagio,valor_estimado,seller_name,callback_date,closed_at,obra)&order=razao_social.asc');
+// Helper: nome principal do vendedor "responsável" pela empresa (do owner da última opp aberta)
+function empresaVendedor(c) {
+  const opps = c.oportunidades || [];
+  const aberta = opps.find(o => o.estagio !== 'ganha' && o.estagio !== 'perdida');
+  return (aberta && aberta.seller_name) || (opps[0]?.seller_name) || null;
+}
+// Helper: total de produtos cadastrados nas oportunidades (pra display)
+function empresaPipeline(c) { return c.valor_pipeline || 0; }
 const fetchPf = () => api('GET','profiles','select=id,name,role,email&order=name');
 const fetchProds = () => api('GET','products','select=nome,embalagem,preco_materia_prima,preco_office,preco_pj&order=nome,embalagem');
-const fetchHist = id => api('GET','call_history','client_id=eq.'+id+'&select=*,seller:profiles(id,name)&order=datetime.desc');
+// Sprint 3: histórico via interactions (por oportunidade) — stub por enquanto
+const fetchHist = id => Promise.resolve([]); // será refeito no Sprint 3.3 ligado a oportunidades
 function saveCl(d, id) {
-  if (id) return api('PATCH','clients','id=eq.'+id,d).then(r => Array.isArray(r)?r[0]:r);
-  return api('POST','clients',null,d).then(r => Array.isArray(r)?r[0]:r);
+  if (id) return api('PATCH','companies','id=eq.'+id,d).then(r => Array.isArray(r)?r[0]:r);
+  return api('POST','companies',null,d).then(r => Array.isArray(r)?r[0]:r);
 }
-const delCl = id => apiDelete('clients','id=eq.'+id);
-const saveCont = d => api('POST','call_history',null,d).then(r => Array.isArray(r)?r[0]:r);
+const delCl = id => apiDelete('companies','id=eq.'+id);
+const saveCont = d => Promise.reject(new Error('Histórico de contatos será refeito no Sprint 3.3 (ligado a oportunidades)'));
 const fetchMePf = uid => api('GET','profiles','id=eq.'+uid+'&select=*').then(r => r[0]||null);
 
 // ── Sugestões de vendedor ─────────────────────────────────────────────────
@@ -1360,14 +1350,14 @@ function updSug() {
 // ── Ordenação / Filtro ────────────────────────────────────────────────────
 function filtrar() {
   const q  = (document.getElementById('srch').value||'').toLowerCase();
-  const sf = document.getElementById('stf').value;
+  const tf = document.getElementById('stf').value; // agora filtra TIER (lead/cliente/conta)
   const vf = (document.getElementById('svf').value||'').toLowerCase();
   const cutoff = periodoFiltro > 0 ? new Date(Date.now() - periodoFiltro * 86400000) : null;
   return CL.filter(c => {
-    const sv = (c.seller_name||c.seller?.name||'').toLowerCase();
+    const vend = (empresaVendedor(c)||'').toLowerCase();
     const okP = !cutoff || (c.created_at && new Date(c.created_at) >= cutoff);
-    return ((c.name||'').toLowerCase().includes(q)||(c.phone||'').includes(q)) &&
-      (!sf||c.status===sf) && (!vf||sv.includes(vf)) && okP;
+    const hay = ((c.razao_social||'')+' '+(c.nome_fantasia||'')+' '+(c.cnpj||'')+' '+(c.telefone||'')+' '+(c.email||'')).toLowerCase();
+    return hay.includes(q) && (!tf || c.tier === tf) && (!vf || vend.includes(vf)) && okP;
   });
 }
 // ── Bulk actions (Sprint 1) ───────────────────────────────────────────────
@@ -1456,13 +1446,13 @@ async function bulkMudarVendedor(novoVend) {
 async function bulkExcluir() {
   if (!selectedIds.size) return;
   const ids = [...selectedIds];
-  conf('⚠ Excluir clientes',
-    `Excluir ${ids.length} cliente(s) e todos os dados relacionados (produtos, histórico, propostas)? Esta ação não pode ser desfeita.`,
+  conf('⚠ Excluir empresas',
+    `Excluir ${ids.length} empresa(s) e todos os dados relacionados (contatos, oportunidades, produtos, propostas, interações)? Esta ação não pode ser desfeita.`,
     async () => {
       try {
         const idsList = ids.map(i => `"${i}"`).join(',');
-        await apiDelete('clients', `id=in.(${idsList})`);
-        toast('Excluídos', `${ids.length} cliente(s) removido(s)`, 'success');
+        await apiDelete('companies', `id=in.(${idsList})`);
+        toast('Excluídas', `${ids.length} empresa(s) removida(s)`, 'success');
         bulkLimpar();
         CL = await fetchCl(); renderCl();
       } catch(err) {
@@ -1526,73 +1516,93 @@ function aplicarVisao(nome) {
 function ordenar(lst) {
   return [...lst].sort((a,b) => {
     let va=a[SCOL], vb=b[SCOL];
-    if (SCOL==='seller_name'){va=a.seller_name||a.seller?.name||'';vb=b.seller_name||b.seller?.name||'';}
+    if (SCOL==='name')         { va=a.razao_social||''; vb=b.razao_social||''; }
+    if (SCOL==='seller_name')  { va=empresaVendedor(a)||''; vb=empresaVendedor(b)||''; }
+    if (SCOL==='estimated_value'){va=a.valor_pipeline||0; vb=b.valor_pipeline||0;}
+    if (SCOL==='status')       { va=a.tier||''; vb=b.tier||''; }
     if (va==null&&vb==null) return 0;
     if (va==null) return 1; if (vb==null) return -1;
-    const c = String(va).toLowerCase()<String(vb).toLowerCase()?-1:1;
-    return SDIR==='asc'?c:-c;
+    const cmp = (typeof va === 'number') ? (va - vb) : (String(va).toLowerCase()<String(vb).toLowerCase()?-1:1);
+    return SDIR==='asc'?cmp:-cmp;
   });
 }
 
-// ── Render clientes ───────────────────────────────────────────────────────
+// ── Render empresas (Sprint 3) ────────────────────────────────────────────
 function renderCl() {
   const lst = ordenar(filtrar());
   const tot = CL.length;
   const el = document.getElementById('cst');
-  if (el) el.textContent = lst.length===tot ? tot+' cliente(s)' : lst.length+' de '+tot;
+  if (el) el.textContent = lst.length===tot ? tot+' empresa(s)' : lst.length+' de '+tot;
   const tb = document.getElementById('ctb');
   if (!lst.length) {
-    tb.innerHTML = '<tr><td colspan="9"><div class="se"><h3>Nenhum cliente encontrado</h3><p>Ajuste os filtros ou cadastre um novo.</p></div></td></tr>';
+    tb.innerHTML = '<tr><td colspan="9"><div class="se"><h3>Nenhuma empresa encontrada</h3><p>Ajuste os filtros ou cadastre uma nova.</p></div></td></tr>';
     return;
   }
   tb.innerHTML = lst.map(c => {
-    const ov = venc(c.callback_date);
-    const nv = c.seller_name||c.seller?.name||'';
-    const vc = nv ? '<div class="sch"><div class="sav" style="background:'+cor(nv)+'">'+ini(nv)+'</div>'+nv+'</div>' : '<span style="color:var(--mt)">—</span>';
-    // Coluna produto: usa client_products ou fallback para campo antigo
-    const prods = (c.produtos && c.produtos.length > 0)
-      ? c.produtos
-      : (c.produto ? [{produto:c.produto, embalagem:null, qtd_kg:null, preco_kg:null, peso:c.peso}] : []);
-    const prodCell = prods.length
-      ? prods.map(p => {
-          const emb = p.embalagem ? ' <span class="prod-tag-peso">· '+p.embalagem+'</span>' : '';
-          const qt  = p.qtd_kg != null ? ' <span class="prod-tag-peso">· '+p.qtd_kg+'kg</span>'
-                    : p.peso              ? ' <span class="prod-tag-peso">· '+p.peso+'</span>' : '';
-          return '<span class="prod-tag">'+p.produto+emb+qt+'</span>';
-        }).join('')
-      : '<span style="color:var(--mt2)">—</span>';
-    const dc = c.callback_date
-      ? fData(c.callback_date)+' <small style="color:var(--mt)">('+fRel(c.callback_date)+')</small>'+(ov?'<span class="ob">Vencido</span>':'')
-      : '—';
     const id = c.id;
-    const nm = (c.name||'').replace(/'/g,"\\'");
-    const ts = tempoStatus(c);
-    const waNum = foneLink(c.phone);
-    const statusCell = bStatus(c.status) + (ts ? '<span class="ts-badge">'+ts+'</span>' : '')
-      + (c.status==='Nao comprou' && c.loss_reason ? '<span class="ts-badge" style="color:var(--er)">'+c.loss_reason+'</span>' : '');
+    const nm = (c.razao_social||'').replace(/'/g,"\\'");
+    const vend = empresaVendedor(c);
+    const vc = vend ? '<div class="sch"><div class="sav" style="background:'+cor(vend)+'">'+ini(vend)+'</div>'+escHtml(vend)+'</div>' : '<span style="color:var(--mt)">—</span>';
+    const cidade = c.cidade ? escHtml(c.cidade) + (c.uf ? '/' + escHtml(c.uf) : '') : '—';
+    const cnpj = c.cnpj ? '<span style="font-family:ui-monospace,Consolas,monospace;font-size:12px">'+escHtml(c.cnpj)+'</span>' : '<span style="color:var(--mt2)">—</span>';
+    const tier = c.tier || 'lead';
+    const tierBadge = '<span class="tier-badge tier-'+tier+'">'+tier+'</span>';
+    const oppsCell = c.opps_abertas
+      ? '<span class="tier-badge tier-cliente">'+c.opps_abertas+' aberta(s)</span>'
+      : '<span style="color:var(--mt2)">—</span>';
+    const pipe = c.valor_pipeline ? fMoeda(c.valor_pipeline) : '—';
+    const waNum = foneLink(c.telefone);
     const waBtn = waNum
       ? '<a class="btn wa-btn sm" href="https://wa.me/'+waNum+'" target="_blank" title="Abrir WhatsApp">📱</a>'
       : '';
     const checked = selectedIds.has(id) ? ' checked' : '';
-    const rowClass = (ov?'ov':'') + (selectedIds.has(id)?' row-selected':'');
-    return '<tr class="'+rowClass+'"><td><input type="checkbox" class="bulk-cb" data-id="'+id+'"'+checked+' onclick="toggleSelecionado(\''+id+'\',this.checked)" onchange="event.stopPropagation()"></td><td><strong><a class="cl-name" onclick="abrPerfil(\''+id+'\')" title="Ver perfil completo">'+c.name+'</a></strong></td>'
-      +'<td class="tp">'+(c.phone||'—')+'</td>'
-      +'<td>'+prodCell+'</td>'
-      +'<td>'+vc+'</td><td>'+statusCell+'</td>'
-      +'<td>'+dc+'</td><td>'+fMoeda(c.estimated_value)+'</td>'
+    const rowClass = selectedIds.has(id) ? 'row-selected' : '';
+    return '<tr class="'+rowClass+'"><td><input type="checkbox" class="bulk-cb" data-id="'+id+'"'+checked+' onclick="toggleSelecionado(\''+id+'\',this.checked)" onchange="event.stopPropagation()"></td>'
+      +'<td><strong>'+escHtml(c.razao_social)+'</strong>'+(c.nome_fantasia?'<br><small style="color:var(--mt)">'+escHtml(c.nome_fantasia)+'</small>':'')+'</td>'
+      +'<td>'+cidade+'</td>'
+      +'<td>'+cnpj+'</td>'
+      +'<td>'+tierBadge+'</td>'
+      +'<td>'+oppsCell+'</td>'
+      +'<td style="text-align:right;font-variant-numeric:tabular-nums">'+pipe+'</td>'
+      +'<td>'+vc+'</td>'
       +'<td><div class="ac2">'
       +waBtn
-      +'<button class="btn bg sm" onclick="abrPainel(\''+id+'\')">Histórico</button>'
-      +'<button class="btn bg sm" onclick="abrCotacao(\''+id+'\')">Cotação</button>'
       +'<button class="btn bp sm" onclick="abrEdit(\''+id+'\')">Editar</button>'
       +'<button class="btn bod sm" onclick="abrDel(\''+id+'\',\''+nm+'\')">Excluir</button>'
       +'</div></td></tr>';
   }).join('');
 }
 
-// ── Dashboard ─────────────────────────────────────────────────────────────
+// ── Dashboard (Sprint 3.2: simplificado, adaptado pra empresas) ────────────
 async function renderDb() {
   const tot  = CL.length;
+  const leads     = CL.filter(c => c.tier === 'lead').length;
+  const clientes  = CL.filter(c => c.tier === 'cliente').length;
+  const contas    = CL.filter(c => c.tier === 'conta').length;
+  const oppsAbertas = CL.reduce((s,c) => s + (c.opps_abertas||0), 0);
+  const pipelineTot = CL.reduce((s,c) => s + (Number(c.valor_pipeline)||0), 0);
+
+  // Cards principais — reaproveita os 5 slots existentes
+  const setSafe = (id, val) => { const el = document.getElementById(id); if (el) el.textContent = val; };
+  setSafe('d1', tot);
+  setSafe('d2', clientes + contas); // "Compraram" = clientes + contas
+  setSafe('d3', leads);              // "Pendentes" = leads
+  setSafe('d4', oppsAbertas);        // "Retornos Vencidos" reaproveitado como Opps abertas
+  setSafe('d5', fMoedaK(pipelineTot));
+  const d2b = document.getElementById('d2b'); if (d2b) d2b.style.width = tot ? ((clientes+contas)/tot*100)+'%' : '0%';
+  const d3b = document.getElementById('d3b'); if (d3b) d3b.style.width = tot ? (leads/tot*100)+'%' : '0%';
+
+  // Esconde seções que dependem de oportunidades / call_history
+  const hide = id => { const el = document.getElementById(id); if (el) el.style.display = 'none'; };
+  const showMsg = (id, msg) => { const el = document.getElementById(id); if (el) el.innerHTML = '<div class="deprecated-msg">'+msg+'</div>'; };
+  showMsg('funil-body', 'Funil por estágios de oportunidade virá no Sprint 3.3.');
+  document.getElementById('funil-taxa').textContent = '';
+  showMsg('dol', 'Alertas de retorno serão refeitos com callback_date das oportunidades (Sprint 3.3).');
+  document.getElementById('dob').textContent = '0';
+  showMsg('drl', 'Ranking com meta será refeito ao contar oportunidades ganhas por vendedor (Sprint 3.3).');
+  renderProdRep();
+  return; // pula tudo abaixo (código antigo)
+  // ↓ dead code preservado para referência durante o refactor
   const comp = CL.filter(c=>c.status==='Comprou').length;
   const pend = CL.filter(c=>c.status==='Pendente').length;
   const vl   = CL.filter(c=>venc(c.callback_date)&&c.status!=='Comprou'&&c.status!=='Inativo');
@@ -1736,6 +1746,11 @@ function agregarProdutos(filtroVend, filtroDias) {
 
 function renderProdRep() {
   if (!document.getElementById('prod-rep-body')) return; // dashboard não montado ainda
+  // Sprint 3: agregação por produto será refeita a partir de opportunity_products (3.4)
+  document.getElementById('prod-rep-cards').innerHTML = '';
+  document.getElementById('prod-rep-body').innerHTML =
+    '<tr><td colspan="6" class="deprecated-msg">Relatório de produtos será refeito no Sprint 3.4 a partir de opportunity_products.</td></tr>';
+  return;
   popularVendSelect();
   const filtroVend = document.getElementById('prod-rep-vend').value;
   const agg = agregarProdutos(filtroVend, prodRepPeriodo);
@@ -1825,6 +1840,9 @@ document.querySelectorAll('.prod-rep-table th[data-pcol]').forEach(th => {
 
 // ── Painel histórico ──────────────────────────────────────────────────────
 async function abrPainel(id) {
+  // Sprint 3.2: histórico de interactions liga a oportunidades (3.3). Desabilitado por enquanto.
+  toast('Em breve', 'Histórico de interações virá no Sprint 3.3 (ligado a oportunidades).', 'info');
+  return;
   PID = id;
   const c = CL.find(x=>x.id===id); if(!c) return;
   const nv = c.seller_name||c.seller?.name||'';
@@ -1879,21 +1897,15 @@ function recalcValorEstimado() {
 // ── Modal cliente ─────────────────────────────────────────────────────────
 function abrNovo() {
   EID=null;
-  document.getElementById('mtit').textContent='Novo Cliente';
-  document.getElementById('msav').textContent='Criar Cliente';
+  document.getElementById('mtit').textContent='Nova Empresa';
+  document.getElementById('msav').textContent='Criar Empresa';
   document.getElementById('clf').reset();
-  document.getElementById('fst').value='Pendente';
-  toggleLossReason('Pendente');
   document.getElementById('serr').textContent='';
   document.getElementById('fn').classList.remove('err');
   document.getElementById('fn-err').classList.remove('show');
-  updSug();
-  valorTouched = false;
-  renderProdutoRows([]); // lista de produtos vazia
-  recalcValorEstimado();
   // LGPD reset
   document.getElementById('f-lgpd-consent').checked = false;
-  document.getElementById('f-lgpd-info').innerHTML = '<span style="color:var(--mt2)">Marque se o cliente autoriza armazenamento e contato.</span>';
+  document.getElementById('f-lgpd-info').innerHTML = '<span style="color:var(--mt2)">Marque se a empresa autoriza armazenamento e contato.</span>';
   document.getElementById('f-lgpd-del-zone').style.display = 'none';
   document.getElementById('f-lgpd-del-btn').style.display = '';
   document.getElementById('cm').classList.add('op');
@@ -1902,29 +1914,23 @@ function abrNovo() {
 function abrEdit(id) {
   const c=CL.find(x=>x.id===id); if(!c) return;
   EID=id;
-  document.getElementById('mtit').textContent='Editar Cliente';
+  document.getElementById('mtit').textContent='Editar Empresa';
   document.getElementById('msav').textContent='Salvar Alterações';
   document.getElementById('serr').textContent='';
-  updSug();
-  document.getElementById('fn').value=c.name||'';
-  document.getElementById('ft').value=c.phone||'';
-  document.getElementById('fv').value=c.seller_name||c.seller?.name||'';
-  document.getElementById('fst').value=c.status||'Pendente';
-  toggleLossReason(c.status||'Pendente');
-  document.getElementById('flr').value=c.loss_reason||'';
-  document.getElementById('fcb').value=c.callback_date||'';
-  document.getElementById('fvl').value=c.estimated_value||'';
-  document.getElementById('fob').value=c.observation||'';
-  // Dados fiscais e obra (Fase 4)
-  document.getElementById('f-cnpj').value  = c.cnpj  || '';
-  document.getElementById('f-ie').value    = c.ie    || '';
-  document.getElementById('f-end').value   = c.endereco || '';
-  document.getElementById('f-cid').value   = c.cidade || '';
-  document.getElementById('f-uf').value    = c.uf    || '';
-  document.getElementById('f-cep').value   = c.cep   || '';
-  document.getElementById('f-obra').value  = c.obra  || '';
-  document.getElementById('f-outros').value= c.contato_outros || '';
-  document.getElementById('f-email').value = c.email || '';
+  document.getElementById('fn').value         = c.razao_social || '';
+  document.getElementById('f-fantasia').value = c.nome_fantasia || '';
+  document.getElementById('f-cnpj').value     = c.cnpj  || '';
+  document.getElementById('f-ie').value       = c.ie    || '';
+  document.getElementById('f-industria').value= c.industria || '';
+  document.getElementById('ft').value         = c.telefone || '';
+  document.getElementById('ft-email').value   = c.email || '';
+  document.getElementById('f-website').value  = c.website || '';
+  document.getElementById('f-end').value      = c.endereco || '';
+  document.getElementById('f-cid').value      = c.cidade || '';
+  document.getElementById('f-uf').value       = c.uf    || '';
+  document.getElementById('f-cep').value      = c.cep   || '';
+  document.getElementById('f-fat').value      = c.faturamento_estimado || '';
+  document.getElementById('fob').value        = c.observacoes || '';
   // LGPD
   document.getElementById('f-lgpd-consent').checked = !!c.lgpd_consent_at;
   const consInfo = document.getElementById('f-lgpd-info');
@@ -1945,27 +1951,18 @@ function abrEdit(id) {
     delZone.style.display = 'none';
     delBtn.style.display = '';
   }
-  // Se já tinha valor estimado salvo, considera manualmente sobrescrito
-  // (não vamos auto-recalcular em cima e perder o ajuste do vendedor)
-  valorTouched = c.estimated_value != null && c.estimated_value !== '';
-  // Carrega produtos: usa client_products ou fallback para campo antigo
-  const prods = (c.produtos && c.produtos.length > 0)
-    ? c.produtos
-    : (c.produto ? [{produto:c.produto, embalagem:null, qtd_kg:null, preco_kg:null}] : []);
-  renderProdutoRows(prods);
-  recalcValorEstimado();
   document.getElementById('cm').classList.add('op');
 }
 function fechaModal() { document.getElementById('cm').classList.remove('op'); EID=null; }
 
 function abrDel(id, nome) {
-  conf('Excluir cliente','Tem certeza que deseja excluir "'+nome+'"? O histórico de contatos também será removido.', async () => {
+  conf('Excluir empresa','Tem certeza que deseja excluir "'+nome+'"? Contatos, oportunidades, produtos, propostas e histórico de interações relacionados também serão removidos.', async () => {
     try {
       await delCl(id);
       CL = CL.filter(c=>c.id!==id);
       try { localStorage.setItem('crm_cl',JSON.stringify(CL)); } catch {}
       renderCl();
-      toast('Cliente excluído','"'+nome+'" removido com sucesso.','success');
+      toast('Empresa excluída','"'+nome+'" removida com sucesso.','success');
     } catch(e) { toast('Erro ao excluir',e.message,'warning'); }
   });
 }
@@ -1975,13 +1972,16 @@ async function checkSchema() {
   // Lista de tabelas + colunas que o app precisa. Se o Supabase rejeita
   // o select, sabemos que falta rodar o supabase_setup.sql.
   const PROBES = [
-    ['clients',         'id,name,phone,email,status,loss_reason,callback_date,estimated_value,observation,internal_notes,status_changed_at,seller_name,produto,peso,endereco,cidade,uf,cep,cnpj,ie,obra,contato_outros,lgpd_consent_at,lgpd_consent_by,lgpd_delete_requested_at,lgpd_delete_requested_by,created_at'],
-    ['profiles',        'id,name,email,role,seller_status,telefone,office_nome,office_email,office_telefone'],
-    ['client_products', 'id,client_id,produto,embalagem,qtd_kg,preco_kg,peso,created_at'],
-    ['products',        'id,nome,embalagem,preco_materia_prima,preco_office,preco_pj'],
-    ['call_history',    'id,client_id,seller_id,datetime,result,next_callback,notes,created_at'],
-    ['proposals',       'id,ano,numero,client_id,seller_id,snapshot,created_at'],
-    ['lgpd_requests',   'id,client_id,client_name,acao,detalhes,requested_by,created_at'],
+    ['companies',            'id,razao_social,nome_fantasia,cnpj,ie,email,telefone,website,industria,faturamento_estimado,endereco,cidade,uf,cep,observacoes,internal_notes,lgpd_consent_at,lgpd_consent_by,lgpd_delete_requested_at,lgpd_delete_requested_by,created_at,updated_at'],
+    ['companies_with_tier',  'id,razao_social,cnpj,tier,opps_total,opps_abertas,opps_ganhas_total,opps_ganhas_12m,valor_pipeline'],
+    ['profiles',             'id,name,email,role,seller_status,telefone,office_nome,office_email,office_telefone'],
+    ['contacts',             'id,company_id,nome,cargo,email,telefone,papel,principal,created_at'],
+    ['opportunities',        'id,company_id,contact_id,seller_id,seller_name,titulo,obra,estagio,valor_estimado,callback_date,perda_motivo,observation,estagio_changed_at,closed_at,created_at,updated_at'],
+    ['opportunity_products', 'id,opportunity_id,produto,embalagem,qtd_kg,preco_kg,created_at'],
+    ['interactions',         'id,opportunity_id,contact_id,seller_id,datetime,result,next_callback,notes,created_at'],
+    ['products',             'id,nome,embalagem,preco_materia_prima,preco_office,preco_pj'],
+    ['proposals',            'id,ano,numero,opportunity_id,company_id,seller_id,snapshot,created_at'],
+    ['lgpd_requests',        'id,company_id,company_name,acao,detalhes,requested_by,created_at'],
   ];
   const issues = [];
   for (const [tabela, cols] of PROBES) {
@@ -2101,17 +2101,7 @@ document.getElementById('svf').addEventListener('input',renderCl);
 
 // Botões
 document.getElementById('ncbtn').addEventListener('click',abrNovo);
-document.getElementById('imbtn').addEventListener('click',abrImport);
-document.getElementById('expbtn').addEventListener('click',()=>{
-  const rows=filtrar();
-  if(!rows.length){toast('Nada para exportar','','warning');return;}
-  const h=['Nome','Telefone','Vendedor','Status','Produto','Peso','Data Retorno','Valor','Observacao'];
-  const l=rows.map(c=>[c.name,c.phone||'',c.seller_name||c.seller?.name||'',c.status,c.produto||'',c.peso||'',c.callback_date||'',c.estimated_value||'',(c.observation||'').replace(/\n/g,' ')].map(v=>'"'+String(v).replace(/"/g,'""')+'"').join(','));
-  const a=document.createElement('a');
-  a.href=URL.createObjectURL(new Blob(['﻿'+[h.join(','),...l].join('\n')],{type:'text/csv;charset=utf-8'}));
-  a.download='clientes_'+hj()+'.csv'; a.click();
-  toast('Exportado!',rows.length+' cliente(s).','success');
-});
+// Importar/Exportar CSV removidos no Sprint 3 (depende de modelo legado)
 document.getElementById('dref').addEventListener('click',async()=>{
   try{CL=await fetchCl();renderDb();toast('Atualizado','','success');}catch(err){console.error('Refresh dashboard:', err); toast('Falha ao atualizar', err.message||'', 'warning');}
 });
@@ -2138,31 +2128,22 @@ document.getElementById('clf').addEventListener('submit', async e => {
   const btn=document.getElementById('msav'), err=document.getElementById('serr');
   btn.disabled=true; btn.textContent='Salvando...'; err.textContent='';
   try {
-    const novoStatus = document.getElementById('fst').value;
-    const clienteAtual = EID ? CL.find(c=>c.id===EID) : null;
-    const statusMudou = !clienteAtual || clienteAtual.status !== novoStatus;
-    const d={
-      name:document.getElementById('fn').value.trim(),
-      phone:document.getElementById('ft').value.trim()||null,
-      produto:null, // migrado para client_products
-      peso:null,
-      seller_name:document.getElementById('fv').value.trim()||null,
-      status:novoStatus,
-      loss_reason:novoStatus==='Nao comprou'?(document.getElementById('flr').value||null):null,
-      callback_date:document.getElementById('fcb').value||null,
-      estimated_value:document.getElementById('fvl').value?parseFloat(document.getElementById('fvl').value):null,
-      observation:document.getElementById('fob').value.trim()||null,
-      // Fase 4: dados fiscais e obra
-      cnpj:           document.getElementById('f-cnpj').value.trim()  || null,
-      ie:             document.getElementById('f-ie').value.trim()    || null,
-      endereco:       document.getElementById('f-end').value.trim()   || null,
-      cidade:         document.getElementById('f-cid').value.trim()   || null,
-      uf:             document.getElementById('f-uf').value.trim().toUpperCase() || null,
-      cep:            document.getElementById('f-cep').value.trim()   || null,
-      obra:           document.getElementById('f-obra').value.trim()  || null,
-      contato_outros: document.getElementById('f-outros').value.trim()|| null,
-      email:          document.getElementById('f-email').value.trim() || null,
-      // LGPD: marca timestamp do consentimento apenas quando passa de off→on
+    const d = {
+      razao_social:         document.getElementById('fn').value.trim(),
+      nome_fantasia:        document.getElementById('f-fantasia').value.trim() || null,
+      cnpj:                 document.getElementById('f-cnpj').value.trim() || null,
+      ie:                   document.getElementById('f-ie').value.trim() || null,
+      industria:            document.getElementById('f-industria').value.trim() || null,
+      email:                document.getElementById('ft-email').value.trim() || null,
+      telefone:             document.getElementById('ft').value.trim() || null,
+      website:              document.getElementById('f-website').value.trim() || null,
+      endereco:             document.getElementById('f-end').value.trim() || null,
+      cidade:               document.getElementById('f-cid').value.trim() || null,
+      uf:                   document.getElementById('f-uf').value.trim().toUpperCase() || null,
+      cep:                  document.getElementById('f-cep').value.trim() || null,
+      faturamento_estimado: document.getElementById('f-fat').value ? parseFloat(document.getElementById('f-fat').value) : null,
+      observacoes:          document.getElementById('fob').value.trim() || null,
+      // LGPD: timestamp só quando passa de off→on
       ...(() => {
         const cur = document.getElementById('f-lgpd-consent').checked;
         const old = EID ? (CL.find(c=>c.id===EID)?.lgpd_consent_at) : null;
@@ -2170,43 +2151,25 @@ document.getElementById('clf').addEventListener('submit', async e => {
         if (!cur && old) return { lgpd_consent_at: null, lgpd_consent_by: null };
         return {};
       })(),
-      ...(statusMudou && {status_changed_at: new Date().toISOString()}),
+      ...(EID ? {} : { created_by: ME?.id || null }),
     };
-    const oldC = EID ? (CL.find(c=>c.id===EID)||{}) : {};
     const saved = await saveCl(d, EID);
     const savedId = EID || saved?.id;
-    // Salva produtos (async, não bloqueia o toast — mas erro avisa)
-    if (savedId) salvarProdutos(savedId).catch(err => {
-      console.error('Salvar produtos do cliente:', err);
-      toast('Erro ao salvar produtos', err.message||'Tente novamente.', 'warning');
-    });
-    // LGPD: log de consentimento se foi dado/revogado neste save
+    // LGPD: log se houve mudança de consentimento
     if (savedId && d.lgpd_consent_at !== undefined) {
       const acao = d.lgpd_consent_at ? 'consentimento' : 'revogacao_consentimento';
-      logLgpd(savedId, d.name, acao, d.lgpd_consent_at?'Consentimento dado via cadastro':'Consentimento revogado');
-    }
-    // Audit log (não bloqueia)
-    if (EID) {
-      const changes = detectChanges(oldC, d);
-      if (changes.length) logAudit(EID, 'editado', changes);
-    } else if (savedId) {
-      logAudit(savedId, 'criado', []);
+      logLgpd(savedId, d.razao_social, acao, d.lgpd_consent_at ? 'Consentimento dado via cadastro' : 'Consentimento revogado');
     }
     CL = await fetchCl();
-    try{localStorage.setItem('crm_cl',JSON.stringify(CL));}catch{}
+    try { localStorage.setItem('crm_cl', JSON.stringify(CL)); } catch {}
     renderCl(); fechaModal();
-    // Atualiza perfil se estiver aberto
-    if (pfClientId && pfClientId===EID) {
-      const atualizado = CL.find(c=>c.id===pfClientId);
-      if (atualizado) { renderPfResumo(atualizado); loadPfNotas(atualizado); }
-    }
-    toast(EID?'Cliente atualizado':'Cliente criado','"'+d.name+'" salvo com sucesso.','success');
+    toast(EID ? 'Empresa atualizada' : 'Empresa criada', '"' + d.razao_social + '" salva com sucesso.', 'success');
   } catch(e) {
-    err.textContent = e.message||'Erro ao salvar.';
-    toast('Erro ao salvar',e.message,'warning');
+    err.textContent = e.message || 'Erro ao salvar.';
+    toast('Erro ao salvar', e.message, 'warning');
   } finally {
-    btn.disabled=false;
-    btn.textContent=EID?'Salvar Alterações':'Criar Cliente';
+    btn.disabled = false;
+    btn.textContent = EID ? 'Salvar Alterações' : 'Criar Empresa';
   }
 });
 
@@ -2267,6 +2230,10 @@ document.addEventListener('keydown', e => {
 
 // ── Alertas de Inatividade ────────────────────────────────────────────────
 async function loadAlertasInatividade() {
+  // Sprint 3: será recalculado a partir de interactions ligadas a oportunidades (3.3)
+  const wrap = document.getElementById('inact-wrap');
+  if (wrap) wrap.style.display = 'none';
+  return;
   try {
     const corte = new Date(Date.now() - 7 * 86400000).toISOString();
     // Busca clientes que tiveram contato nos últimos 7 dias
@@ -2367,6 +2334,9 @@ function numProposta(p) {
 
 // Abre o modal de preparação da cotação (escolhe IPI, risco, condições)
 function abrCotacao(id) {
+  // Sprint 3.2: cotação agora será gerada a partir de uma oportunidade (3.3). Desabilitado.
+  toast('Em breve', 'Cotação será gerada a partir de uma oportunidade (Sprint 3.3).', 'info');
+  return;
   const c = CL.find(x => x.id === id);
   if (!c) { toast('Cliente não encontrado','','warning'); return; }
   GC_CLIENT_ID = id;
@@ -2850,19 +2820,18 @@ function detectChanges(oldC, newC) {
 }
 
 async function logAudit(clientId, action, changes) {
-  try {
-    await api('POST','audit_log',null,{
-      client_id:clientId, user_id:ME?.id,
-      user_name:MEP?.name||ME?.email||'Usuário',
-      action, changes
-    });
-  } catch {} // não bloqueia o fluxo principal
+  // Sprint 3: audit_log será substituído por sistema próprio ligado a opportunities (3.3+).
+  // Por enquanto no-op para não criar registros órfãos.
+  return;
 }
 
 // ── Página de Perfil ──────────────────────────────────────────────────────
 let pfClientId = null;
 
 function abrPerfil(id) {
+  // Sprint 3.2: perfil completo da empresa (com abas Contatos/Oportunidades/Histórico) vem no 3.3
+  toast('Em breve', 'Perfil completo da empresa virá no Sprint 3.3 com contatos e oportunidades.', 'info');
+  return;
   pfClientId = id;
   const c = CL.find(x=>x.id===id);
   if (!c) return;
@@ -3241,10 +3210,10 @@ function renderProdutoRows(produtos) {
 }
 
 // ── LGPD: solicitar / cancelar / executar exclusão ───────────────────────
-async function logLgpd(clientId, clientName, acao, detalhes) {
+async function logLgpd(companyId, companyName, acao, detalhes) {
   try {
     await api('POST', 'lgpd_requests', null, {
-      client_id: clientId, client_name: clientName, acao, detalhes,
+      company_id: companyId, company_name: companyName, acao, detalhes,
       requested_by: ME?.id || null,
       requested_by_name: MEP?.name || ME?.email || null,
     });
@@ -3252,19 +3221,19 @@ async function logLgpd(clientId, clientName, acao, detalhes) {
 }
 
 async function solicitarExclusaoLgpd() {
-  if (!EID) { toast('Salve o cliente primeiro','','warning'); return; }
+  if (!EID) { toast('Salve a empresa primeiro','','warning'); return; }
   const c = CL.find(x => x.id === EID); if (!c) return;
   conf('Solicitar exclusão definitiva',
-    `O cliente "${c.name}" será marcado para exclusão. Os dados ficam no sistema até alguém executar a exclusão definitiva (botão vermelho). Deseja continuar?`,
+    `A empresa "${c.razao_social}" será marcada para exclusão. Os dados ficam no sistema até alguém executar a exclusão definitiva (botão vermelho). Deseja continuar?`,
     async () => {
       try {
         const now = new Date().toISOString();
         const by  = MEP?.name || ME?.email || 'sistema';
-        await api('PATCH', 'clients', `id=eq.${EID}`, {
+        await api('PATCH', 'companies', `id=eq.${EID}`, {
           lgpd_delete_requested_at: now, lgpd_delete_requested_by: by,
         });
-        await logLgpd(EID, c.name, 'exclusao_solicitada', 'Solicitação registrada via CRM');
-        toast('Exclusão solicitada', 'Cliente marcado. Execute a exclusão definitiva quando confirmar.', 'success');
+        await logLgpd(EID, c.razao_social, 'exclusao_solicitada', 'Solicitação registrada via CRM');
+        toast('Exclusão solicitada', 'Empresa marcada. Execute a exclusão definitiva quando confirmar.', 'success');
         CL = await fetchCl(); renderCl(); abrEdit(EID);
       } catch(err) {
         console.error('solicitarExclusaoLgpd:', err);
@@ -3277,10 +3246,10 @@ async function cancelarExclusaoLgpd() {
   if (!EID) return;
   const c = CL.find(x => x.id === EID); if (!c) return;
   try {
-    await api('PATCH', 'clients', `id=eq.${EID}`, {
+    await api('PATCH', 'companies', `id=eq.${EID}`, {
       lgpd_delete_requested_at: null, lgpd_delete_requested_by: null,
     });
-    await logLgpd(EID, c.name, 'revogacao_consentimento', 'Solicitação de exclusão cancelada');
+    await logLgpd(EID, c.razao_social, 'revogacao_consentimento', 'Solicitação de exclusão cancelada');
     toast('Solicitação cancelada','','success');
     CL = await fetchCl(); renderCl(); abrEdit(EID);
   } catch(err) {
@@ -3293,12 +3262,12 @@ async function executarExclusaoLgpd() {
   if (!EID) return;
   const c = CL.find(x => x.id === EID); if (!c) return;
   conf('⚠ Exclusão DEFINITIVA',
-    `Esta ação remove "${c.name}" e todos os dados relacionados (produtos, histórico, propostas) PERMANENTEMENTE. Não há volta. Confirma?`,
+    `Esta ação remove "${c.razao_social}" e todos os dados relacionados (contatos, oportunidades, produtos, propostas, interações) PERMANENTEMENTE. Não há volta. Confirma?`,
     async () => {
       try {
-        await logLgpd(EID, c.name, 'exclusao_executada', 'Exclusão LGPD executada pelo CRM');
-        await apiDelete('clients', `id=eq.${EID}`);
-        toast('Cliente excluído definitivamente','','success');
+        await logLgpd(EID, c.razao_social, 'exclusao_executada', 'Exclusão LGPD executada pelo CRM');
+        await apiDelete('companies', `id=eq.${EID}`);
+        toast('Empresa excluída definitivamente','','success');
         document.getElementById('cm').classList.remove('op');
         EID = null;
         CL = await fetchCl(); renderCl();
@@ -3603,9 +3572,11 @@ function startRealtime() {
   if (realtimeChannel) return;
   try {
     realtimeChannel = sb.channel('crm-changes')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'clients' },         scheduleRealtimeRefresh)
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'client_products' }, scheduleRealtimeRefresh)
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'call_history' },    scheduleRealtimeRefresh)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'companies' },            scheduleRealtimeRefresh)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'contacts' },             scheduleRealtimeRefresh)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'opportunities' },        scheduleRealtimeRefresh)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'opportunity_products' }, scheduleRealtimeRefresh)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'interactions' },         scheduleRealtimeRefresh)
       .subscribe(status => {
         if (status === 'SUBSCRIBED') console.info('Realtime conectado');
         else if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT') console.warn('Realtime status:', status);

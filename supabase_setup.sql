@@ -28,7 +28,8 @@ ALTER TABLE public.clients
   ADD COLUMN IF NOT EXISTS cnpj               text,
   ADD COLUMN IF NOT EXISTS ie                 text,
   ADD COLUMN IF NOT EXISTS obra               text,
-  ADD COLUMN IF NOT EXISTS contato_outros     text;
+  ADD COLUMN IF NOT EXISTS contato_outros     text, -- usado como "Solicitante" na proposta
+  ADD COLUMN IF NOT EXISTS email              text;
 
 ALTER TABLE public.profiles
   ADD COLUMN IF NOT EXISTS seller_status      text DEFAULT 'Disponível',

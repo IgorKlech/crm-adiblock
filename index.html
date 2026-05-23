@@ -817,6 +817,10 @@ td strong{color:var(--tx);font-weight:600}
           <div class="fg"><label>Nome <span class="req">*</span></label><input type="text" id="fn" placeholder="Nome do cliente"><div class="ferr" id="fn-err">Nome é obrigatório</div></div>
           <div class="fg"><label>Telefone</label><input type="text" id="ft" placeholder="(11) 99999-9999"></div>
         </div>
+        <div class="fr">
+          <div class="fg"><label>Email</label><input type="email" id="f-email" placeholder="contato@cliente.com"></div>
+          <div class="fg"><label>Solicitante <span style="font-weight:400;color:var(--mt);font-size:11px">— quem pediu a proposta</span></label><input type="text" id="f-outros" placeholder="Ex: Sr. Gilson — (21) 99999-9999"></div>
+        </div>
       </div>
       <div class="fs"><div class="fsl">Dados fiscais e obra <span style="font-weight:400;color:var(--mt);font-size:11px">— usados na cotação</span></div>
         <div class="fr">
@@ -829,10 +833,7 @@ td strong{color:var(--tx);font-weight:600}
           <div class="fg" style="flex:0.5"><label>UF</label><input type="text" id="f-uf" placeholder="RJ" maxlength="2" style="text-transform:uppercase"></div>
           <div class="fg" style="flex:1"><label>CEP</label><input type="text" id="f-cep" placeholder="00000-000"></div>
         </div>
-        <div class="fr">
-          <div class="fg"><label>Obra</label><input type="text" id="f-obra" placeholder="Nome / identificação da obra"></div>
-          <div class="fg"><label>Outros contatos</label><input type="text" id="f-outros" placeholder="Sr. Gilson, (21) 99999-9999"></div>
-        </div>
+        <div class="fg"><label>Obra</label><input type="text" id="f-obra" placeholder="Nome / identificação da obra"></div>
       </div>
       <div class="fs">
         <div class="fsl">Produtos</div>
@@ -935,13 +936,6 @@ td strong{color:var(--tx);font-weight:600}
         <div class="fr">
           <div class="fg"><label>Email</label><input type="email" id="cfg-off-email" placeholder="comercial@adiblock.com.br"></div>
           <div class="fg"><label>Telefone</label><input type="text" id="cfg-off-tel" placeholder="(21) 2708-2045"></div>
-        </div>
-      </div>
-      <div class="fs"><div class="fsl">Contato Solicitação <span style="font-weight:400;color:var(--mt);font-size:11px">— bloco "Solicitação" da proposta</span></div>
-        <div class="fg"><label>Nome</label><input type="text" id="cfg-sol-nome" placeholder="Quem solicitou"></div>
-        <div class="fr">
-          <div class="fg"><label>Email</label><input type="email" id="cfg-sol-email" placeholder="email@..."></div>
-          <div class="fg"><label>Telefone</label><input type="text" id="cfg-sol-tel" placeholder="(21) 99999-9999"></div>
         </div>
       </div>
       <div class="ma">
@@ -1677,6 +1671,7 @@ function abrEdit(id) {
   document.getElementById('f-cep').value   = c.cep   || '';
   document.getElementById('f-obra').value  = c.obra  || '';
   document.getElementById('f-outros').value= c.contato_outros || '';
+  document.getElementById('f-email').value = c.email || '';
   // Se já tinha valor estimado salvo, considera manualmente sobrescrito
   // (não vamos auto-recalcular em cima e perder o ajuste do vendedor)
   valorTouched = c.estimated_value != null && c.estimated_value !== '';
@@ -1844,6 +1839,7 @@ document.getElementById('clf').addEventListener('submit', async e => {
       cep:            document.getElementById('f-cep').value.trim()   || null,
       obra:           document.getElementById('f-obra').value.trim()  || null,
       contato_outros: document.getElementById('f-outros').value.trim()|| null,
+      email:          document.getElementById('f-email').value.trim() || null,
       ...(statusMudou && {status_changed_at: new Date().toISOString()}),
     };
     const oldC = EID ? (CL.find(c=>c.id===EID)||{}) : {};
@@ -2039,7 +2035,9 @@ function abrCotacao(id) {
 
   document.getElementById('gc-cli-title').textContent = 'Cliente — ' + (c.name||'');
   const resumo = [
+    c.email ? `📧 ${escHtml(c.email)}` : null,
     c.cnpj ? `CNPJ: ${escHtml(c.cnpj)}` : null,
+    c.contato_outros ? `Solicitante: ${escHtml(c.contato_outros)}` : null,
     (c.endereco || c.cidade) ? `${escHtml(c.endereco||'')}${c.cidade?', '+escHtml(c.cidade):''}${c.uf?'/'+escHtml(c.uf):''}` : null,
     c.obra ? `Obra: ${escHtml(c.obra)}` : null,
   ].filter(Boolean).join(' · ') || '<span style="color:var(--mt2)">Sem dados fiscais cadastrados — edite o cliente para preencher.</span>';
@@ -2092,12 +2090,12 @@ document.getElementById('gcf').addEventListener('submit', async e => {
 
   const snapshot = {
     cliente: {
-      name: c.name, phone: c.phone, endereco: c.endereco, cidade: c.cidade, uf: c.uf,
-      cep: c.cep, cnpj: c.cnpj, ie: c.ie, obra: c.obra, contato_outros: c.contato_outros,
+      name: c.name, phone: c.phone, email: c.email,
+      endereco: c.endereco, cidade: c.cidade, uf: c.uf, cep: c.cep,
+      cnpj: c.cnpj, ie: c.ie, obra: c.obra, contato_outros: c.contato_outros,
     },
     consultor:  { nome: MEP?.name || ME.email, email: ME.email, telefone: MEP?.telefone || null },
     office:     { nome: MEP?.office_nome || null, email: MEP?.office_email || null, telefone: MEP?.office_telefone || null },
-    solicitacao:{ nome: MEP?.solic_nome  || null, email: MEP?.solic_email  || null, telefone: MEP?.solic_telefone  || null },
     produtos:   prodsSnap,
     condicoes: {
       prazo_pagamento: document.getElementById('gc-pgto').value.trim() || '30DD',
@@ -2143,9 +2141,6 @@ function abrConfig() {
   document.getElementById('cfg-off-nome').value = MEP.office_nome     || '';
   document.getElementById('cfg-off-email').value= MEP.office_email    || '';
   document.getElementById('cfg-off-tel').value  = MEP.office_telefone || '';
-  document.getElementById('cfg-sol-nome').value = MEP.solic_nome      || '';
-  document.getElementById('cfg-sol-email').value= MEP.solic_email     || '';
-  document.getElementById('cfg-sol-tel').value  = MEP.solic_telefone  || '';
   document.getElementById('cfgm').classList.add('op');
 }
 
@@ -2157,9 +2152,6 @@ document.getElementById('cfgf').addEventListener('submit', async e => {
     office_nome:     document.getElementById('cfg-off-nome').value.trim() || null,
     office_email:    document.getElementById('cfg-off-email').value.trim()|| null,
     office_telefone: document.getElementById('cfg-off-tel').value.trim()  || null,
-    solic_nome:      document.getElementById('cfg-sol-nome').value.trim() || null,
-    solic_email:     document.getElementById('cfg-sol-email').value.trim()|| null,
-    solic_telefone:  document.getElementById('cfg-sol-tel').value.trim()  || null,
   };
   try {
     await api('PATCH','profiles',`id=eq.${ME.id}`, dados);
@@ -2176,7 +2168,6 @@ function renderCotacao(prop) {
   const c    = snap.cliente || {};
   const consultor = snap.consultor || {};
   const office    = snap.office || {};
-  const solic     = snap.solicitacao || {};
   const cond      = snap.condicoes || {};
   const prods     = snap.produtos || [];
 
@@ -2230,12 +2221,13 @@ function renderCotacao(prop) {
         <div class="cot-sect-title">Cliente</div>
         <div class="cot-info-list">
           <div><span>Nome:</span> <b>${escHtml(c.name||'—')}</b></div>
-          ${enderecoFull?`<div><span>Endereço:</span> ${escHtml(enderecoFull)}</div>`:''}
+          ${c.email?`<div><span>Email:</span> ${escHtml(c.email)}</div>`:''}
           ${c.cnpj?`<div><span>CNPJ/CPF:</span> <b>${escHtml(c.cnpj)}</b></div>`:''}
           ${c.ie?`<div><span>I.E.:</span> ${escHtml(c.ie)}</div>`:''}
-          ${c.phone?`<div><span>Telefones:</span> ${escHtml(c.phone)}</div>`:''}
+          ${c.contato_outros?`<div><span>Solicitante:</span> <b>${escHtml(c.contato_outros)}</b></div>`:''}
+          ${c.phone?`<div><span>Telefone:</span> ${escHtml(c.phone)}</div>`:''}
+          ${enderecoFull?`<div><span>Endereço:</span> ${escHtml(enderecoFull)}</div>`:''}
           ${c.obra?`<div><span>Obra:</span> ${escHtml(c.obra)}</div>`:''}
-          ${c.contato_outros?`<div><span>Outros:</span> ${escHtml(c.contato_outros)}</div>`:''}
         </div>
       </div>
       <div>
@@ -2247,9 +2239,6 @@ function renderCotacao(prop) {
           ${office.nome?`<div style="margin-top:8px"><span>Office:</span> <b>${escHtml(office.nome)}</b></div>`:''}
           ${office.email?`<div><span>email:</span> ${escHtml(office.email)}</div>`:''}
           ${office.telefone?`<div><span>Telefone:</span> ${escHtml(office.telefone)}</div>`:''}
-          ${solic.nome?`<div style="margin-top:8px"><span>Solicitação:</span> <b>${escHtml(solic.nome)}</b></div>`:''}
-          ${solic.email?`<div><span>email:</span> ${escHtml(solic.email)}</div>`:''}
-          ${solic.telefone?`<div><span>Telefone:</span> ${escHtml(solic.telefone)}</div>`:''}
         </div>
       </div>
     </div>

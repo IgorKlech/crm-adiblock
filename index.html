@@ -454,6 +454,14 @@ td strong{color:var(--tx);font-weight:600}
 .rel-ok-box{background:var(--ok2);border:1px solid var(--ok);border-radius:var(--r);padding:14px 18px;font-size:13px;color:var(--ok);display:flex;align-items:center;gap:10px}
 .rel-footer{text-align:center;font-size:11px;color:var(--mt);margin-top:28px;padding-top:16px;border-top:1px solid var(--bdr)}
 
+/* ── Linhas editáveis no modal de Gerar Cotação ── */
+.gc-prow{display:grid;grid-template-columns:1.6fr 1fr 0.7fr 0.9fr 0.6fr 1.2fr;gap:6px;align-items:center;font-size:12px;padding:6px 0;border-bottom:1px solid var(--bdr)}
+.gc-prow:last-child{border-bottom:none}
+.gc-phead{display:grid;grid-template-columns:1.6fr 1fr 0.7fr 0.9fr 0.6fr 1.2fr;gap:6px;font-size:11px;font-weight:600;color:var(--mt);text-transform:uppercase;letter-spacing:.04em;padding-bottom:6px;border-bottom:1.5px solid var(--bdr)}
+.gc-prow input,.gc-prow select{padding:6px 8px;border:1px solid var(--bdr);border-radius:6px;font-size:12px;font-family:inherit;background:var(--sur);color:var(--tx);outline:none;width:100%;box-sizing:border-box}
+.gc-prow input:focus,.gc-prow select:focus{border-color:var(--p)}
+.gc-prow .num{text-align:right}
+
 /* ── Cotação imprimível ── */
 #cot-page{display:none;position:fixed;inset:0;background:var(--bg);z-index:285;overflow-y:auto}
 #cot-page.op{display:block}
@@ -478,8 +486,20 @@ td strong{color:var(--tx);font-weight:600}
 .cot-tab tfoot td{padding:14px 10px;font-weight:700;font-size:14px;background:var(--bg);border-top:2px solid var(--p)}
 .cot-tab tfoot td.cot-total-lbl{text-align:right;color:var(--mt);font-weight:600;font-size:12px;text-transform:uppercase;letter-spacing:.05em}
 .cot-tab tfoot td.cot-total-val{color:var(--p);text-align:right;font-size:16px}
-.cot-obs{font-size:13px;line-height:1.6;color:var(--tx);white-space:pre-wrap}
+.cot-obs{font-size:13px;line-height:1.6;color:var(--tx);white-space:pre-wrap;padding:10px 14px;background:#fff8e1;border-left:4px solid #f59e0b;border-radius:6px}
 .cot-footer{text-align:center;font-size:11px;color:var(--mt);margin-top:28px;padding-top:14px;border-top:1px solid var(--bdr)}
+.cot-2col{display:grid;grid-template-columns:1fr 1fr;gap:24px;margin-bottom:22px}
+.cot-info-list{font-size:12px;line-height:1.7;color:var(--tx)}
+.cot-info-list span{color:var(--mt);margin-right:4px;display:inline-block;min-width:80px}
+.cot-info-list b{color:var(--tx);font-weight:600}
+.cot-condicoes{width:100%;border-collapse:collapse;font-size:12.5px;margin-bottom:28px}
+.cot-condicoes td{padding:8px 10px;border-bottom:1px solid var(--bdr);vertical-align:top}
+.cot-condicoes td:first-child{font-weight:600;color:var(--tx);width:35%;background:var(--bg)}
+.cot-corresp{display:grid;grid-template-columns:1fr 1fr;gap:24px;font-size:11px;color:var(--mt);line-height:1.7;border-top:1px solid var(--bdr);padding-top:14px;margin-top:30px}
+.cot-termos{font-size:11.5px;line-height:1.55;color:var(--tx);padding-left:22px}
+.cot-termos li{margin-bottom:8px}
+.cot-page-break{page-break-after:always}
+@media print{.cot-page-break{page-break-after:always}}
 
 /* ── @media print ── */
 @media print{
@@ -570,7 +590,7 @@ td strong{color:var(--tx);font-weight:600}
     </div>
     <div class="nbr">
       <div class="uc">
-        <div class="ua" id="uav">?</div>
+        <div class="ua" id="uav" onclick="abrConfig()" title="Minhas configurações" style="cursor:pointer">?</div>
         <div>
           <div class="un" id="unm">-</div>
           <span id="nb-alert" title="Clientes inativos">⚠</span>
@@ -732,6 +752,22 @@ td strong{color:var(--tx);font-weight:600}
           <div class="fg"><label>Telefone</label><input type="text" id="ft" placeholder="(11) 99999-9999"></div>
         </div>
       </div>
+      <div class="fs"><div class="fsl">Dados fiscais e obra <span style="font-weight:400;color:var(--mt);font-size:11px">— usados na cotação</span></div>
+        <div class="fr">
+          <div class="fg"><label>CNPJ / CPF</label><input type="text" id="f-cnpj" placeholder="00.000.000/0000-00"></div>
+          <div class="fg"><label>Inscrição Estadual</label><input type="text" id="f-ie" placeholder="—"></div>
+        </div>
+        <div class="fg"><label>Endereço</label><input type="text" id="f-end" placeholder="Rua, número, complemento"></div>
+        <div class="fr">
+          <div class="fg" style="flex:2"><label>Cidade</label><input type="text" id="f-cid" placeholder="Cidade"></div>
+          <div class="fg" style="flex:0.5"><label>UF</label><input type="text" id="f-uf" placeholder="RJ" maxlength="2" style="text-transform:uppercase"></div>
+          <div class="fg" style="flex:1"><label>CEP</label><input type="text" id="f-cep" placeholder="00000-000"></div>
+        </div>
+        <div class="fr">
+          <div class="fg"><label>Obra</label><input type="text" id="f-obra" placeholder="Nome / identificação da obra"></div>
+          <div class="fg"><label>Outros contatos</label><input type="text" id="f-outros" placeholder="Sr. Gilson, (21) 99999-9999"></div>
+        </div>
+      </div>
       <div class="fs">
         <div class="fsl">Produtos</div>
         <div class="prod-headers">
@@ -786,6 +822,65 @@ td strong{color:var(--tx);font-weight:600}
         <p id="serr" class="em" style="flex:1;margin:0;align-self:center"></p>
         <button type="button" class="btn bg" id="mcan">Cancelar</button>
         <button type="submit" class="btn bp" id="msav">Salvar</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- MODAL GERAR COTACAO -->
+<div class="mo" id="gcm">
+  <div class="md" style="max-width:780px">
+    <div class="mh"><h3>Gerar Proposta Comercial</h3><button class="mx" onclick="document.getElementById('gcm').classList.remove('op')">✕</button></div>
+    <form id="gcf">
+      <div class="fs"><div class="fsl" id="gc-cli-title">Cliente</div>
+        <div id="gc-cli-resumo" style="font-size:13px;color:var(--mt);line-height:1.6"></div>
+      </div>
+      <div class="fs"><div class="fsl">Produtos <span style="font-weight:400;color:var(--mt);font-size:11px">— IPI e Classificação editáveis</span></div>
+        <div id="gc-prod-lista"></div>
+      </div>
+      <div class="fs"><div class="fsl">Condições comerciais</div>
+        <div class="fr">
+          <div class="fg"><label>Prazo de pagamento</label><input type="text" id="gc-pgto" placeholder="Ex: 35DD" value="30DD"></div>
+          <div class="fg"><label>Frete</label>
+            <select id="gc-frete"><option>FOB</option><option>CIF</option></select>
+          </div>
+          <div class="fg"><label>Validade (dias)</label><input type="number" id="gc-val" min="1" value="30"></div>
+        </div>
+        <div class="fg"><label>Observações adicionais</label><textarea id="gc-obs" placeholder="Ex: local de entrega, condições especiais..." rows="2"></textarea></div>
+      </div>
+      <div class="ma">
+        <button type="button" class="btn bg" onclick="document.getElementById('gcm').classList.remove('op')">Cancelar</button>
+        <button type="submit" class="btn bp" id="gc-sub">Gerar Proposta</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- MODAL MINHAS CONFIGURACOES -->
+<div class="mo" id="cfgm">
+  <div class="md">
+    <div class="mh"><h3>Minhas Configurações</h3><button class="mx" onclick="document.getElementById('cfgm').classList.remove('op')">✕</button></div>
+    <form id="cfgf">
+      <div class="fs"><div class="fsl">Seus dados <span style="font-weight:400;color:var(--mt);font-size:11px">— aparecem na cotação como Consultor</span></div>
+        <div class="fg"><label>Telefone</label><input type="text" id="cfg-tel" placeholder="(11) 99999-9999"></div>
+      </div>
+      <div class="fs"><div class="fsl">Contato Office <span style="font-weight:400;color:var(--mt);font-size:11px">— bloco "Office" da proposta</span></div>
+        <div class="fg"><label>Nome</label><input type="text" id="cfg-off-nome" placeholder="Ex: Laiz Oliveira"></div>
+        <div class="fr">
+          <div class="fg"><label>Email</label><input type="email" id="cfg-off-email" placeholder="comercial@adiblock.com.br"></div>
+          <div class="fg"><label>Telefone</label><input type="text" id="cfg-off-tel" placeholder="(21) 2708-2045"></div>
+        </div>
+      </div>
+      <div class="fs"><div class="fsl">Contato Solicitação <span style="font-weight:400;color:var(--mt);font-size:11px">— bloco "Solicitação" da proposta</span></div>
+        <div class="fg"><label>Nome</label><input type="text" id="cfg-sol-nome" placeholder="Quem solicitou"></div>
+        <div class="fr">
+          <div class="fg"><label>Email</label><input type="email" id="cfg-sol-email" placeholder="email@..."></div>
+          <div class="fg"><label>Telefone</label><input type="text" id="cfg-sol-tel" placeholder="(21) 99999-9999"></div>
+        </div>
+      </div>
+      <div class="ma">
+        <button type="button" class="btn bg" onclick="document.getElementById('cfgm').classList.remove('op')">Cancelar</button>
+        <button type="submit" class="btn bp">Salvar</button>
       </div>
     </form>
   </div>
@@ -1354,6 +1449,15 @@ function abrEdit(id) {
   document.getElementById('fcb').value=c.callback_date||'';
   document.getElementById('fvl').value=c.estimated_value||'';
   document.getElementById('fob').value=c.observation||'';
+  // Dados fiscais e obra (Fase 4)
+  document.getElementById('f-cnpj').value  = c.cnpj  || '';
+  document.getElementById('f-ie').value    = c.ie    || '';
+  document.getElementById('f-end').value   = c.endereco || '';
+  document.getElementById('f-cid').value   = c.cidade || '';
+  document.getElementById('f-uf').value    = c.uf    || '';
+  document.getElementById('f-cep').value   = c.cep   || '';
+  document.getElementById('f-obra').value  = c.obra  || '';
+  document.getElementById('f-outros').value= c.contato_outros || '';
   // Se já tinha valor estimado salvo, considera manualmente sobrescrito
   // (não vamos auto-recalcular em cima e perder o ajuste do vendedor)
   valorTouched = c.estimated_value != null && c.estimated_value !== '';
@@ -1512,6 +1616,15 @@ document.getElementById('clf').addEventListener('submit', async e => {
       callback_date:document.getElementById('fcb').value||null,
       estimated_value:document.getElementById('fvl').value?parseFloat(document.getElementById('fvl').value):null,
       observation:document.getElementById('fob').value.trim()||null,
+      // Fase 4: dados fiscais e obra
+      cnpj:           document.getElementById('f-cnpj').value.trim()  || null,
+      ie:             document.getElementById('f-ie').value.trim()    || null,
+      endereco:       document.getElementById('f-end').value.trim()   || null,
+      cidade:         document.getElementById('f-cid').value.trim()   || null,
+      uf:             document.getElementById('f-uf').value.trim().toUpperCase() || null,
+      cep:            document.getElementById('f-cep').value.trim()   || null,
+      obra:           document.getElementById('f-obra').value.trim()  || null,
+      contato_outros: document.getElementById('f-outros').value.trim()|| null,
       ...(statusMudou && {status_changed_at: new Date().toISOString()}),
     };
     const oldC = EID ? (CL.find(c=>c.id===EID)||{}) : {};
@@ -1662,100 +1775,340 @@ function fecharRelatorio() {
 }
 
 // ── Cotação / Proposta Comercial ──────────────────────────────────────────
+// Endereço fixo da Adiblock no rodapé das condições comerciais
+const ADIBLOCK_INFO = {
+  razao: 'ADIBLOCK FABRICAÇÃO COMERCIALIZAÇÃO E REPRESENTAÇÃO DE PRODUTOS QUIMICOS Ltda.',
+  cnpj: '31.458.997/0001-51',
+  endereco: 'Estrada Pena Boto 972 - Monjolos',
+  cidade: 'São Gonçalo – RJ',
+  cep: '24722-470',
+  telefone: '+ 55 (21) 2708-2045',
+  email: 'comercial@adiblock.com.br',
+  web: 'www.adiblock.com.br',
+};
+
+const TERMOS_COMERCIAIS = [
+  'A ADIBLOCK se reserva o direito de cancelar ou alterar as condições de suas propostas, antes do recebimento de uma confirmação pelo cliente.',
+  'A ordem de compra do cliente deve fazer referência ao nosso número de proposta.',
+  'Ordens de compra recebidas em desatenção aos termos aqui propostos, não serão consideradas válidas e deverão ser refeitas.',
+  'Os prazos de entrega, tanto na modalidade CIF ou FOB, são estimados e podem variar, em função do tamanho dos pedidos dos clientes, horário de envio do pedido e disponibilidades das transportadoras. A ADIBLOCK não poderá ser penalizada pelo cliente ou por seus clientes, face a atrasos na data de entrega decorrentes dessas variáveis.',
+  'Os fretes sobre produtos devolvidos em função de erros do comprador não poderão ser imputados à ADIBLOCK e deverão ser pagos pelo cliente.',
+  'Produtos retirados diretamente pelo cliente somente serão autorizados, caso o veículo de transporte e o motorista atendam às diretrizes da ANTT, principalmente quando se tratarem de cargas consideradas perigosas para o transporte terrestre. Cabe ao cliente ou à sua ordem, providenciar placas sinalizadoras e demais requisitos legais, quando aplicáveis.',
+  'O risco de danos durante o transporte dos produtos comprados pelo cliente é assumido pelo comprador, quando o frete for na modalidade FOB.',
+  'Sendo informada pelo cliente a data de carregamento, a ADIBLOCK emitirá Nota Fiscal e já começará a valer o prazo de pagamento. Sendo postergada a data de carregamento após a emissão da Nota Fiscal, o prazo de pagamento continua a ser o da data de faturamento original.',
+  'Produtos vendidos só poderão ser devolvidas para a ADIBLOCK, após aceite formal. O frete da devolução, caso aceita, corre por conta do comprador. Produtos devolvidos por motivos que possam ser imputados à ADIBLOCK serão custeados pela ADIBLOCK.',
+  'Não há garantias expressas exceto as estipuladas nestes TERMOS COMERCIAIS GERAIS e nos demais itens da proposta.',
+  'A ADIBLOCK garante que os produtos por ela produzidos estão conformes aos requisitos especificados e foram aprovados pelo laboratório de controle da qualidade antes da expedição e encontravam-se dentro do prazo de validade, em embalagens adequadas e não defeituosas. Essa garantia é restrita às condições dos produtos especificadas nas fichas técnicas e dentro dos prazos de validade e nas embalagens protegidas.',
+  'A ADIBLOCK não dá garantias em relação a produtos defeituosos não reclamados antes do vencimento do prazo de validade, bem como a danos causados devido à má aplicação do produto, falta de conservação, erro de dosagem, erro de indicação do produto (em discordância das recomendações estipuladas nas fichas técnicas), abuso ou uso indevido do produto, uso em condições desfavoráveis de clima, que contrariem as boas práticas de engenharia, bem como erro de especificação por engenheiros ou especificadores não pertencentes ao quadro da ADIBLOCK ou sob sua administração.',
+  'Dosagens, métodos de aplicação, consumos e resultados dos produtos foram determinados baseados em testes realizados pela ADIBLOCK em condições especiais de laboratório, com materiais selecionados e temperatura controlada e tem caráter restrito ao desenvolvimento dos produtos, não sendo atestado tácito ou explícito de desempenho em situação de campo ou obra. Cabe ao cliente ou à sua ordem confirmar, aprovar e validar seus traços / produtos, métodos executivos, qualificar seus insumos e pessoal de aplicação, seja por si só ou por terceiros.',
+  'As partes elegem o Foro da Comarca de São Gonçalo/RJ para dirimir quaisquer questões em relação as condições comerciais aqui estabelecidas.',
+];
+
+const RISCOS = ['NÃO CLASSIFICADO','Classe 3 (Líquido inflamável)','Classe 6 (Substância tóxica)','Classe 8 (Substância corrosiva)','Classe 9 (Diversos)'];
+
+let GC_CLIENT_ID = null;
+
+function numProposta(p) {
+  return String(p.numero).padStart(4, '0') + '-' + String(p.ano).slice(-2);
+}
+
+// Abre o modal de preparação da cotação (escolhe IPI, risco, condições)
 function abrCotacao(id) {
   const c = CL.find(x => x.id === id);
   if (!c) { toast('Cliente não encontrado','','warning'); return; }
-  renderCotacao(c);
-  const page = document.getElementById('cot-page');
-  page.classList.add('op');
-  page.scrollTop = 0;
-  document.body.style.overflow = 'hidden';
+  GC_CLIENT_ID = id;
+
+  document.getElementById('gc-cli-title').textContent = 'Cliente — ' + (c.name||'');
+  const resumo = [
+    c.cnpj ? `CNPJ: ${escHtml(c.cnpj)}` : null,
+    (c.endereco || c.cidade) ? `${escHtml(c.endereco||'')}${c.cidade?', '+escHtml(c.cidade):''}${c.uf?'/'+escHtml(c.uf):''}` : null,
+    c.obra ? `Obra: ${escHtml(c.obra)}` : null,
+  ].filter(Boolean).join(' · ') || '<span style="color:var(--mt2)">Sem dados fiscais cadastrados — edite o cliente para preencher.</span>';
+  document.getElementById('gc-cli-resumo').innerHTML = resumo;
+
+  const prods = (c.produtos && c.produtos.length > 0) ? c.produtos : [];
+  const lista = document.getElementById('gc-prod-lista');
+  if (!prods.length) {
+    lista.innerHTML = '<div style="font-size:13px;color:var(--mt);padding:12px 0">Cliente sem produtos cadastrados. Volte e adicione produtos primeiro.</div>';
+    document.getElementById('gc-sub').disabled = true;
+  } else {
+    document.getElementById('gc-sub').disabled = false;
+    lista.innerHTML = `<div class="gc-phead">
+      <div>Produto</div><div>Embalagem</div>
+      <div class="num">Qtd (kg)</div><div class="num">Preço R$/kg</div>
+      <div class="num">IPI %</div><div>Classificação</div>
+    </div>` + prods.map((p, i) => `<div class="gc-prow" data-idx="${i}">
+      <div>${escHtml(p.produto||'—')}</div>
+      <div>${escHtml(p.embalagem||'—')}</div>
+      <input class="num gc-qtd" type="number" step="0.01" min="0" value="${p.qtd_kg!=null?p.qtd_kg:''}">
+      <input class="num gc-prc" type="number" step="0.01" min="0" value="${p.preco_kg!=null?p.preco_kg:''}">
+      <input class="num gc-ipi" type="number" step="0.01" min="0" value="0">
+      <select class="gc-risco">${RISCOS.map(r=>`<option>${r}</option>`).join('')}</select>
+    </div>`).join('');
+  }
+
+  document.getElementById('gcm').classList.add('op');
 }
+
+document.getElementById('gcf').addEventListener('submit', async e => {
+  e.preventDefault();
+  if (!GC_CLIENT_ID || !ME) return;
+  const c = CL.find(x => x.id === GC_CLIENT_ID);
+  if (!c) return;
+
+  const rows = [...document.querySelectorAll('#gc-prod-lista .gc-prow')];
+  const prodsSnap = rows.map((r, idx) => {
+    const i = parseInt(r.dataset.idx, 10);
+    const orig = (c.produtos||[])[i] || {};
+    return {
+      item: idx + 1,
+      produto:   orig.produto || '—',
+      embalagem: orig.embalagem || null,
+      qtd_kg:    parseNum(r.querySelector('.gc-qtd').value),
+      preco_kg:  parseNum(r.querySelector('.gc-prc').value),
+      ipi:       parseNum(r.querySelector('.gc-ipi').value) ?? 0,
+      classificacao_risco: r.querySelector('.gc-risco').value || 'NÃO CLASSIFICADO',
+    };
+  });
+
+  const snapshot = {
+    cliente: {
+      name: c.name, phone: c.phone, endereco: c.endereco, cidade: c.cidade, uf: c.uf,
+      cep: c.cep, cnpj: c.cnpj, ie: c.ie, obra: c.obra, contato_outros: c.contato_outros,
+    },
+    consultor:  { nome: MEP?.name || ME.email, email: ME.email, telefone: MEP?.telefone || null },
+    office:     { nome: MEP?.office_nome || null, email: MEP?.office_email || null, telefone: MEP?.office_telefone || null },
+    solicitacao:{ nome: MEP?.solic_nome  || null, email: MEP?.solic_email  || null, telefone: MEP?.solic_telefone  || null },
+    produtos:   prodsSnap,
+    condicoes: {
+      prazo_pagamento: document.getElementById('gc-pgto').value.trim() || '30DD',
+      frete:           document.getElementById('gc-frete').value,
+      validade_dias:   parseInt(document.getElementById('gc-val').value, 10) || 30,
+      obs:             document.getElementById('gc-obs').value.trim() || null,
+    },
+  };
+
+  const btn = document.getElementById('gc-sub');
+  btn.disabled = true; btn.textContent = 'Gerando...';
+  try {
+    const created = await api('POST', 'proposals', null, {
+      ano: new Date().getFullYear(),
+      client_id: GC_CLIENT_ID,
+      seller_id: ME.id,
+      snapshot,
+    });
+    const prop = Array.isArray(created) ? created[0] : created;
+    document.getElementById('gcm').classList.remove('op');
+    renderCotacao(prop);
+    const page = document.getElementById('cot-page');
+    page.classList.add('op');
+    page.scrollTop = 0;
+    document.body.style.overflow = 'hidden';
+    toast('Proposta gerada', 'Nº ' + numProposta(prop), 'success');
+  } catch(err) {
+    toast('Erro ao gerar proposta', err.message||'', 'warning');
+  } finally {
+    btn.disabled = false; btn.textContent = 'Gerar Proposta';
+  }
+});
+
 function fecharCotacao() {
   document.getElementById('cot-page').classList.remove('op');
   document.body.style.overflow = '';
 }
 
-function renderCotacao(c) {
-  const prods = (c.produtos && c.produtos.length > 0)
-    ? c.produtos
-    : (c.produto ? [{produto:c.produto, embalagem:null, qtd_kg:null, preco_kg:null}] : []);
+// ── Minhas Configurações (perfil do vendedor) ─────────────────────────────
+function abrConfig() {
+  if (!MEP) { toast('Carregando perfil...','','info'); return; }
+  document.getElementById('cfg-tel').value      = MEP.telefone        || '';
+  document.getElementById('cfg-off-nome').value = MEP.office_nome     || '';
+  document.getElementById('cfg-off-email').value= MEP.office_email    || '';
+  document.getElementById('cfg-off-tel').value  = MEP.office_telefone || '';
+  document.getElementById('cfg-sol-nome').value = MEP.solic_nome      || '';
+  document.getElementById('cfg-sol-email').value= MEP.solic_email     || '';
+  document.getElementById('cfg-sol-tel').value  = MEP.solic_telefone  || '';
+  document.getElementById('cfgm').classList.add('op');
+}
 
-  const hoje = new Date();
-  const dataStr = hoje.toLocaleDateString('pt-BR');
-  const validade = new Date(hoje.getTime() + 15 * 86400000).toLocaleDateString('pt-BR');
-  const propNum = 'COT-' + hoje.toISOString().slice(0,10).replace(/-/g,'') + '-' + String(c.id||'').slice(0,4).toUpperCase();
+document.getElementById('cfgf').addEventListener('submit', async e => {
+  e.preventDefault();
+  if (!ME) return;
+  const dados = {
+    telefone:        document.getElementById('cfg-tel').value.trim()      || null,
+    office_nome:     document.getElementById('cfg-off-nome').value.trim() || null,
+    office_email:    document.getElementById('cfg-off-email').value.trim()|| null,
+    office_telefone: document.getElementById('cfg-off-tel').value.trim()  || null,
+    solic_nome:      document.getElementById('cfg-sol-nome').value.trim() || null,
+    solic_email:     document.getElementById('cfg-sol-email').value.trim()|| null,
+    solic_telefone:  document.getElementById('cfg-sol-tel').value.trim()  || null,
+  };
+  try {
+    await api('PATCH','profiles',`id=eq.${ME.id}`, dados);
+    Object.assign(MEP, dados);
+    toast('Configurações salvas','','success');
+    document.getElementById('cfgm').classList.remove('op');
+  } catch(err) {
+    toast('Erro ao salvar',err.message||'','warning');
+  }
+});
 
-  const vendedor = c.seller_name || c.seller?.name || (ME?.email||'—');
+function renderCotacao(prop) {
+  const snap = prop.snapshot || {};
+  const c    = snap.cliente || {};
+  const consultor = snap.consultor || {};
+  const office    = snap.office || {};
+  const solic     = snap.solicitacao || {};
+  const cond      = snap.condicoes || {};
+  const prods     = snap.produtos || [];
+
+  const dataProp = new Date(prop.created_at || Date.now());
+  const dataStr  = dataProp.toLocaleDateString('pt-BR');
+  const validade = new Date(dataProp.getTime() + (cond.validade_dias||30) * 86400000).toLocaleDateString('pt-BR');
+  const propLabel = numProposta(prop);
 
   let totalGeral = 0;
-  const rowsHtml = prods.length
-    ? prods.map(p => {
-        const q = p.qtd_kg != null ? Number(p.qtd_kg) : null;
-        const pr = p.preco_kg != null ? Number(p.preco_kg) : null;
-        const sub = (q != null && pr != null) ? q * pr : null;
-        if (sub != null) totalGeral += sub;
-        return `<tr>
-          <td>${escHtml(p.produto)}</td>
-          <td>${escHtml(p.embalagem||'—')}</td>
-          <td class="num">${q!=null ? q.toLocaleString('pt-BR',{maximumFractionDigits:2}) : '—'}</td>
-          <td class="num">${pr!=null ? fmtBRL(pr) : '—'}</td>
-          <td class="num">${sub!=null ? fmtBRL(sub) : '—'}</td>
-        </tr>`;
-      }).join('')
-    : '<tr><td colspan="5" style="text-align:center;color:var(--mt);padding:24px">Nenhum produto cadastrado para este cliente.</td></tr>';
+  const rowsHtml = prods.map(p => {
+    const q  = p.qtd_kg   != null ? Number(p.qtd_kg)   : null;
+    const pr = p.preco_kg != null ? Number(p.preco_kg) : null;
+    const ipiPct = p.ipi != null ? Number(p.ipi) : 0;
+    const valorSemIpi = (q != null && pr != null) ? q * pr : null;
+    const ipiVal      = valorSemIpi != null ? valorSemIpi * (ipiPct/100) : 0;
+    const valorTotal  = valorSemIpi != null ? valorSemIpi + ipiVal : null;
+    if (valorTotal != null) totalGeral += valorTotal;
+    return `<tr>
+      <td class="num">${p.item||''}</td>
+      <td><b>${escHtml(p.produto)}</b>${p.embalagem?` <span style="color:var(--mt)">(${escHtml(p.embalagem)})</span>`:''}</td>
+      <td class="num">${q!=null?q.toLocaleString('pt-BR'):'—'}</td>
+      <td class="num">${pr!=null?fmtBRL(pr):'—'}</td>
+      <td class="num">${valorSemIpi!=null?fmtBRL(valorSemIpi):'—'}</td>
+      <td class="num">${ipiPct}%</td>
+      <td class="num">${valorTotal!=null?fmtBRL(valorTotal):'—'}</td>
+      <td style="font-size:11px;color:#b91c1c;font-weight:600">${escHtml(p.classificacao_risco||'—')}</td>
+    </tr>`;
+  }).join('');
 
-  document.getElementById('cot-body').innerHTML = `
-    <div class="cot-body">
-      <div class="cot-header">
-        <div class="cot-logo-wrap">
-          <img src="logo.png" alt="Adiblock">
-          <div>
-            <div class="cot-title">Adiblock</div>
-            <div class="cot-h1">Proposta Comercial</div>
-          </div>
-        </div>
-        <div class="cot-meta">
-          <div><b>${escHtml(propNum)}</b></div>
-          <div>Data: <b>${dataStr}</b></div>
-          <div>Validade: <b>${validade}</b></div>
+  const enderecoFull = [c.endereco, c.cidade && c.uf ? c.cidade+'/'+c.uf : (c.cidade||c.uf||''), c.cep ? 'CEP '+c.cep : null].filter(Boolean).join(' — ');
+
+  // ─── Página 1: Proposta ───
+  const pagina1 = `<div class="cot-body cot-page-break">
+    <div class="cot-header">
+      <div class="cot-logo-wrap">
+        <img src="logo.png" alt="Adiblock">
+        <div>
+          <div class="cot-title">Adiblock — Aditivos para Concretos</div>
+          <div class="cot-h1">Proposta Comercial</div>
         </div>
       </div>
+      <div class="cot-meta">
+        <div>Pedido: <b>${escHtml(propLabel)}</b></div>
+        <div>Data: <b>${dataStr}</b></div>
+        <div>Validade: <b>${validade}</b></div>
+      </div>
+    </div>
 
-      <div class="cot-sect">
+    <div class="cot-2col">
+      <div>
         <div class="cot-sect-title">Cliente</div>
-        <div class="cot-info">
-          <div><span>Nome:</span><b>${escHtml(c.name||'—')}</b></div>
-          <div><span>Telefone:</span><b>${escHtml(c.phone||'—')}</b></div>
-          <div><span>Vendedor:</span><b>${escHtml(vendedor)}</b></div>
-          <div><span>Status:</span><b>${escHtml(c.status||'—')}</b></div>
+        <div class="cot-info-list">
+          <div><span>Nome:</span> <b>${escHtml(c.name||'—')}</b></div>
+          ${enderecoFull?`<div><span>Endereço:</span> ${escHtml(enderecoFull)}</div>`:''}
+          ${c.cnpj?`<div><span>CNPJ/CPF:</span> <b>${escHtml(c.cnpj)}</b></div>`:''}
+          ${c.ie?`<div><span>I.E.:</span> ${escHtml(c.ie)}</div>`:''}
+          ${c.phone?`<div><span>Telefones:</span> ${escHtml(c.phone)}</div>`:''}
+          ${c.obra?`<div><span>Obra:</span> ${escHtml(c.obra)}</div>`:''}
+          ${c.contato_outros?`<div><span>Outros:</span> ${escHtml(c.contato_outros)}</div>`:''}
         </div>
       </div>
-
-      <div class="cot-sect">
-        <div class="cot-sect-title">Produtos</div>
-        <table class="cot-tab">
-          <thead><tr>
-            <th>Produto</th><th>Embalagem</th>
-            <th class="num">Qtd (kg)</th><th class="num">Preço R$/kg</th><th class="num">Total</th>
-          </tr></thead>
-          <tbody>${rowsHtml}</tbody>
-          ${totalGeral > 0 ? `<tfoot><tr>
-            <td colspan="4" class="cot-total-lbl">Total Geral</td>
-            <td class="cot-total-val">${fmtBRL(totalGeral)}</td>
-          </tr></tfoot>` : ''}
-        </table>
+      <div>
+        <div class="cot-sect-title">Contatos Adiblock</div>
+        <div class="cot-info-list">
+          <div><span>Consultor:</span> <b>${escHtml(consultor.nome||'—')}</b></div>
+          ${consultor.email?`<div><span>email:</span> ${escHtml(consultor.email)}</div>`:''}
+          ${consultor.telefone?`<div><span>Telefone:</span> ${escHtml(consultor.telefone)}</div>`:''}
+          ${office.nome?`<div style="margin-top:8px"><span>Office:</span> <b>${escHtml(office.nome)}</b></div>`:''}
+          ${office.email?`<div><span>email:</span> ${escHtml(office.email)}</div>`:''}
+          ${office.telefone?`<div><span>Telefone:</span> ${escHtml(office.telefone)}</div>`:''}
+          ${solic.nome?`<div style="margin-top:8px"><span>Solicitação:</span> <b>${escHtml(solic.nome)}</b></div>`:''}
+          ${solic.email?`<div><span>email:</span> ${escHtml(solic.email)}</div>`:''}
+          ${solic.telefone?`<div><span>Telefone:</span> ${escHtml(solic.telefone)}</div>`:''}
+        </div>
       </div>
+    </div>
 
-      ${c.observation ? `<div class="cot-sect">
-        <div class="cot-sect-title">Observações</div>
-        <div class="cot-obs">${escHtml(c.observation)}</div>
-      </div>` : ''}
+    <div class="cot-sect">
+      <div class="cot-sect-title">Produtos</div>
+      <table class="cot-tab">
+        <thead><tr>
+          <th class="num" style="width:34px">Item</th>
+          <th>Produto (embalagem)</th>
+          <th class="num">Qtd (kg)</th>
+          <th class="num">Preço unit. (R$/kg)</th>
+          <th class="num">Valor sem IPI</th>
+          <th class="num">IPI</th>
+          <th class="num">Valor Total</th>
+          <th>Classificação de risco</th>
+        </tr></thead>
+        <tbody>${rowsHtml||'<tr><td colspan="8" style="text-align:center;color:var(--mt);padding:20px">Sem produtos.</td></tr>'}</tbody>
+        ${totalGeral > 0 ? `<tfoot><tr>
+          <td colspan="6" class="cot-total-lbl">Valor Total</td>
+          <td class="cot-total-val">${fmtBRL(totalGeral)}</td>
+          <td></td>
+        </tr></tfoot>` : ''}
+      </table>
+    </div>
 
-      <div class="cot-footer">
-        Proposta gerada em ${dataStr} · Adiblock — Aditivos para Concreto
+    ${cond.obs ? `<div class="cot-sect">
+      <div class="cot-sect-title">OBS</div>
+      <div class="cot-obs">${escHtml(cond.obs)}</div>
+    </div>`:''}
+
+    <div style="font-size:13px;margin-top:14px"><b>Prazo de pagamento:</b> ${escHtml(cond.prazo_pagamento||'30DD')}</div>
+  </div>`;
+
+  // ─── Página 2: Condições Comerciais ───
+  const pagina2 = `<div class="cot-body cot-page-break">
+    <div class="cot-h1" style="margin-bottom:18px">Condições Comerciais</div>
+    <table class="cot-condicoes">
+      <tr><td>Prazo de pagamento</td><td><b>${escHtml(cond.prazo_pagamento||'30DD')}</b></td></tr>
+      <tr><td>Frete</td><td><b>${escHtml(cond.frete||'FOB')}</b></td></tr>
+      <tr><td>Condições sobre o transporte</td><td>Quando a carga conter produtos classificados como perigosos para efeito de transporte terrestre, em atenção à legislação da ANTT, o veículo deverá possuir as placas adequadas, bem como o motorista deverá possuir MOPP válido.</td></tr>
+      <tr><td>Prazo de entrega</td><td>Até 10 dias úteis após confirmação da proposta por e-mail.</td></tr>
+      <tr><td>Impostos inclusos sobre a fatura</td><td><b>ICMS incluso</b> — Optante pelo Simples Nacional.</td></tr>
+      <tr><td>Demais impostos</td><td>IPI isento. Demais impostos inclusos.</td></tr>
+      <tr><td>Prazo de validade da proposta</td><td><b>${cond.validade_dias||30} dias</b></td></tr>
+      <tr><td>Observações adicionais</td><td>Esta proposta é complementada pelos <b>TERMOS COMERCIAIS GERAIS</b> em anexo.</td></tr>
+    </table>
+
+    <div class="cot-corresp">
+      <div>
+        <div style="font-weight:600;margin-bottom:4px">Correspondência:</div>
+        <div>${escHtml(ADIBLOCK_INFO.razao)}</div>
+        <div>CNPJ: ${escHtml(ADIBLOCK_INFO.cnpj)}</div>
+        <div>${escHtml(ADIBLOCK_INFO.endereco)}</div>
+        <div>${escHtml(ADIBLOCK_INFO.cidade)}</div>
+        <div>CEP: ${escHtml(ADIBLOCK_INFO.cep)}</div>
       </div>
-    </div>`;
+      <div>
+        <div style="font-weight:600;margin-bottom:4px">Comunicação:</div>
+        <div>Fone: ${escHtml(ADIBLOCK_INFO.telefone)}</div>
+        <div>Mail: ${escHtml(ADIBLOCK_INFO.email)}</div>
+        <div>Web: ${escHtml(ADIBLOCK_INFO.web)}</div>
+      </div>
+    </div>
+  </div>`;
+
+  // ─── Página 3: Termos Comerciais Gerais ───
+  const pagina3 = `<div class="cot-body">
+    <div class="cot-h1" style="margin-bottom:14px">Termos Comerciais Gerais</div>
+    <div style="font-size:12px;line-height:1.55;color:var(--tx);margin-bottom:14px">
+      As vendas efetuadas pela <b>ADIBLOCK FABRICAÇÃO COMERCIALIZAÇÃO E REPRESENTAÇÃO DE PRODUTOS QUIMICOS LTDA</b>, doravante denominada ADIBLOCK, são realizadas sob as seguintes condições:
+    </div>
+    <ol class="cot-termos">
+      ${TERMOS_COMERCIAIS.map(t => `<li>${escHtml(t)}</li>`).join('')}
+    </ol>
+  </div>`;
+
+  document.getElementById('cot-body').innerHTML = pagina1 + pagina2 + pagina3;
 }
 
 async function gerarRelatorio() {

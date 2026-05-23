@@ -19,10 +19,27 @@ ALTER TABLE public.clients
   ADD COLUMN IF NOT EXISTS observation        text,
   ADD COLUMN IF NOT EXISTS internal_notes     text,
   ADD COLUMN IF NOT EXISTS status_changed_at  timestamptz,
-  ADD COLUMN IF NOT EXISTS created_at         timestamptz DEFAULT now();
+  ADD COLUMN IF NOT EXISTS created_at         timestamptz DEFAULT now(),
+  -- Fase 4: dados fiscais e da obra (usados nas cotações)
+  ADD COLUMN IF NOT EXISTS endereco           text,
+  ADD COLUMN IF NOT EXISTS cidade             text,
+  ADD COLUMN IF NOT EXISTS uf                 text,
+  ADD COLUMN IF NOT EXISTS cep                text,
+  ADD COLUMN IF NOT EXISTS cnpj               text,
+  ADD COLUMN IF NOT EXISTS ie                 text,
+  ADD COLUMN IF NOT EXISTS obra               text,
+  ADD COLUMN IF NOT EXISTS contato_outros     text;
 
 ALTER TABLE public.profiles
-  ADD COLUMN IF NOT EXISTS seller_status      text DEFAULT 'Disponível';
+  ADD COLUMN IF NOT EXISTS seller_status      text DEFAULT 'Disponível',
+  -- Fase 4: dados do contato Office e Solicitação que aparecem no rodapé da cotação
+  ADD COLUMN IF NOT EXISTS telefone           text,
+  ADD COLUMN IF NOT EXISTS office_nome        text,
+  ADD COLUMN IF NOT EXISTS office_email       text,
+  ADD COLUMN IF NOT EXISTS office_telefone    text,
+  ADD COLUMN IF NOT EXISTS solic_nome         text,
+  ADD COLUMN IF NOT EXISTS solic_email        text,
+  ADD COLUMN IF NOT EXISTS solic_telefone     text;
 
 -- call_history (usado pelo histórico de contatos)
 CREATE TABLE IF NOT EXISTS public.call_history (
@@ -365,6 +382,49 @@ ON CONFLICT (nome, embalagem) DO UPDATE SET
 
 
 -- -------------------------------------------------------------------------
--- 4) Recarrega o schema do PostgREST (necessário para o embed funcionar já)
+-- 4) proposals — propostas comerciais com numeração sequencial por ano
+--    Numero formato: NNNN-AA (ex: 0142-26 = proposta 142 de 2026)
+-- -------------------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS public.proposals (
+  id          uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  ano         int  NOT NULL DEFAULT EXTRACT(YEAR FROM now())::int,
+  numero      int  NOT NULL,
+  client_id   uuid REFERENCES public.clients(id) ON DELETE SET NULL,
+  seller_id   uuid REFERENCES public.profiles(id) ON DELETE SET NULL,
+  snapshot    jsonb,
+  created_at  timestamptz NOT NULL DEFAULT now(),
+  UNIQUE (ano, numero)
+);
+
+CREATE INDEX IF NOT EXISTS idx_proposals_client_id ON public.proposals(client_id);
+CREATE INDEX IF NOT EXISTS idx_proposals_ano_numero ON public.proposals(ano, numero DESC);
+
+-- Trigger: atribui o próximo numero sequencial para o ano, atomicamente
+-- (advisory lock evita race condition entre vendedores criando ao mesmo tempo)
+CREATE OR REPLACE FUNCTION public.atribui_numero_proposta()
+RETURNS trigger LANGUAGE plpgsql AS $$
+BEGIN
+  IF NEW.numero IS NULL OR NEW.numero = 0 THEN
+    PERFORM pg_advisory_xact_lock(hashtext('proposta_ano_' || NEW.ano));
+    SELECT COALESCE(MAX(numero), 0) + 1 INTO NEW.numero
+      FROM public.proposals WHERE ano = NEW.ano;
+  END IF;
+  RETURN NEW;
+END;
+$$;
+
+DROP TRIGGER IF EXISTS tg_atribui_numero_proposta ON public.proposals;
+CREATE TRIGGER tg_atribui_numero_proposta
+  BEFORE INSERT ON public.proposals
+  FOR EACH ROW EXECUTE FUNCTION public.atribui_numero_proposta();
+
+ALTER TABLE public.proposals ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "auth_all_proposals" ON public.proposals;
+CREATE POLICY "auth_all_proposals" ON public.proposals
+  FOR ALL TO authenticated USING (true) WITH CHECK (true);
+
+
+-- -------------------------------------------------------------------------
+-- 5) Recarrega o schema do PostgREST (necessário para o embed funcionar já)
 -- -------------------------------------------------------------------------
 NOTIFY pgrst, 'reload schema';

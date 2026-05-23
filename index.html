@@ -454,6 +454,40 @@ td strong{color:var(--tx);font-weight:600}
 .rel-ok-box{background:var(--ok2);border:1px solid var(--ok);border-radius:var(--r);padding:14px 18px;font-size:13px;color:var(--ok);display:flex;align-items:center;gap:10px}
 .rel-footer{text-align:center;font-size:11px;color:var(--mt);margin-top:28px;padding-top:16px;border-top:1px solid var(--bdr)}
 
+/* ── Relatório de Produtos ── */
+.prod-rep-wrap{background:var(--sur);border:1px solid var(--bdr);border-radius:var(--r);padding:18px 20px;margin-top:18px}
+.prod-rep-head{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:14px;flex-wrap:wrap}
+.prod-rep-head h3{margin:0;font-size:15px;font-weight:600;color:var(--tx)}
+.prod-rep-filters{display:flex;align-items:center;gap:10px}
+.prod-rep-filters select{padding:6px 10px;border:1.5px solid var(--bdr);border-radius:var(--rs);font-size:12px;font-family:inherit;color:var(--tx);background:var(--sur);outline:none}
+.prod-rep-periods{display:flex;gap:2px;background:var(--bg);border-radius:var(--rs);padding:2px}
+.prod-rep-periods .pdb{padding:4px 10px;border:none;background:none;font-size:11px;font-weight:600;color:var(--mt);cursor:pointer;border-radius:6px;font-family:inherit}
+.prod-rep-periods .pdb.ac{background:var(--sur);color:var(--p);box-shadow:0 1px 2px rgba(0,0,0,.08)}
+.prod-rep-cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:10px;margin-bottom:14px}
+.prod-rep-card{background:var(--bg);border:1px solid var(--bdr);border-radius:var(--rs);padding:10px 12px}
+.prod-rep-card .prc-l{font-size:10px;font-weight:600;color:var(--mt);text-transform:uppercase;letter-spacing:.05em}
+.prod-rep-card .prc-v{font-size:18px;font-weight:700;color:var(--p);margin-top:4px;font-variant-numeric:tabular-nums}
+.prod-rep-card .prc-sub{font-size:11px;color:var(--mt);margin-top:2px}
+.prod-rep-table-wrap{overflow-x:auto}
+.prod-rep-table{width:100%;border-collapse:collapse;font-size:13px}
+.prod-rep-table th{text-align:left;padding:8px 10px;font-size:11px;font-weight:600;color:var(--mt);text-transform:uppercase;letter-spacing:.04em;border-bottom:1.5px solid var(--bdr);background:var(--bg);cursor:default}
+.prod-rep-table th[data-pcol]{cursor:pointer;user-select:none}
+.prod-rep-table th[data-pcol]:hover{color:var(--p)}
+.prod-rep-table th.pcol-asc::after{content:' ▲';color:var(--p);font-size:9px}
+.prod-rep-table th.pcol-desc::after{content:' ▼';color:var(--p);font-size:9px}
+.prod-rep-table .num{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
+.prod-rep-table td{padding:8px 10px;border-bottom:1px solid var(--bdr);vertical-align:top}
+.prod-rep-table tr.prod-row-main{cursor:pointer}
+.prod-rep-table tr.prod-row-main:hover{background:var(--ps)}
+.prod-rep-table tr.prod-row-detail td{padding:0;border-bottom:1px solid var(--bdr)}
+.prod-rep-table .prod-cli-list{padding:8px 12px 12px 38px;background:var(--bg);font-size:12px}
+.prod-rep-table .prod-cli-list .pcl-row{display:flex;justify-content:space-between;padding:4px 0;border-bottom:1px dashed var(--bdr2)}
+.prod-rep-table .prod-cli-list .pcl-row:last-child{border-bottom:none}
+.prod-rep-table .prod-cli-list .pcl-nome{color:var(--tx);font-weight:500}
+.prod-rep-table .prod-cli-list .pcl-meta{color:var(--mt)}
+.prod-emb-chip{display:inline-block;background:var(--ps);color:var(--p);font-size:10px;padding:2px 6px;border-radius:99px;margin:1px 2px;font-weight:500}
+.prod-vend-chip{display:inline-block;background:var(--bg);color:var(--mt);font-size:10px;padding:2px 6px;border-radius:99px;margin:1px 2px;border:1px solid var(--bdr)}
+
 /* ── Linhas editáveis no modal de Gerar Cotação ── */
 .gc-prow{display:grid;grid-template-columns:1.6fr 1fr 0.7fr 0.9fr 0.6fr 1.2fr;gap:6px;align-items:center;font-size:12px;padding:6px 0;border-bottom:1px solid var(--bdr)}
 .gc-prow:last-child{border-bottom:none}
@@ -699,6 +733,38 @@ td strong{color:var(--tx);font-weight:600}
         <div class="dc2">
           <div class="dch"><h3>Ranking com Meta</h3><span class="dt">conversões / meta mensal</span></div>
           <div id="drl"><div class="sl"><div class="sp"></div></div></div>
+        </div>
+      </div>
+
+      <!-- Relatório de Produtos -->
+      <div class="prod-rep-wrap">
+        <div class="prod-rep-head">
+          <h3>Produtos Vendidos</h3>
+          <div class="prod-rep-filters">
+            <select id="prod-rep-vend" onchange="renderProdRep()">
+              <option value="">Todos os vendedores</option>
+            </select>
+            <div class="prod-rep-periods">
+              <button class="pdb ac" data-d="0" onclick="setPeriodoProdRep(0)">Todos</button>
+              <button class="pdb" data-d="7" onclick="setPeriodoProdRep(7)">7d</button>
+              <button class="pdb" data-d="30" onclick="setPeriodoProdRep(30)">30d</button>
+              <button class="pdb" data-d="90" onclick="setPeriodoProdRep(90)">90d</button>
+            </div>
+          </div>
+        </div>
+        <div id="prod-rep-cards" class="prod-rep-cards"></div>
+        <div class="prod-rep-table-wrap">
+          <table class="prod-rep-table">
+            <thead><tr>
+              <th data-pcol="nome">Produto</th>
+              <th>Embalagens</th>
+              <th class="num" data-pcol="clientes">Nº Clientes</th>
+              <th class="num" data-pcol="totalKg">Total (kg)</th>
+              <th class="num" data-pcol="totalRS">Total R$</th>
+              <th>Vendedores</th>
+            </tr></thead>
+            <tbody id="prod-rep-body"><tr><td colspan="6" style="text-align:center;color:var(--mt);padding:20px">Carregando...</td></tr></tbody>
+          </table>
         </div>
       </div>
     </div>
@@ -1360,7 +1426,160 @@ async function renderDb() {
         }).join('')
       : '<div class="se" style="padding:12px 0"><p>Nenhuma conversão ainda.</p></div>';
   } catch{}
+  renderProdRep(); // relatório de produtos da Fase 5
 }
+
+// ── Relatório de Produtos (Fase 5) ────────────────────────────────────────
+let prodRepPeriodo = 0;      // 0 = todos, ou 7/30/90 dias
+let prodRepSortCol = 'totalRS';
+let prodRepSortDir = 'desc';
+let prodRepExpanded = new Set(); // chave: nome do produto expandido
+
+function setPeriodoProdRep(d) {
+  prodRepPeriodo = d;
+  document.querySelectorAll('.prod-rep-periods .pdb').forEach(b =>
+    b.classList.toggle('ac', parseInt(b.dataset.d, 10) === d));
+  renderProdRep();
+}
+
+// Popula o select de vendedores (chamado em renderDb implicitamente via PF carregado)
+function popularVendSelect() {
+  const sel = document.getElementById('prod-rep-vend');
+  if (!sel) return;
+  const atual = sel.value;
+  const nomes = new Set();
+  for (const c of CL) {
+    const n = c.seller_name || c.seller?.name;
+    if (n) nomes.add(n);
+  }
+  for (const p of PF) if (p.name) nomes.add(p.name);
+  sel.innerHTML = '<option value="">Todos os vendedores</option>' +
+    [...nomes].sort().map(n => `<option value="${escHtml(n)}"${n===atual?' selected':''}>${escHtml(n)}</option>`).join('');
+}
+
+// Agrega CL.produtos aplicando filtros de vendedor e período
+function agregarProdutos(filtroVend, filtroDias) {
+  const cutoff = filtroDias > 0 ? Date.now() - filtroDias*86400000 : 0;
+  const map = new Map();
+  for (const c of CL) {
+    const vend = c.seller_name || c.seller?.name || '(sem vendedor)';
+    if (filtroVend && vend !== filtroVend) continue;
+    if (cutoff && c.created_at && new Date(c.created_at).getTime() < cutoff) continue;
+    for (const p of (c.produtos || [])) {
+      if (!p.produto) continue;
+      const key = p.produto;
+      if (!map.has(key)) map.set(key, {
+        nome: p.produto, totalKg: 0, totalRS: 0,
+        clientes: new Map(), // id → {nome, qtd, valor, vendedor, embalagem}
+        embalagens: new Set(),
+        vendedores: new Set(),
+      });
+      const e = map.get(key);
+      if (p.embalagem) e.embalagens.add(p.embalagem);
+      e.vendedores.add(vend);
+      const q  = p.qtd_kg   != null ? Number(p.qtd_kg)   : 0;
+      const pr = p.preco_kg != null ? Number(p.preco_kg) : 0;
+      const valor = q * pr;
+      e.totalKg += q;
+      e.totalRS += valor;
+      const cli = e.clientes.get(c.id) || { id:c.id, nome:c.name, vendedor:vend, qtd:0, valor:0, embalagens:new Set() };
+      cli.qtd += q;
+      cli.valor += valor;
+      if (p.embalagem) cli.embalagens.add(p.embalagem);
+      e.clientes.set(c.id, cli);
+    }
+  }
+  return [...map.values()];
+}
+
+function renderProdRep() {
+  if (!document.getElementById('prod-rep-body')) return; // dashboard não montado ainda
+  popularVendSelect();
+  const filtroVend = document.getElementById('prod-rep-vend').value;
+  const agg = agregarProdutos(filtroVend, prodRepPeriodo);
+
+  // Cards de resumo
+  const totalProds = agg.length;
+  const totalKg = agg.reduce((s,e)=>s+e.totalKg, 0);
+  const totalRS = agg.reduce((s,e)=>s+e.totalRS, 0);
+  const topVol  = [...agg].sort((a,b)=>b.totalKg - a.totalKg)[0];
+  const topRS   = [...agg].sort((a,b)=>b.totalRS - a.totalRS)[0];
+  document.getElementById('prod-rep-cards').innerHTML = `
+    <div class="prod-rep-card"><div class="prc-l">Produtos diferentes</div><div class="prc-v">${totalProds}</div></div>
+    <div class="prod-rep-card"><div class="prc-l">Volume total</div><div class="prc-v">${totalKg.toLocaleString('pt-BR',{maximumFractionDigits:0})} kg</div></div>
+    <div class="prod-rep-card"><div class="prc-l">Valor total</div><div class="prc-v">${fmtBRL(totalRS)}</div></div>
+    <div class="prod-rep-card"><div class="prc-l">Top por volume</div><div class="prc-v" style="font-size:14px">${topVol?escHtml(topVol.nome):'—'}</div><div class="prc-sub">${topVol?topVol.totalKg.toLocaleString('pt-BR')+' kg':''}</div></div>
+    <div class="prod-rep-card"><div class="prc-l">Top por valor</div><div class="prc-v" style="font-size:14px">${topRS?escHtml(topRS.nome):'—'}</div><div class="prc-sub">${topRS?fmtBRL(topRS.totalRS):''}</div></div>
+  `;
+
+  // Sort
+  const sortFn = (a,b) => {
+    const va = a[prodRepSortCol], vb = b[prodRepSortCol];
+    const cmp = typeof va === 'string' ? va.localeCompare(vb) : (va - vb);
+    return prodRepSortDir === 'asc' ? cmp : -cmp;
+  };
+  // clientes count needs special handling
+  const sorted = [...agg].sort((a,b)=>{
+    const va = prodRepSortCol === 'clientes' ? a.clientes.size : a[prodRepSortCol];
+    const vb = prodRepSortCol === 'clientes' ? b.clientes.size : b[prodRepSortCol];
+    const cmp = typeof va === 'string' ? String(va).localeCompare(String(vb)) : (va - vb);
+    return prodRepSortDir === 'asc' ? cmp : -cmp;
+  });
+
+  // Headers sort indicators
+  document.querySelectorAll('.prod-rep-table th[data-pcol]').forEach(th => {
+    th.classList.remove('pcol-asc','pcol-desc');
+    if (th.dataset.pcol === prodRepSortCol) th.classList.add('pcol-'+prodRepSortDir);
+  });
+
+  // Body
+  const body = document.getElementById('prod-rep-body');
+  if (!sorted.length) {
+    body.innerHTML = '<tr><td colspan="6" style="text-align:center;color:var(--mt);padding:24px">Nenhum produto encontrado com os filtros aplicados.</td></tr>';
+    return;
+  }
+  body.innerHTML = sorted.map(e => {
+    const exp = prodRepExpanded.has(e.nome);
+    const embChips = [...e.embalagens].map(em => `<span class="prod-emb-chip">${escHtml(em)}</span>`).join('') || '<span style="color:var(--mt2)">—</span>';
+    const vendChips = [...e.vendedores].slice(0,3).map(v => `<span class="prod-vend-chip">${escHtml(v)}</span>`).join('') + (e.vendedores.size > 3 ? `<span class="prod-vend-chip">+${e.vendedores.size-3}</span>` : '');
+    const detalhe = exp ? `<tr class="prod-row-detail"><td colspan="6">
+      <div class="prod-cli-list">
+        ${[...e.clientes.values()].sort((a,b)=>b.valor-a.valor).map(cli => `<div class="pcl-row">
+          <div class="pcl-nome">${escHtml(cli.nome)} <span class="pcl-meta">· ${escHtml(cli.vendedor)}${cli.embalagens.size?' · '+[...cli.embalagens].join(', '):''}</span></div>
+          <div class="pcl-meta"><b>${cli.qtd.toLocaleString('pt-BR')} kg</b> · ${fmtBRL(cli.valor)}</div>
+        </div>`).join('')}
+      </div>
+    </td></tr>` : '';
+    return `<tr class="prod-row-main" data-pnome="${escHtml(e.nome)}">
+      <td><b>${escHtml(e.nome)}</b> <span style="color:var(--mt);font-size:10px">${exp?'▼':'▶'}</span></td>
+      <td>${embChips}</td>
+      <td class="num">${e.clientes.size}</td>
+      <td class="num">${e.totalKg.toLocaleString('pt-BR',{maximumFractionDigits:1})}</td>
+      <td class="num">${fmtBRL(e.totalRS)}</td>
+      <td>${vendChips || '<span style="color:var(--mt2)">—</span>'}</td>
+    </tr>${detalhe}`;
+  }).join('');
+  // bind click no body (sem inline onclick pra não esbarrar em quoting)
+  body.querySelectorAll('tr.prod-row-main').forEach(tr => {
+    tr.addEventListener('click', () => toggleProdRow(tr.dataset.pnome));
+  });
+}
+
+function toggleProdRow(nome) {
+  if (prodRepExpanded.has(nome)) prodRepExpanded.delete(nome);
+  else prodRepExpanded.add(nome);
+  renderProdRep();
+}
+
+// Sort handlers
+document.querySelectorAll('.prod-rep-table th[data-pcol]').forEach(th => {
+  th.addEventListener('click', () => {
+    const col = th.dataset.pcol;
+    if (prodRepSortCol === col) prodRepSortDir = prodRepSortDir === 'asc' ? 'desc' : 'asc';
+    else { prodRepSortCol = col; prodRepSortDir = col === 'nome' ? 'asc' : 'desc'; }
+    renderProdRep();
+  });
+});
 
 // ── Painel histórico ──────────────────────────────────────────────────────
 async function abrPainel(id) {

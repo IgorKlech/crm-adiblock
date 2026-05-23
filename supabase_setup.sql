@@ -71,6 +71,16 @@ SET
 WHERE embalagem IS NULL
   AND produto ~ '\([^)]+\)\s*$';
 
+-- Fase 3: quantidade numérica (kg) e preço negociado por kg
+ALTER TABLE public.client_products
+  ADD COLUMN IF NOT EXISTS qtd_kg   numeric(12,2),
+  ADD COLUMN IF NOT EXISTS preco_kg numeric(10,2);
+
+-- Backfill qtd_kg: tenta extrair primeiro número de peso (ex: "60 Kg" → 60)
+UPDATE public.client_products
+SET qtd_kg = NULLIF(REPLACE(SUBSTRING(peso FROM '([0-9]+(?:[.,][0-9]+)?)'), ',', '.'), '')::numeric
+WHERE qtd_kg IS NULL AND peso IS NOT NULL AND peso ~ '[0-9]';
+
 CREATE INDEX IF NOT EXISTS idx_client_products_client_id
   ON public.client_products(client_id);
 

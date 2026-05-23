@@ -469,15 +469,16 @@ td strong{color:var(--tx);font-weight:600}
 .prod-row:last-child{margin-bottom:0}
 .prod-nome-wrap{flex:2;position:relative}
 .prod-row .prod-nome{width:100%;padding:8px 12px;border:1.5px solid var(--bdr);border-radius:var(--rs);font-size:13px;font-family:inherit;color:var(--tx);background:var(--sur);outline:none;transition:border-color .15s;box-sizing:border-box}
-.prod-row .prod-emb{flex:1.2;padding:8px 8px;border:1.5px solid var(--bdr);border-radius:var(--rs);font-size:13px;font-family:inherit;color:var(--tx);background:var(--sur);outline:none;transition:border-color .15s;cursor:pointer}
+.prod-row .prod-emb{flex:1;padding:8px 6px;border:1.5px solid var(--bdr);border-radius:var(--rs);font-size:13px;font-family:inherit;color:var(--tx);background:var(--sur);outline:none;transition:border-color .15s;cursor:pointer;min-width:0}
 .prod-row .prod-emb:disabled{color:var(--mt2);cursor:not-allowed;background:var(--bg)}
-.prod-row .prod-qtd{flex:1;padding:8px 12px;border:1.5px solid var(--bdr);border-radius:var(--rs);font-size:13px;font-family:inherit;color:var(--tx);background:var(--sur);outline:none;transition:border-color .15s}
-.prod-row .prod-nome:focus,.prod-row .prod-qtd:focus,.prod-row .prod-emb:focus{border-color:var(--p)}
+.prod-row .prod-qtd{flex:0.7;padding:8px 8px;border:1.5px solid var(--bdr);border-radius:var(--rs);font-size:13px;font-family:inherit;color:var(--tx);background:var(--sur);outline:none;transition:border-color .15s;min-width:0;text-align:right}
+.prod-row .prod-preco{flex:0.9;padding:8px 8px;border:1.5px solid var(--bdr);border-radius:var(--rs);font-size:13px;font-family:inherit;color:var(--tx);background:var(--sur);outline:none;transition:border-color .15s;min-width:0;text-align:right}
+.prod-row .prod-nome:focus,.prod-row .prod-qtd:focus,.prod-row .prod-emb:focus,.prod-row .prod-preco:focus{border-color:var(--p)}
 .prod-del{background:none;border:none;color:var(--mt2);cursor:pointer;font-size:18px;padding:8px 6px;line-height:1;border-radius:4px;flex-shrink:0;transition:all .15s}
 .prod-del:hover{color:var(--er);background:var(--er2)}
 .prod-headers{display:flex;gap:8px;margin-bottom:6px;padding:0 0 0 0}
 .prod-h{font-size:11px;font-weight:600;color:var(--mt);text-transform:uppercase;letter-spacing:.04em}
-.prod-h.hn{flex:2}.prod-h.he{flex:1.2}.prod-h.hq{flex:1}.prod-h.hd{width:32px}
+.prod-h.hn{flex:1.8}.prod-h.he{flex:1}.prod-h.hq{flex:0.7;text-align:right}.prod-h.hp{flex:0.9;text-align:right}.prod-h.hd{width:32px}
 .prod-add-btn{display:flex;align-items:center;justify-content:center;gap:6px;width:100%;padding:9px;border:1.5px dashed var(--bdr2);border-radius:var(--rs);background:none;font-size:13px;color:var(--p);cursor:pointer;font-family:inherit;transition:all .15s;margin-top:6px}
 .prod-add-btn:hover{border-color:var(--p);background:var(--ps)}
 .prod-tag{display:inline-flex;align-items:center;gap:4px;background:var(--ps);color:var(--p);font-size:11px;font-weight:500;padding:2px 8px;border-radius:99px;white-space:nowrap;margin:2px 2px 2px 0}
@@ -493,8 +494,10 @@ td strong{color:var(--tx);font-weight:600}
 .prod-dd-prices{display:flex;gap:10px;margin-top:2px;font-size:11px;color:var(--mt)}
 .prod-dd-prices b{color:var(--tx);font-weight:600}
 .prod-dd-empty{padding:10px 12px;font-size:12px;color:var(--mt);font-style:italic}
-.prod-price-hint{margin-top:4px;font-size:11px;color:var(--mt);display:flex;gap:10px}
+.prod-price-hint{margin-top:4px;font-size:11px;color:var(--mt);display:flex;gap:12px;flex-wrap:wrap}
 .prod-price-hint b{color:var(--p);font-weight:600}
+.prod-price-hint .prod-total{margin-left:auto;color:var(--tx);font-weight:500}
+.prod-price-hint .prod-total b{color:var(--p);font-size:12px}
 </style>
 </head>
 <body>
@@ -706,7 +709,8 @@ td strong{color:var(--tx);font-weight:600}
         <div class="prod-headers">
           <span class="prod-h hn">Nome do Produto</span>
           <span class="prod-h he">Embalagem</span>
-          <span class="prod-h hq">Qtd / Peso</span>
+          <span class="prod-h hq">Qtd (kg)</span>
+          <span class="prod-h hp">Preço (R$/kg)</span>
           <span class="prod-h hd"></span>
         </div>
         <div id="prod-lista"></div>
@@ -743,7 +747,10 @@ td strong{color:var(--tx);font-weight:600}
         </div>
         <div class="fr">
           <div class="fg"><label>Ligar de volta em</label><input type="date" id="fcb"></div>
-          <div class="fg"><label>Valor Estimado R$</label><input type="number" id="fvl" placeholder="0,00" step="0.01" min="0"></div>
+          <div class="fg">
+            <label>Valor Estimado R$ <span id="fvl-auto" style="font-weight:400;color:var(--mt);font-size:11px;display:none">— calculado dos produtos</span></label>
+            <input type="number" id="fvl" placeholder="0,00" step="0.01" min="0">
+          </div>
         </div>
       </div>
       <div class="fs"><div class="fg"><label>Observação</label><textarea id="fob" placeholder="Informações relevantes..."></textarea></div></div>
@@ -1041,7 +1048,7 @@ document.getElementById('cosi').onclick = () => { const cb = CCB; fechaConf(); i
 document.getElementById('cono').onclick = fechaConf;
 
 // ── DB ────────────────────────────────────────────────────────────────────
-const fetchCl = () => api('GET','clients','select=*,seller:profiles(id,name),produtos:client_products(id,produto,embalagem,peso)&order=created_at.desc');
+const fetchCl = () => api('GET','clients','select=*,seller:profiles(id,name),produtos:client_products(id,produto,embalagem,qtd_kg,preco_kg,peso)&order=created_at.desc');
 const fetchPf = () => api('GET','profiles','select=id,name,role,email&order=name');
 const fetchProds = () => api('GET','products','select=nome,embalagem,preco_materia_prima,preco_office,preco_pj&order=nome,embalagem');
 const fetchHist = id => api('GET','call_history','client_id=eq.'+id+'&select=*,seller:profiles(id,name)&order=datetime.desc');
@@ -1103,12 +1110,13 @@ function renderCl() {
     // Coluna produto: usa client_products ou fallback para campo antigo
     const prods = (c.produtos && c.produtos.length > 0)
       ? c.produtos
-      : (c.produto ? [{produto:c.produto, embalagem:null, peso:c.peso}] : []);
+      : (c.produto ? [{produto:c.produto, embalagem:null, qtd_kg:null, preco_kg:null, peso:c.peso}] : []);
     const prodCell = prods.length
       ? prods.map(p => {
           const emb = p.embalagem ? ' <span class="prod-tag-peso">· '+p.embalagem+'</span>' : '';
-          const ps  = p.peso      ? ' <span class="prod-tag-peso">· '+p.peso+'</span>'      : '';
-          return '<span class="prod-tag">'+p.produto+emb+ps+'</span>';
+          const qt  = p.qtd_kg != null ? ' <span class="prod-tag-peso">· '+p.qtd_kg+'kg</span>'
+                    : p.peso              ? ' <span class="prod-tag-peso">· '+p.peso+'</span>' : '';
+          return '<span class="prod-tag">'+p.produto+emb+qt+'</span>';
         }).join('')
       : '<span style="color:var(--mt2)">—</span>';
     const dc = c.callback_date
@@ -1246,6 +1254,30 @@ async function loadTl(id) {
 }
 function fechaPainel() { document.getElementById('sp').classList.remove('op'); document.getElementById('po').classList.remove('op'); PID=null; }
 
+// Flag: usuário sobrescreveu o Valor Estimado manualmente nesta sessão do modal
+let valorTouched = false;
+
+function recalcValorEstimado() {
+  const rows = document.querySelectorAll('#prod-lista .prod-row');
+  let total = 0, hasAny = false;
+  rows.forEach(r => {
+    const q = parseNum(r.querySelector('.prod-qtd').value);
+    const p = parseNum(r.querySelector('.prod-preco').value);
+    if (q != null && p != null) { total += q * p; hasAny = true; }
+  });
+  const fvl = document.getElementById('fvl');
+  const tag = document.getElementById('fvl-auto');
+  if (!valorTouched && hasAny) {
+    fvl.value = total.toFixed(2);
+    if (tag) tag.style.display = '';
+  } else if (!hasAny && !valorTouched) {
+    fvl.value = '';
+    if (tag) tag.style.display = 'none';
+  } else {
+    if (tag) tag.style.display = 'none';
+  }
+}
+
 // ── Modal cliente ─────────────────────────────────────────────────────────
 function abrNovo() {
   EID=null;
@@ -1258,7 +1290,9 @@ function abrNovo() {
   document.getElementById('fn').classList.remove('err');
   document.getElementById('fn-err').classList.remove('show');
   updSug();
+  valorTouched = false;
   renderProdutoRows([]); // lista de produtos vazia
+  recalcValorEstimado();
   document.getElementById('cm').classList.add('op');
   setTimeout(()=>document.getElementById('fn').focus(),80);
 }
@@ -1278,11 +1312,15 @@ function abrEdit(id) {
   document.getElementById('fcb').value=c.callback_date||'';
   document.getElementById('fvl').value=c.estimated_value||'';
   document.getElementById('fob').value=c.observation||'';
+  // Se já tinha valor estimado salvo, considera manualmente sobrescrito
+  // (não vamos auto-recalcular em cima e perder o ajuste do vendedor)
+  valorTouched = c.estimated_value != null && c.estimated_value !== '';
   // Carrega produtos: usa client_products ou fallback para campo antigo
   const prods = (c.produtos && c.produtos.length > 0)
     ? c.produtos
-    : (c.produto ? [{produto:c.produto, embalagem:null, peso:c.peso}] : []);
+    : (c.produto ? [{produto:c.produto, embalagem:null, qtd_kg:null, preco_kg:null}] : []);
   renderProdutoRows(prods);
+  recalcValorEstimado();
   document.getElementById('cm').classList.add('op');
 }
 function fechaModal() { document.getElementById('cm').classList.remove('op'); EID=null; }
@@ -1400,6 +1438,13 @@ document.getElementById('dref').addEventListener('click',async()=>{
 document.getElementById('mcl').addEventListener('click',fechaModal);
 document.getElementById('mcan').addEventListener('click',fechaModal);
 document.getElementById('cm').addEventListener('click',e=>{if(e.target===e.currentTarget)fechaModal();});
+
+// Marca Valor Estimado como manualmente editado quando o vendedor digita nele
+document.getElementById('fvl').addEventListener('input', () => {
+  valorTouched = true;
+  const tag = document.getElementById('fvl-auto');
+  if (tag) tag.style.display = 'none';
+});
 
 document.getElementById('clf').addEventListener('submit', async e => {
   e.preventDefault();
@@ -1827,12 +1872,19 @@ function abrEditFromPerfil() {
 function renderPfResumo(c) {
   const prods = (c.produtos && c.produtos.length > 0)
     ? c.produtos
-    : (c.produto ? [{produto:c.produto, embalagem:null, peso:c.peso}] : []);
+    : (c.produto ? [{produto:c.produto, embalagem:null, qtd_kg:null, preco_kg:null, peso:c.peso}] : []);
   const prodHtml = prods.length
-    ? prods.map(p=>`<div class="pf-row" style="flex-wrap:wrap;gap:6px">
-        <div class="pf-rk" style="width:auto">${p.produto}${p.embalagem?` <span style="color:var(--mt);font-weight:400">· ${p.embalagem}</span>`:''}</div>
-        ${p.peso?`<div style="font-size:12px;color:var(--mt)">${p.peso}</div>`:''}
-      </div>`).join('')
+    ? prods.map(p=>{
+        const sub = [];
+        if (p.qtd_kg != null) sub.push(`${p.qtd_kg} kg`);
+        else if (p.peso)      sub.push(p.peso);
+        if (p.preco_kg != null) sub.push(`${fmtBRL(p.preco_kg)}/kg`);
+        if (p.qtd_kg != null && p.preco_kg != null) sub.push(`<b>${fmtBRL(p.qtd_kg * p.preco_kg)}</b>`);
+        return `<div class="pf-row" style="flex-wrap:wrap;gap:6px">
+          <div class="pf-rk" style="width:auto">${p.produto}${p.embalagem?` <span style="color:var(--mt);font-weight:400">· ${p.embalagem}</span>`:''}</div>
+          ${sub.length?`<div style="font-size:12px;color:var(--mt)">${sub.join(' · ')}</div>`:''}
+        </div>`;
+      }).join('')
     : '<div style="font-size:13px;color:var(--mt)">Sem produtos cadastrados.</div>';
 
   const rows = [
@@ -1956,14 +2008,29 @@ function findProd(nome, embalagem) {
   ) || null;
 }
 
+function parseNum(s) {
+  if (s == null || s === '') return null;
+  const n = parseFloat(String(s).replace(',', '.'));
+  return isNaN(n) ? null : n;
+}
+
 function renderProdHint(row) {
   const hint = row.querySelector('.prod-price-hint');
   if (!hint) return;
-  const nome = row.querySelector('.prod-nome').value;
-  const emb  = row.querySelector('.prod-emb').value;
+  const nome  = row.querySelector('.prod-nome').value;
+  const emb   = row.querySelector('.prod-emb').value;
+  const qtd   = parseNum(row.querySelector('.prod-qtd').value);
+  const preco = parseNum(row.querySelector('.prod-preco').value);
   const prod = findProd(nome, emb);
-  if (!prod) { hint.innerHTML = ''; return; }
-  hint.innerHTML = `<span>OFFICE: <b>${fmtBRL(prod.preco_office)}</b></span><span>PJ: <b>${fmtBRL(prod.preco_pj)}</b></span>`;
+  const parts = [];
+  if (prod) {
+    parts.push(`<span>Base OFFICE: <b>${fmtBRL(prod.preco_office)}</b></span>`);
+    parts.push(`<span>Base PJ: <b>${fmtBRL(prod.preco_pj)}</b></span>`);
+  }
+  if (qtd != null && preco != null) {
+    parts.push(`<span class="prod-total">Total: <b>${fmtBRL(qtd * preco)}</b></span>`);
+  }
+  hint.innerHTML = parts.join('');
 }
 
 function filtrarNomes(q) {
@@ -2010,8 +2077,15 @@ function popularEmbSelect(row, nome, embAtual) {
   sel.disabled = false;
   sel.innerHTML = '<option value="">Selecione…</option>' +
     embs.map(e => `<option value="${escHtml(e.embalagem)}"${e.embalagem===embAtual?' selected':''}>${escHtml(e.embalagem)}</option>`).join('');
-  // Auto-seleciona primeira embalagem se nada foi pedido
   if (!embAtual && embs.length === 1) sel.value = embs[0].embalagem;
+}
+
+// Auto-preenche preço com PJ base da embalagem se vazio
+function autoPreencherPreco(row) {
+  const precoInp = row.querySelector('.prod-preco');
+  if (precoInp.value.trim() !== '') return; // não sobrescreve valor manual
+  const prod = findProd(row.querySelector('.prod-nome').value, row.querySelector('.prod-emb').value);
+  if (prod) precoInp.value = Number(prod.preco_pj).toFixed(2);
 }
 
 function selProdItem(row, item) {
@@ -2021,17 +2095,19 @@ function selProdItem(row, item) {
   inp.value = nome;
   dd.classList.remove('op');
   popularEmbSelect(row, nome, null);
+  autoPreencherPreco(row);
   renderProdHint(row);
-  // Foca embalagem se houver múltiplas opções, senão pula direto pra qtd
   const sel = row.querySelector('.prod-emb');
   const opts = sel.querySelectorAll('option:not([value=""])').length;
   if (opts > 1) sel.focus();
   else row.querySelector('.prod-qtd').focus();
 }
 
-function addProdRow(nome, embalagem, peso) {
+function addProdRow(nome, embalagem, qtdKg, precoKg) {
   const lista = document.getElementById('prod-lista');
   if (!lista) return;
+  const qtdV   = qtdKg   != null ? String(qtdKg)   : '';
+  const precoV = precoKg != null ? String(precoKg) : '';
   const row = document.createElement('div');
   row.className = 'prod-row';
   row.innerHTML = `
@@ -2041,18 +2117,20 @@ function addProdRow(nome, embalagem, peso) {
       <div class="prod-price-hint"></div>
     </div>
     <select class="prod-emb" disabled><option value="">—</option></select>
-    <input type="text" class="prod-qtd" placeholder="Qtd / Peso (ex: 500 kg)" value="${escHtml(peso)}">
+    <input type="number" step="0.01" min="0" class="prod-qtd" placeholder="0" value="${escHtml(qtdV)}">
+    <input type="number" step="0.01" min="0" class="prod-preco" placeholder="0,00" value="${escHtml(precoV)}">
     <button type="button" class="prod-del" onclick="this.closest('.prod-row').remove()" title="Remover">✕</button>`;
   lista.appendChild(row);
 
-  const inp = row.querySelector('.prod-nome');
-  const dd  = row.querySelector('.prod-dd');
-  const sel = row.querySelector('.prod-emb');
+  const inp     = row.querySelector('.prod-nome');
+  const dd      = row.querySelector('.prod-dd');
+  const sel     = row.querySelector('.prod-emb');
+  const qtdInp  = row.querySelector('.prod-qtd');
+  const prcInp  = row.querySelector('.prod-preco');
 
   inp.addEventListener('focus', () => renderProdDd(row));
   inp.addEventListener('input', () => {
     renderProdDd(row);
-    // Se o nome digitado ainda casa com algum do catálogo, mantém embalagens; senão zera
     popularEmbSelect(row, inp.value, sel.value);
     renderProdHint(row);
   });
@@ -2071,9 +2149,20 @@ function addProdRow(nome, embalagem, peso) {
     const it = e.target.closest('.prod-dd-item');
     if (it) { e.preventDefault(); selProdItem(row, it); }
   });
-  sel.addEventListener('change', () => renderProdHint(row));
+  sel.addEventListener('change', () => {
+    // Mudou embalagem → re-sugere preço base (mas só se campo estiver vazio)
+    autoPreencherPreco(row);
+    renderProdHint(row);
+    recalcValorEstimado();
+  });
+  qtdInp.addEventListener('input', () => { renderProdHint(row); recalcValorEstimado(); });
+  prcInp.addEventListener('input', () => { renderProdHint(row); recalcValorEstimado(); });
+  // Hook no botão de deletar (remove + recalcula)
+  row.querySelector('.prod-del').addEventListener('click', () => {
+    // a remoção já é feita pelo onclick inline; aqui só agendamos o recalc
+    setTimeout(recalcValorEstimado, 0);
+  });
 
-  // Estado inicial (linha pré-preenchida ao editar cliente)
   popularEmbSelect(row, nome, embalagem);
   renderProdHint(row);
   if (!nome) inp.focus();
@@ -2083,10 +2172,16 @@ function getProdutosDoForm() {
   const rows = document.querySelectorAll('#prod-lista .prod-row');
   const result = [];
   rows.forEach(r => {
-    const nome = r.querySelector('.prod-nome').value.trim();
-    const emb  = r.querySelector('.prod-emb').value.trim();
-    const peso = r.querySelector('.prod-qtd').value.trim();
-    if (nome) result.push({ produto: nome, embalagem: emb || null, peso: peso || null });
+    const nome  = r.querySelector('.prod-nome').value.trim();
+    const emb   = r.querySelector('.prod-emb').value.trim();
+    const qtd   = parseNum(r.querySelector('.prod-qtd').value);
+    const preco = parseNum(r.querySelector('.prod-preco').value);
+    if (nome) result.push({
+      produto: nome,
+      embalagem: emb || null,
+      qtd_kg: qtd,
+      preco_kg: preco,
+    });
   });
   return result;
 }
@@ -2095,7 +2190,7 @@ function renderProdutoRows(produtos) {
   const lista = document.getElementById('prod-lista');
   if (!lista) return;
   lista.innerHTML = '';
-  (produtos || []).forEach(p => addProdRow(p.produto, p.embalagem, p.peso));
+  (produtos || []).forEach(p => addProdRow(p.produto, p.embalagem, p.qtd_kg, p.preco_kg));
 }
 
 async function salvarProdutos(clientId) {
@@ -2104,9 +2199,28 @@ async function salvarProdutos(clientId) {
   await api('DELETE', 'client_products', `client_id=eq.${clientId}`);
   if (produtos.length > 0) {
     await api('POST', 'client_products', null,
-      produtos.map(p => ({ client_id: clientId, produto: p.produto, embalagem: p.embalagem, peso: p.peso || null }))
+      produtos.map(p => ({
+        client_id: clientId,
+        produto: p.produto,
+        embalagem: p.embalagem,
+        qtd_kg: p.qtd_kg,
+        preco_kg: p.preco_kg,
+      }))
     );
   }
+}
+
+// Soma o total (R$) de todos os produtos de um cliente
+function calcTotalCliente(c) {
+  const prods = c?.produtos || [];
+  let total = 0, hasAny = false;
+  for (const p of prods) {
+    if (p.qtd_kg != null && p.preco_kg != null) {
+      total += Number(p.qtd_kg) * Number(p.preco_kg);
+      hasAny = true;
+    }
+  }
+  return hasAny ? total : null;
 }
 
 // ── Filtro por Período ────────────────────────────────────────────────────

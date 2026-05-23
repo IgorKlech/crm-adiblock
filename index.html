@@ -485,6 +485,13 @@ td strong{color:var(--tx);font-weight:600}
 .rel-ok-box{background:var(--ok2);border:1px solid var(--ok);border-radius:var(--r);padding:14px 18px;font-size:13px;color:var(--ok);display:flex;align-items:center;gap:10px}
 .rel-footer{text-align:center;font-size:11px;color:var(--mt);margin-top:28px;padding-top:16px;border-top:1px solid var(--bdr)}
 
+/* ── Bulk actions ── */
+#bulk-bar{display:flex;align-items:center;gap:10px;padding:10px 14px;background:var(--ps);border:1px solid var(--p);border-radius:var(--rs);margin:8px 0;font-size:13px}
+#bulk-bar select,#bulk-bar button{font-size:12px}
+#bulk-count{color:var(--p);font-weight:600;margin-right:4px}
+.bulk-cb{cursor:pointer;width:15px;height:15px;accent-color:var(--p)}
+tr.row-selected{background:var(--ps)!important}
+
 /* ── LGPD ── */
 .lgpd-row{padding:10px 12px;background:var(--bg);border:1px solid var(--bdr);border-radius:8px}
 .lgpd-check{display:flex;align-items:flex-start;gap:8px;font-size:13px;color:var(--tx);cursor:pointer;line-height:1.4}
@@ -728,11 +735,30 @@ td strong{color:var(--tx);font-weight:600}
           <button class="pdb" data-d="30" onclick="setPeriodo(30)">30 dias</button>
           <button class="pdb" data-d="90" onclick="setPeriodo(90)">90 dias</button>
         </div>
+        <select class="fs2" id="visao-sel" onchange="aplicarVisao(this.value)" title="Visões salvas">
+          <option value="">— Visão —</option>
+        </select>
+        <button class="btn bg sm" onclick="salvarVisaoAtual()" title="Salvar filtros atuais como nova visão">💾</button>
+      </div>
+      <!-- Barra de ações em massa (aparece quando algo selecionado) -->
+      <div id="bulk-bar" style="display:none">
+        <span id="bulk-count"></span>
+        <select id="bulk-status" onchange="if(this.value){bulkMudarStatus(this.value);this.value='';}">
+          <option value="">Mudar status para...</option>
+          <option>Pendente</option><option>Em contato</option><option>Comprou</option>
+          <option>Nao comprou</option><option>Inativo</option>
+        </select>
+        <select id="bulk-vend" onchange="if(this.value){bulkMudarVendedor(this.value);this.value='';}">
+          <option value="">Mudar vendedor para...</option>
+        </select>
+        <button class="btn bod sm" onclick="bulkExcluir()">🗑 Excluir selecionados</button>
+        <button class="btn bg sm" onclick="bulkLimpar()">Cancelar</button>
       </div>
       <div class="tw">
         <table>
           <thead>
             <tr>
+              <th style="width:32px"><input type="checkbox" id="bulk-master" onchange="toggleSelecionarTodos(this.checked)" title="Selecionar todos visíveis"></th>
               <th class="so" data-col="name">Cliente <span class="sa">↕</span></th>
               <th>Telefone</th>
               <th class="so" data-col="produto">Produto / Qtd <span class="sa">↕</span></th>
@@ -743,7 +769,7 @@ td strong{color:var(--tx);font-weight:600}
               <th>Ações</th>
             </tr>
           </thead>
-          <tbody id="ctb"><tr><td colspan="8"><div class="sl"><div class="sp"></div>Carregando...</div></td></tr></tbody>
+          <tbody id="ctb"><tr><td colspan="9"><div class="sl"><div class="sp"></div>Carregando...</div></td></tr></tbody>
         </table>
       </div>
     </div>
@@ -1344,6 +1370,159 @@ function filtrar() {
       (!sf||c.status===sf) && (!vf||sv.includes(vf)) && okP;
   });
 }
+// ── Bulk actions (Sprint 1) ───────────────────────────────────────────────
+let selectedIds = new Set();
+
+function atualizarBulkBar() {
+  const bar = document.getElementById('bulk-bar');
+  const count = selectedIds.size;
+  if (!bar) return;
+  if (count === 0) { bar.style.display = 'none'; return; }
+  bar.style.display = 'flex';
+  document.getElementById('bulk-count').textContent = count + ' selecionado(s):';
+  // Popula vendedores no select de bulk
+  const selVend = document.getElementById('bulk-vend');
+  if (selVend && selVend.options.length <= 1) {
+    const nomes = new Set();
+    PF.forEach(p => p.name && nomes.add(p.name));
+    CL.forEach(c => { const n = c.seller_name||c.seller?.name; if (n) nomes.add(n); });
+    selVend.innerHTML = '<option value="">Mudar vendedor para...</option>' +
+      [...nomes].sort().map(n => `<option value="${escHtml(n)}">${escHtml(n)}</option>`).join('');
+  }
+}
+
+function toggleSelecionado(id, on) {
+  if (on) selectedIds.add(id); else selectedIds.delete(id);
+  const tr = document.querySelector(`tr input.bulk-cb[data-id="${id}"]`)?.closest('tr');
+  if (tr) tr.classList.toggle('row-selected', on);
+  atualizarBulkBar();
+}
+
+function toggleSelecionarTodos(on) {
+  const visiveis = ordenar(filtrar()).map(c => c.id);
+  if (on) visiveis.forEach(id => selectedIds.add(id));
+  else visiveis.forEach(id => selectedIds.delete(id));
+  document.querySelectorAll('#ctb tr input.bulk-cb').forEach(cb => {
+    cb.checked = on;
+    cb.closest('tr').classList.toggle('row-selected', on);
+  });
+  atualizarBulkBar();
+}
+
+function bulkLimpar() {
+  selectedIds.clear();
+  document.getElementById('bulk-master').checked = false;
+  document.querySelectorAll('#ctb tr input.bulk-cb').forEach(cb => {
+    cb.checked = false;
+    cb.closest('tr')?.classList.remove('row-selected');
+  });
+  atualizarBulkBar();
+}
+
+async function bulkMudarStatus(novoStatus) {
+  if (!selectedIds.size) return;
+  const ids = [...selectedIds];
+  conf('Mudar status', `Alterar ${ids.length} cliente(s) para "${novoStatus}"?`, async () => {
+    try {
+      const idsList = ids.map(i => `"${i}"`).join(',');
+      await api('PATCH', 'clients', `id=in.(${idsList})`, { status: novoStatus, status_changed_at: new Date().toISOString() });
+      toast('Status atualizado', `${ids.length} cliente(s) movido(s) para "${novoStatus}"`, 'success');
+      bulkLimpar();
+      CL = await fetchCl(); renderCl();
+    } catch(err) {
+      console.error('bulkMudarStatus:', err);
+      toast('Erro', err.message||'', 'warning');
+    }
+  });
+}
+
+async function bulkMudarVendedor(novoVend) {
+  if (!selectedIds.size) return;
+  const ids = [...selectedIds];
+  conf('Mudar vendedor', `Atribuir ${ids.length} cliente(s) ao vendedor "${novoVend}"?`, async () => {
+    try {
+      const idsList = ids.map(i => `"${i}"`).join(',');
+      await api('PATCH', 'clients', `id=in.(${idsList})`, { seller_name: novoVend });
+      toast('Vendedor atualizado', `${ids.length} cliente(s)`, 'success');
+      bulkLimpar();
+      CL = await fetchCl(); renderCl();
+    } catch(err) {
+      console.error('bulkMudarVendedor:', err);
+      toast('Erro', err.message||'', 'warning');
+    }
+  });
+}
+
+async function bulkExcluir() {
+  if (!selectedIds.size) return;
+  const ids = [...selectedIds];
+  conf('⚠ Excluir clientes',
+    `Excluir ${ids.length} cliente(s) e todos os dados relacionados (produtos, histórico, propostas)? Esta ação não pode ser desfeita.`,
+    async () => {
+      try {
+        const idsList = ids.map(i => `"${i}"`).join(',');
+        await apiDelete('clients', `id=in.(${idsList})`);
+        toast('Excluídos', `${ids.length} cliente(s) removido(s)`, 'success');
+        bulkLimpar();
+        CL = await fetchCl(); renderCl();
+      } catch(err) {
+        console.error('bulkExcluir:', err);
+        toast('Erro', err.message||'', 'warning');
+      }
+    });
+}
+
+// ── Visões salvas (Sprint 1) ──────────────────────────────────────────────
+function getVisoes() {
+  try { return JSON.parse(localStorage.getItem('crm_visoes') || '[]'); } catch { return []; }
+}
+function setVisoes(v) {
+  try { localStorage.setItem('crm_visoes', JSON.stringify(v)); } catch {}
+}
+function popularSelectVisoes() {
+  const sel = document.getElementById('visao-sel');
+  if (!sel) return;
+  const visoes = getVisoes();
+  sel.innerHTML = '<option value="">— Visão —</option>' +
+    visoes.map(v => `<option value="${escHtml(v.nome)}">${escHtml(v.nome)}</option>`).join('') +
+    (visoes.length ? '<option value="__del__">🗑 Apagar visão atual...</option>' : '');
+}
+function salvarVisaoAtual() {
+  const nome = prompt('Nome da visão (ex: "Meus clientes pendentes esta semana"):');
+  if (!nome || !nome.trim()) return;
+  const v = {
+    nome: nome.trim(),
+    busca:    document.getElementById('srch').value,
+    status:   document.getElementById('stf').value,
+    vendedor: document.getElementById('svf').value,
+    periodo:  periodoFiltro,
+  };
+  const visoes = getVisoes().filter(x => x.nome !== v.nome);
+  visoes.push(v);
+  setVisoes(visoes);
+  popularSelectVisoes();
+  document.getElementById('visao-sel').value = v.nome;
+  toast('Visão salva', `"${v.nome}" pode ser reaplicada pelo seletor`, 'success');
+}
+function aplicarVisao(nome) {
+  if (!nome) return;
+  if (nome === '__del__') {
+    const atual = prompt('Nome da visão a apagar:');
+    if (!atual) { popularSelectVisoes(); return; }
+    setVisoes(getVisoes().filter(v => v.nome !== atual.trim()));
+    popularSelectVisoes();
+    toast('Visão removida','','success');
+    return;
+  }
+  const v = getVisoes().find(x => x.nome === nome);
+  if (!v) return;
+  document.getElementById('srch').value = v.busca || '';
+  document.getElementById('stf').value  = v.status || '';
+  document.getElementById('svf').value  = v.vendedor || '';
+  setPeriodo(v.periodo || 0);
+  renderCl();
+}
+
 function ordenar(lst) {
   return [...lst].sort((a,b) => {
     let va=a[SCOL], vb=b[SCOL];
@@ -1363,7 +1542,7 @@ function renderCl() {
   if (el) el.textContent = lst.length===tot ? tot+' cliente(s)' : lst.length+' de '+tot;
   const tb = document.getElementById('ctb');
   if (!lst.length) {
-    tb.innerHTML = '<tr><td colspan="8"><div class="se"><h3>Nenhum cliente encontrado</h3><p>Ajuste os filtros ou cadastre um novo.</p></div></td></tr>';
+    tb.innerHTML = '<tr><td colspan="9"><div class="se"><h3>Nenhum cliente encontrado</h3><p>Ajuste os filtros ou cadastre um novo.</p></div></td></tr>';
     return;
   }
   tb.innerHTML = lst.map(c => {
@@ -1394,7 +1573,9 @@ function renderCl() {
     const waBtn = waNum
       ? '<a class="btn wa-btn sm" href="https://wa.me/'+waNum+'" target="_blank" title="Abrir WhatsApp">📱</a>'
       : '';
-    return '<tr class="'+(ov?'ov':'')+'"><td><strong><a class="cl-name" onclick="abrPerfil(\''+id+'\')" title="Ver perfil completo">'+c.name+'</a></strong></td>'
+    const checked = selectedIds.has(id) ? ' checked' : '';
+    const rowClass = (ov?'ov':'') + (selectedIds.has(id)?' row-selected':'');
+    return '<tr class="'+rowClass+'"><td><input type="checkbox" class="bulk-cb" data-id="'+id+'"'+checked+' onclick="toggleSelecionado(\''+id+'\',this.checked)" onchange="event.stopPropagation()"></td><td><strong><a class="cl-name" onclick="abrPerfil(\''+id+'\')" title="Ver perfil completo">'+c.name+'</a></strong></td>'
       +'<td class="tp">'+(c.phone||'—')+'</td>'
       +'<td>'+prodCell+'</td>'
       +'<td>'+vc+'</td><td>'+statusCell+'</td>'
@@ -1863,7 +2044,7 @@ async function iniciar(user) {
   }
   if (rp.status==='fulfilled'&&rp.value.length>0) PF=rp.value;
   if (rpr.status==='fulfilled'&&Array.isArray(rpr.value)) PRODS=rpr.value;
-  updSug(); renderCl();
+  updSug(); popularSelectVisoes(); renderCl();
   const n=CL.filter(c=>venc(c.callback_date)&&c.status!=='Comprou'&&c.status!=='Inativo').length;
   if (n>0) toast(n+' retorno(s) vencido(s)',n+' cliente(s) com data vencida.','warning');
   startAutoRefresh();

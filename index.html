@@ -465,20 +465,36 @@ td strong{color:var(--tx);font-weight:600}
 }
 
 /* ── Lista de produtos dinâmica ── */
-.prod-row{display:flex;align-items:center;gap:8px;margin-bottom:8px}
+.prod-row{display:flex;align-items:flex-start;gap:8px;margin-bottom:8px}
 .prod-row:last-child{margin-bottom:0}
-.prod-row .prod-nome{flex:2;padding:8px 12px;border:1.5px solid var(--bdr);border-radius:var(--rs);font-size:13px;font-family:inherit;color:var(--tx);background:var(--sur);outline:none;transition:border-color .15s}
+.prod-nome-wrap{flex:2;position:relative}
+.prod-row .prod-nome{width:100%;padding:8px 12px;border:1.5px solid var(--bdr);border-radius:var(--rs);font-size:13px;font-family:inherit;color:var(--tx);background:var(--sur);outline:none;transition:border-color .15s;box-sizing:border-box}
+.prod-row .prod-emb{flex:1.2;padding:8px 8px;border:1.5px solid var(--bdr);border-radius:var(--rs);font-size:13px;font-family:inherit;color:var(--tx);background:var(--sur);outline:none;transition:border-color .15s;cursor:pointer}
+.prod-row .prod-emb:disabled{color:var(--mt2);cursor:not-allowed;background:var(--bg)}
 .prod-row .prod-qtd{flex:1;padding:8px 12px;border:1.5px solid var(--bdr);border-radius:var(--rs);font-size:13px;font-family:inherit;color:var(--tx);background:var(--sur);outline:none;transition:border-color .15s}
-.prod-row .prod-nome:focus,.prod-row .prod-qtd:focus{border-color:var(--p)}
-.prod-del{background:none;border:none;color:var(--mt2);cursor:pointer;font-size:18px;padding:4px 6px;line-height:1;border-radius:4px;flex-shrink:0;transition:all .15s}
+.prod-row .prod-nome:focus,.prod-row .prod-qtd:focus,.prod-row .prod-emb:focus{border-color:var(--p)}
+.prod-del{background:none;border:none;color:var(--mt2);cursor:pointer;font-size:18px;padding:8px 6px;line-height:1;border-radius:4px;flex-shrink:0;transition:all .15s}
 .prod-del:hover{color:var(--er);background:var(--er2)}
 .prod-headers{display:flex;gap:8px;margin-bottom:6px;padding:0 0 0 0}
 .prod-h{font-size:11px;font-weight:600;color:var(--mt);text-transform:uppercase;letter-spacing:.04em}
-.prod-h.hn{flex:2}.prod-h.hq{flex:1}.prod-h.hd{width:32px}
+.prod-h.hn{flex:2}.prod-h.he{flex:1.2}.prod-h.hq{flex:1}.prod-h.hd{width:32px}
 .prod-add-btn{display:flex;align-items:center;justify-content:center;gap:6px;width:100%;padding:9px;border:1.5px dashed var(--bdr2);border-radius:var(--rs);background:none;font-size:13px;color:var(--p);cursor:pointer;font-family:inherit;transition:all .15s;margin-top:6px}
 .prod-add-btn:hover{border-color:var(--p);background:var(--ps)}
 .prod-tag{display:inline-flex;align-items:center;gap:4px;background:var(--ps);color:var(--p);font-size:11px;font-weight:500;padding:2px 8px;border-radius:99px;white-space:nowrap;margin:2px 2px 2px 0}
 .prod-tag-peso{color:var(--mt);font-weight:400}
+/* Autocomplete */
+.prod-dd{position:absolute;top:calc(100% + 2px);left:0;right:0;max-height:260px;overflow-y:auto;background:var(--sur);border:1.5px solid var(--bdr2);border-radius:var(--rs);box-shadow:0 8px 24px rgba(0,0,0,.12);z-index:50;display:none}
+.prod-dd.op{display:block}
+.prod-dd-item{padding:8px 12px;cursor:pointer;font-size:12px;line-height:1.4;border-bottom:1px solid var(--bdr)}
+.prod-dd-item:last-child{border-bottom:none}
+.prod-dd-item:hover,.prod-dd-item.hl{background:var(--ps)}
+.prod-dd-name{font-weight:600;color:var(--tx)}
+.prod-dd-emb{color:var(--mt);font-weight:400;margin-left:4px}
+.prod-dd-prices{display:flex;gap:10px;margin-top:2px;font-size:11px;color:var(--mt)}
+.prod-dd-prices b{color:var(--tx);font-weight:600}
+.prod-dd-empty{padding:10px 12px;font-size:12px;color:var(--mt);font-style:italic}
+.prod-price-hint{margin-top:4px;font-size:11px;color:var(--mt);display:flex;gap:10px}
+.prod-price-hint b{color:var(--p);font-weight:600}
 </style>
 </head>
 <body>
@@ -689,6 +705,7 @@ td strong{color:var(--tx);font-weight:600}
         <div class="fsl">Produtos</div>
         <div class="prod-headers">
           <span class="prod-h hn">Nome do Produto</span>
+          <span class="prod-h he">Embalagem</span>
           <span class="prod-h hq">Qtd / Peso</span>
           <span class="prod-h hd"></span>
         </div>
@@ -930,7 +947,7 @@ function apiDelete(table, qs) {
 
 // ── Estado ────────────────────────────────────────────────────────────────
 let ME = null, MEP = null;
-let CL = [], PF = [];
+let CL = [], PF = [], PRODS = [];
 let PID = null, EID = null;
 let SCOL = 'created_at', SDIR = 'desc', CCB = null;
 const VND = ['Igor','Nádia','Letícia','Gracielle'];
@@ -1024,8 +1041,9 @@ document.getElementById('cosi').onclick = () => { const cb = CCB; fechaConf(); i
 document.getElementById('cono').onclick = fechaConf;
 
 // ── DB ────────────────────────────────────────────────────────────────────
-const fetchCl = () => api('GET','clients','select=*,seller:profiles(id,name),produtos:client_products(id,produto,peso)&order=created_at.desc');
+const fetchCl = () => api('GET','clients','select=*,seller:profiles(id,name),produtos:client_products(id,produto,embalagem,peso)&order=created_at.desc');
 const fetchPf = () => api('GET','profiles','select=id,name,role,email&order=name');
+const fetchProds = () => api('GET','products','select=nome,embalagem,preco_materia_prima,preco_office,preco_pj&order=nome,embalagem');
 const fetchHist = id => api('GET','call_history','client_id=eq.'+id+'&select=*,seller:profiles(id,name)&order=datetime.desc');
 function saveCl(d, id) {
   if (id) return api('PATCH','clients','id=eq.'+id,d).then(r => Array.isArray(r)?r[0]:r);
@@ -1085,9 +1103,13 @@ function renderCl() {
     // Coluna produto: usa client_products ou fallback para campo antigo
     const prods = (c.produtos && c.produtos.length > 0)
       ? c.produtos
-      : (c.produto ? [{produto:c.produto, peso:c.peso}] : []);
+      : (c.produto ? [{produto:c.produto, embalagem:null, peso:c.peso}] : []);
     const prodCell = prods.length
-      ? prods.map(p=>'<span class="prod-tag">'+p.produto+(p.peso?' <span class="prod-tag-peso">'+p.peso+'</span>':'')+'</span>').join('')
+      ? prods.map(p => {
+          const emb = p.embalagem ? ' <span class="prod-tag-peso">· '+p.embalagem+'</span>' : '';
+          const ps  = p.peso      ? ' <span class="prod-tag-peso">· '+p.peso+'</span>'      : '';
+          return '<span class="prod-tag">'+p.produto+emb+ps+'</span>';
+        }).join('')
       : '<span style="color:var(--mt2)">—</span>';
     const dc = c.callback_date
       ? fData(c.callback_date)+' <small style="color:var(--mt)">('+fRel(c.callback_date)+')</small>'+(ov?'<span class="ob">Vencido</span>':'')
@@ -1259,7 +1281,7 @@ function abrEdit(id) {
   // Carrega produtos: usa client_products ou fallback para campo antigo
   const prods = (c.produtos && c.produtos.length > 0)
     ? c.produtos
-    : (c.produto ? [{produto:c.produto, peso:c.peso}] : []);
+    : (c.produto ? [{produto:c.produto, embalagem:null, peso:c.peso}] : []);
   renderProdutoRows(prods);
   document.getElementById('cm').classList.add('op');
 }
@@ -1295,7 +1317,7 @@ async function iniciar(user) {
   if (vsSel) vsSel.value = st;
   if (vsDot) vsDot.className = 'vs-dot '+(st==='Disponível'?'vs-disp':st==='Em ligação'?'vs-em':'vs-aus');
   // Dados em paralelo
-  const [rp,rc] = await Promise.allSettled([fetchPf(),fetchCl()]);
+  const [rp,rc,rpr] = await Promise.allSettled([fetchPf(),fetchCl(),fetchProds()]);
   if (rc.status==='fulfilled') {
     CL=rc.value;
     try{localStorage.setItem('crm_cl',JSON.stringify(CL));}catch{}
@@ -1303,6 +1325,7 @@ async function iniciar(user) {
     toast('Erro ao carregar clientes',rc.reason?.message,'warning');
   }
   if (rp.status==='fulfilled'&&rp.value.length>0) PF=rp.value;
+  if (rpr.status==='fulfilled'&&Array.isArray(rpr.value)) PRODS=rpr.value;
   updSug(); renderCl();
   const n=CL.filter(c=>venc(c.callback_date)&&c.status!=='Comprou'&&c.status!=='Inativo').length;
   if (n>0) toast(n+' retorno(s) vencido(s)',n+' cliente(s) com data vencida.','warning');
@@ -1761,11 +1784,11 @@ function abrPerfil(id) {
   document.getElementById('pf-sub').innerHTML =
     bStatus(c.status)+'<span>•</span><span>'+nv+'</span>'
     +(c.callback_date?'<span>•</span><span>Retorno: '+fData(c.callback_date)+' ('+fRel(c.callback_date)+')</span>':'');
+  const nProds = (c.produtos?.length) || (c.produto ? 1 : 0);
   document.getElementById('pf-metrics').innerHTML = [
     ['Telefone', c.phone||'—'],
     ['Valor Est.', fMoeda(c.estimated_value)],
-    ['Produto', c.produto||'—'],
-    ['Peso', c.peso||'—'],
+    ['Produtos', nProds ? `${nProds} ${nProds===1?'item':'itens'}` : '—'],
     ['Cadastrado', fData((c.created_at||'').split('T')[0])],
   ].map(([l,v])=>`<div class="pf-met"><div class="pf-met-l">${l}</div><div class="pf-met-v">${v}</div></div>`).join('');
 
@@ -1804,10 +1827,10 @@ function abrEditFromPerfil() {
 function renderPfResumo(c) {
   const prods = (c.produtos && c.produtos.length > 0)
     ? c.produtos
-    : (c.produto ? [{produto:c.produto, peso:c.peso}] : []);
+    : (c.produto ? [{produto:c.produto, embalagem:null, peso:c.peso}] : []);
   const prodHtml = prods.length
     ? prods.map(p=>`<div class="pf-row" style="flex-wrap:wrap;gap:6px">
-        <div class="pf-rk" style="width:auto">${p.produto}</div>
+        <div class="pf-rk" style="width:auto">${p.produto}${p.embalagem?` <span style="color:var(--mt);font-weight:400">· ${p.embalagem}</span>`:''}</div>
         ${p.peso?`<div style="font-size:12px;color:var(--mt)">${p.peso}</div>`:''}
       </div>`).join('')
     : '<div style="font-size:13px;color:var(--mt)">Sem produtos cadastrados.</div>';
@@ -1911,17 +1934,149 @@ document.querySelectorAll('.pf-tab').forEach(t => t.addEventListener('click', ()
 }));
 
 // ── Gestão de Múltiplos Produtos ─────────────────────────────────────────
-function addProdRow(nome, peso) {
+const escHtml = s => String(s==null?'':s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const fmtBRL = n => 'R$ '+Number(n).toFixed(2).replace('.',',');
+
+// Retorna [{nome, embalagens:[{embalagem,preco_office,preco_pj,...}]}], 1 entrada por nome
+function prodsAgrupados() {
+  const map = new Map();
+  for (const p of PRODS) {
+    if (!map.has(p.nome)) map.set(p.nome, []);
+    map.get(p.nome).push(p);
+  }
+  return [...map.entries()].map(([nome, embs]) => ({ nome, embs }));
+}
+
+function findProd(nome, embalagem) {
+  if (!nome) return null;
+  const n = nome.trim().toLowerCase();
+  const e = (embalagem||'').trim().toLowerCase();
+  return PRODS.find(p =>
+    p.nome.toLowerCase() === n && (!e || p.embalagem.toLowerCase() === e)
+  ) || null;
+}
+
+function renderProdHint(row) {
+  const hint = row.querySelector('.prod-price-hint');
+  if (!hint) return;
+  const nome = row.querySelector('.prod-nome').value;
+  const emb  = row.querySelector('.prod-emb').value;
+  const prod = findProd(nome, emb);
+  if (!prod) { hint.innerHTML = ''; return; }
+  hint.innerHTML = `<span>OFFICE: <b>${fmtBRL(prod.preco_office)}</b></span><span>PJ: <b>${fmtBRL(prod.preco_pj)}</b></span>`;
+}
+
+function filtrarNomes(q) {
+  const grouped = prodsAgrupados();
+  q = (q||'').trim().toLowerCase();
+  if (!q) return grouped.slice(0, 30);
+  const tokens = q.split(/\s+/).filter(Boolean);
+  return grouped.filter(g => {
+    const hay = g.nome.toLowerCase();
+    return tokens.every(t => hay.includes(t));
+  }).slice(0, 30);
+}
+
+function renderProdDd(row) {
+  const dd = row.querySelector('.prod-dd');
+  const inp = row.querySelector('.prod-nome');
+  if (!dd || !inp) return;
+  const items = filtrarNomes(inp.value);
+  if (!items.length) {
+    dd.innerHTML = '<div class="prod-dd-empty">Nenhum produto no catálogo (texto livre OK)</div>';
+  } else {
+    dd.innerHTML = items.map((g,i) => {
+      const nEmb = g.embs.length;
+      const faixa = nEmb > 1
+        ? `${nEmb} embalagens — a partir de <b>${fmtBRL(Math.min(...g.embs.map(e=>e.preco_pj)))}</b>`
+        : `${escHtml(g.embs[0].embalagem)} — PJ <b>${fmtBRL(g.embs[0].preco_pj)}</b>`;
+      return `<div class="prod-dd-item${i===0?' hl':''}" data-nome="${escHtml(g.nome)}">
+         <div class="prod-dd-name">${escHtml(g.nome)}</div>
+         <div class="prod-dd-prices">${faixa}</div>
+       </div>`;
+    }).join('');
+  }
+  dd.classList.add('op');
+}
+
+function popularEmbSelect(row, nome, embAtual) {
+  const sel = row.querySelector('.prod-emb');
+  const embs = nome ? PRODS.filter(p => p.nome.toLowerCase() === nome.toLowerCase()) : [];
+  if (!embs.length) {
+    sel.innerHTML = '<option value="">—</option>';
+    sel.disabled = true;
+    return;
+  }
+  sel.disabled = false;
+  sel.innerHTML = '<option value="">Selecione…</option>' +
+    embs.map(e => `<option value="${escHtml(e.embalagem)}"${e.embalagem===embAtual?' selected':''}>${escHtml(e.embalagem)}</option>`).join('');
+  // Auto-seleciona primeira embalagem se nada foi pedido
+  if (!embAtual && embs.length === 1) sel.value = embs[0].embalagem;
+}
+
+function selProdItem(row, item) {
+  const inp = row.querySelector('.prod-nome');
+  const dd  = row.querySelector('.prod-dd');
+  const nome = item.dataset.nome;
+  inp.value = nome;
+  dd.classList.remove('op');
+  popularEmbSelect(row, nome, null);
+  renderProdHint(row);
+  // Foca embalagem se houver múltiplas opções, senão pula direto pra qtd
+  const sel = row.querySelector('.prod-emb');
+  const opts = sel.querySelectorAll('option:not([value=""])').length;
+  if (opts > 1) sel.focus();
+  else row.querySelector('.prod-qtd').focus();
+}
+
+function addProdRow(nome, embalagem, peso) {
   const lista = document.getElementById('prod-lista');
   if (!lista) return;
   const row = document.createElement('div');
   row.className = 'prod-row';
   row.innerHTML = `
-    <input type="text" class="prod-nome" placeholder="Nome do produto" value="${nome||''}">
-    <input type="text" class="prod-qtd"  placeholder="Qtd / Peso (ex: 500 kg)" value="${peso||''}">
+    <div class="prod-nome-wrap">
+      <input type="text" class="prod-nome" placeholder="Nome do produto" autocomplete="off" value="${escHtml(nome)}">
+      <div class="prod-dd"></div>
+      <div class="prod-price-hint"></div>
+    </div>
+    <select class="prod-emb" disabled><option value="">—</option></select>
+    <input type="text" class="prod-qtd" placeholder="Qtd / Peso (ex: 500 kg)" value="${escHtml(peso)}">
     <button type="button" class="prod-del" onclick="this.closest('.prod-row').remove()" title="Remover">✕</button>`;
   lista.appendChild(row);
-  row.querySelector('.prod-nome').focus();
+
+  const inp = row.querySelector('.prod-nome');
+  const dd  = row.querySelector('.prod-dd');
+  const sel = row.querySelector('.prod-emb');
+
+  inp.addEventListener('focus', () => renderProdDd(row));
+  inp.addEventListener('input', () => {
+    renderProdDd(row);
+    // Se o nome digitado ainda casa com algum do catálogo, mantém embalagens; senão zera
+    popularEmbSelect(row, inp.value, sel.value);
+    renderProdHint(row);
+  });
+  inp.addEventListener('blur',  () => setTimeout(() => dd.classList.remove('op'), 150));
+  inp.addEventListener('keydown', e => {
+    if (!dd.classList.contains('op')) return;
+    const items = [...dd.querySelectorAll('.prod-dd-item')];
+    if (!items.length) return;
+    let idx = items.findIndex(x => x.classList.contains('hl'));
+    if (e.key === 'ArrowDown') { e.preventDefault(); items[idx]?.classList.remove('hl'); idx = (idx+1) % items.length; items[idx].classList.add('hl'); items[idx].scrollIntoView({block:'nearest'}); }
+    else if (e.key === 'ArrowUp') { e.preventDefault(); items[idx]?.classList.remove('hl'); idx = (idx-1+items.length) % items.length; items[idx].classList.add('hl'); items[idx].scrollIntoView({block:'nearest'}); }
+    else if (e.key === 'Enter') { e.preventDefault(); if (items[idx]) selProdItem(row, items[idx]); }
+    else if (e.key === 'Escape') { dd.classList.remove('op'); }
+  });
+  dd.addEventListener('mousedown', e => {
+    const it = e.target.closest('.prod-dd-item');
+    if (it) { e.preventDefault(); selProdItem(row, it); }
+  });
+  sel.addEventListener('change', () => renderProdHint(row));
+
+  // Estado inicial (linha pré-preenchida ao editar cliente)
+  popularEmbSelect(row, nome, embalagem);
+  renderProdHint(row);
+  if (!nome) inp.focus();
 }
 
 function getProdutosDoForm() {
@@ -1929,8 +2084,9 @@ function getProdutosDoForm() {
   const result = [];
   rows.forEach(r => {
     const nome = r.querySelector('.prod-nome').value.trim();
+    const emb  = r.querySelector('.prod-emb').value.trim();
     const peso = r.querySelector('.prod-qtd').value.trim();
-    if (nome) result.push({ produto: nome, peso: peso || null });
+    if (nome) result.push({ produto: nome, embalagem: emb || null, peso: peso || null });
   });
   return result;
 }
@@ -1939,7 +2095,7 @@ function renderProdutoRows(produtos) {
   const lista = document.getElementById('prod-lista');
   if (!lista) return;
   lista.innerHTML = '';
-  (produtos || []).forEach(p => addProdRow(p.produto, p.peso));
+  (produtos || []).forEach(p => addProdRow(p.produto, p.embalagem, p.peso));
 }
 
 async function salvarProdutos(clientId) {
@@ -1948,7 +2104,7 @@ async function salvarProdutos(clientId) {
   await api('DELETE', 'client_products', `client_id=eq.${clientId}`);
   if (produtos.length > 0) {
     await api('POST', 'client_products', null,
-      produtos.map(p => ({ client_id: clientId, produto: p.produto, peso: p.peso || null }))
+      produtos.map(p => ({ client_id: clientId, produto: p.produto, embalagem: p.embalagem, peso: p.peso || null }))
     );
   }
 }

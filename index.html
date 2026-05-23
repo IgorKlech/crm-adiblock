@@ -31,6 +31,37 @@
   --shl:0 20px 60px rgba(0,0,0,.10),0 4px 16px rgba(0,0,0,.06);
   --r:10px;--rs:6px;--rl:14px;
 }
+[data-theme="dark"]{
+  --bg:#0f172a;
+  --sur:#1e293b;
+  --bdr:#334155;
+  --bdr2:#475569;
+  --nb:#020617;
+  --p:#60a5fa;
+  --ph:#93c5fd;
+  --ps:rgba(96,165,250,.12);
+  --tx:#f1f5f9;
+  --tx2:#cbd5e1;
+  --mt:#94a3b8;
+  --mt2:#64748b;
+  --ok:#10b981;--ok2:rgba(16,185,129,.12);
+  --er:#f87171;--er2:rgba(248,113,113,.15);
+  --wr:#fbbf24;--wr2:rgba(251,191,36,.15);
+  --sh:0 1px 3px rgba(0,0,0,.4),0 1px 2px rgba(0,0,0,.3);
+  --shm:0 4px 12px rgba(0,0,0,.45),0 2px 4px rgba(0,0,0,.3);
+  --shl:0 20px 60px rgba(0,0,0,.5),0 4px 16px rgba(0,0,0,.35);
+}
+/* Botão de toggle de tema */
+.theme-toggle{background:none;border:1px solid var(--bdr);color:var(--tx);width:34px;height:34px;border-radius:8px;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:16px;transition:all .15s}
+.theme-toggle:hover{background:var(--ps);border-color:var(--p)}
+/* Modal de atalhos */
+#kbd-help{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:500;align-items:center;justify-content:center}
+#kbd-help.op{display:flex}
+.kbd-card{background:var(--sur);border:1px solid var(--bdr);border-radius:var(--r);padding:24px 28px;max-width:480px;width:90%;box-shadow:var(--shl)}
+.kbd-card h3{font-size:16px;margin:0 0 16px 0;color:var(--tx)}
+.kbd-list{display:flex;flex-direction:column;gap:8px}
+.kbd-item{display:flex;justify-content:space-between;align-items:center;font-size:13px;color:var(--tx)}
+.kbd-item kbd{background:var(--bg);border:1px solid var(--bdr2);border-bottom-width:2px;border-radius:5px;padding:3px 8px;font-family:ui-monospace,Consolas,monospace;font-size:11px;color:var(--tx2);min-width:24px;text-align:center}
 *{box-sizing:border-box;margin:0;padding:0}
 body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--tx);font-size:14px;line-height:1.5;-webkit-font-smoothing:antialiased;min-height:100vh}
 ::-webkit-scrollbar{width:6px;height:6px}
@@ -642,6 +673,8 @@ td strong{color:var(--tx);font-weight:600}
       </div>
     </div>
     <div class="nbr">
+      <button class="theme-toggle" id="theme-toggle" onclick="toggleTheme()" title="Alternar tema (Ctrl+Shift+L)">🌙</button>
+      <button class="theme-toggle" onclick="abrirAjudaAtalhos()" title="Atalhos de teclado (?)" style="margin-left:6px">⌨</button>
       <div class="uc">
         <div class="ua" id="uav" onclick="abrConfig()" title="Minhas configurações" style="cursor:pointer">?</div>
         <div>
@@ -3421,6 +3454,74 @@ sb.auth.onAuthStateChange(async(_,s)=>{
   const{data:{session}}=await sb.auth.getSession();
   if(session?.user){showApp();await iniciar(session.user);}
 })();
+
+// ── Tema (modo escuro) e atalhos de teclado ─────────────────────────────
+function aplicarTema(t) {
+  document.documentElement.setAttribute('data-theme', t);
+  const btn = document.getElementById('theme-toggle');
+  if (btn) btn.textContent = t === 'dark' ? '☀' : '🌙';
+  try { localStorage.setItem('crm_theme', t); } catch {}
+}
+function toggleTheme() {
+  const atual = document.documentElement.getAttribute('data-theme') || 'light';
+  aplicarTema(atual === 'dark' ? 'light' : 'dark');
+}
+// Aplica tema salvo logo no carregamento (antes do app aparecer)
+(function(){ try {
+  const t = localStorage.getItem('crm_theme');
+  if (t === 'dark' || t === 'light') aplicarTema(t);
+} catch {} })();
+
+function abrirAjudaAtalhos() {
+  document.getElementById('kbd-help').classList.add('op');
+}
+
+// Atalhos: ativos apenas quando NÃO está digitando em input/textarea/select
+function isTypingInField() {
+  const el = document.activeElement;
+  if (!el) return false;
+  const tag = el.tagName;
+  return tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT' || el.isContentEditable;
+}
+
+document.addEventListener('keydown', e => {
+  // Sempre ativos (independem de estar digitando ou não)
+  if (e.ctrlKey && e.shiftKey && e.key.toLowerCase() === 'l') { e.preventDefault(); toggleTheme(); return; }
+  if (e.key === 'Escape') {
+    document.getElementById('kbd-help')?.classList.remove('op');
+  }
+  if (isTypingInField()) return;
+  // Atalhos de letra solta (só quando não digitando)
+  if (e.key === '?') { e.preventDefault(); abrirAjudaAtalhos(); return; }
+  if (e.key === 'n' || e.key === 'N') {
+    // Só faz sentido se aba clientes estiver ativa
+    const clActive = document.getElementById('cl-view')?.classList.contains('ac');
+    if (clActive && !document.getElementById('cm').classList.contains('op')) {
+      e.preventDefault(); abrNovo();
+    }
+  }
+  if (e.key === 'd' || e.key === 'D') { e.preventDefault(); document.querySelector('.tb[data-tab="db"]')?.click(); }
+  if (e.key === 'c' || e.key === 'C') { e.preventDefault(); document.querySelector('.tb[data-tab="cl"]')?.click(); }
+});
 </script>
+
+<!-- MODAL AJUDA DE ATALHOS -->
+<div id="kbd-help" onclick="if(event.target.id==='kbd-help')this.classList.remove('op')">
+  <div class="kbd-card">
+    <h3>Atalhos de teclado</h3>
+    <div class="kbd-list">
+      <div class="kbd-item"><span>Novo cliente (aba Clientes)</span><kbd>N</kbd></div>
+      <div class="kbd-item"><span>Ir para Clientes</span><kbd>C</kbd></div>
+      <div class="kbd-item"><span>Ir para Dashboard</span><kbd>D</kbd></div>
+      <div class="kbd-item"><span>Busca global</span><kbd>Ctrl + K</kbd></div>
+      <div class="kbd-item"><span>Alternar tema claro/escuro</span><kbd>Ctrl + Shift + L</kbd></div>
+      <div class="kbd-item"><span>Mostrar atalhos</span><kbd>?</kbd></div>
+      <div class="kbd-item"><span>Fechar modal</span><kbd>Esc</kbd></div>
+    </div>
+    <div style="margin-top:16px;text-align:right">
+      <button class="btn bg sm" onclick="document.getElementById('kbd-help').classList.remove('op')">Fechar</button>
+    </div>
+  </div>
+</div>
 </body>
 </html>

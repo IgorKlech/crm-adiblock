@@ -454,6 +454,18 @@ td strong{color:var(--tx);font-weight:600}
 .rel-ok-box{background:var(--ok2);border:1px solid var(--ok);border-radius:var(--r);padding:14px 18px;font-size:13px;color:var(--ok);display:flex;align-items:center;gap:10px}
 .rel-footer{text-align:center;font-size:11px;color:var(--mt);margin-top:28px;padding-top:16px;border-top:1px solid var(--bdr)}
 
+/* ── Banner de aviso de schema desatualizado ── */
+#schema-banner{position:fixed;top:60px;left:50%;transform:translateX(-50%);z-index:400;background:#fef3c7;border:2px solid #f59e0b;border-radius:8px;padding:14px 18px;max-width:720px;width:calc(100% - 40px);box-shadow:0 10px 30px rgba(0,0,0,.18);font-size:13px;color:#78350f}
+.schema-banner-title{font-weight:700;font-size:14px;margin-bottom:6px;color:#92400e}
+.schema-banner-msg{margin-bottom:8px;line-height:1.5}
+.schema-banner-msg code{background:rgba(0,0,0,.08);padding:1px 6px;border-radius:4px;font-family:ui-monospace,Consolas,monospace;font-size:12px}
+.schema-banner-list{list-style:none;padding:0;margin:0 0 12px 0;max-height:180px;overflow-y:auto;font-size:11.5px;line-height:1.5}
+.schema-banner-list li{padding:4px 0;border-bottom:1px dashed rgba(0,0,0,.12)}
+.schema-banner-list li:last-child{border-bottom:none}
+.schema-banner-list code{font-family:ui-monospace,Consolas,monospace;font-size:11px;color:#7c2d12}
+.schema-banner-close{background:#f59e0b;color:#fff;border:none;padding:6px 14px;border-radius:6px;cursor:pointer;font-size:12px;font-weight:600;font-family:inherit}
+.schema-banner-close:hover{background:#d97706}
+
 /* ── Relatório de Produtos ── */
 .prod-rep-wrap{background:var(--sur);border:1px solid var(--bdr);border-radius:var(--r);padding:18px 20px;margin-top:18px}
 .prod-rep-head{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:14px;flex-wrap:wrap}
@@ -1419,7 +1431,7 @@ async function renderDb() {
             +'</div>';
         }).join('')
       : '<div class="se" style="padding:12px 0"><p>Nenhuma conversão ainda.</p></div>';
-  } catch{}
+  } catch(err) { console.error('Ranking de vendedores:', err); }
   renderProdRep(); // relatório de produtos da Fase 5
 }
 
@@ -1697,6 +1709,50 @@ function abrDel(id, nome) {
   });
 }
 
+// ── Schema self-check (detecta colunas/tabelas faltando no boot) ──────────
+async function checkSchema() {
+  // Lista de tabelas + colunas que o app precisa. Se o Supabase rejeita
+  // o select, sabemos que falta rodar o supabase_setup.sql.
+  const PROBES = [
+    ['clients',         'id,name,phone,email,status,loss_reason,callback_date,estimated_value,observation,internal_notes,status_changed_at,seller_name,produto,peso,endereco,cidade,uf,cep,cnpj,ie,obra,contato_outros,created_at'],
+    ['profiles',        'id,name,email,role,seller_status,telefone,office_nome,office_email,office_telefone'],
+    ['client_products', 'id,client_id,produto,embalagem,qtd_kg,preco_kg,peso,created_at'],
+    ['products',        'id,nome,embalagem,preco_materia_prima,preco_office,preco_pj'],
+    ['call_history',    'id,client_id,seller_id,datetime,result,next_callback,notes,created_at'],
+    ['proposals',       'id,ano,numero,client_id,seller_id,snapshot,created_at'],
+  ];
+  const issues = [];
+  for (const [tabela, cols] of PROBES) {
+    try {
+      await api('GET', tabela, `select=${cols}&limit=1`);
+    } catch (err) {
+      issues.push({ tabela, erro: err.message || String(err) });
+    }
+  }
+  return issues;
+}
+
+function mostrarBannerSchema(issues) {
+  if (!issues.length) {
+    document.getElementById('schema-banner')?.remove();
+    return;
+  }
+  let bn = document.getElementById('schema-banner');
+  if (!bn) {
+    bn = document.createElement('div');
+    bn.id = 'schema-banner';
+    document.body.appendChild(bn);
+  }
+  bn.innerHTML = `
+    <div class="schema-banner-title">⚠ Banco de dados desatualizado</div>
+    <div class="schema-banner-msg">Faltam colunas ou tabelas. Abra o SQL Editor do Supabase e rode <code>supabase_setup.sql</code> (é idempotente, pode rodar mesmo se já rodou antes).</div>
+    <ul class="schema-banner-list">
+      ${issues.map(i => `<li><b>${escHtml(i.tabela)}</b>: <code>${escHtml(i.erro)}</code></li>`).join('')}
+    </ul>
+    <button class="schema-banner-close" onclick="document.getElementById('schema-banner').remove()">Dispensar</button>
+  `;
+}
+
 // ── Init ──────────────────────────────────────────────────────────────────
 async function iniciar(user) {
   ME = user;
@@ -1714,6 +1770,8 @@ async function iniciar(user) {
   const vsDot = document.getElementById('vs-dot');
   if (vsSel) vsSel.value = st;
   if (vsDot) vsDot.className = 'vs-dot '+(st==='Disponível'?'vs-disp':st==='Em ligação'?'vs-em':'vs-aus');
+  // Schema check em background: se faltar coluna/tabela, mostra banner amarelo
+  checkSchema().then(mostrarBannerSchema).catch(err => console.error('checkSchema falhou:', err));
   // Dados em paralelo
   const [rp,rc,rpr] = await Promise.allSettled([fetchPf(),fetchCl(),fetchProds()]);
   if (rc.status==='fulfilled') {
@@ -1791,7 +1849,7 @@ document.getElementById('expbtn').addEventListener('click',()=>{
   toast('Exportado!',rows.length+' cliente(s).','success');
 });
 document.getElementById('dref').addEventListener('click',async()=>{
-  try{CL=await fetchCl();renderDb();toast('Atualizado','','success');}catch{}
+  try{CL=await fetchCl();renderDb();toast('Atualizado','','success');}catch(err){console.error('Refresh dashboard:', err); toast('Falha ao atualizar', err.message||'', 'warning');}
 });
 
 // Modal
@@ -1845,8 +1903,11 @@ document.getElementById('clf').addEventListener('submit', async e => {
     const oldC = EID ? (CL.find(c=>c.id===EID)||{}) : {};
     const saved = await saveCl(d, EID);
     const savedId = EID || saved?.id;
-    // Salva produtos (async, não bloqueia o toast)
-    if (savedId) salvarProdutos(savedId).catch(()=>{});
+    // Salva produtos (async, não bloqueia o toast — mas erro avisa)
+    if (savedId) salvarProdutos(savedId).catch(err => {
+      console.error('Salvar produtos do cliente:', err);
+      toast('Erro ao salvar produtos', err.message||'Tente novamente.', 'warning');
+    });
     // Audit log (não bloqueia)
     if (EID) {
       const changes = detectChanges(oldC, d);
@@ -3157,7 +3218,7 @@ function startAutoRefresh() {
       renderCl();
       const now = new Date().toLocaleTimeString('pt-BR', {hour:'2-digit',minute:'2-digit'});
       if (ind) ind.title = 'Atualizado às ' + now;
-    } catch {}
+    } catch(err) { console.error('Auto-refresh:', err); }
   }, 120000); // 2 minutos
 }
 function stopAutoRefresh() {

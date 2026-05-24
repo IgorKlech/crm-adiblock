@@ -1751,112 +1751,134 @@ function renderCl() {
   }).join('');
 }
 
-// ── Dashboard (Sprint 3.2: simplificado, adaptado pra empresas) ────────────
+// ── Dashboard (Sprint 3.4: funil, ranking, alertas e forecast baseados em opportunities) ────
+// Probabilidade ponderada por estágio (forecast B2B padrão)
+const ESTAGIO_PROB = {
+  lead: 0.10, qualificado: 0.30, proposta_enviada: 0.60,
+  em_negociacao: 0.80, ganha: 1.00, perdida: 0,
+};
+
+function todasOpps() {
+  // Achata todas oportunidades de todas empresas (com nome da empresa anexado)
+  return CL.flatMap(c => (c.oportunidades||[]).map(o => ({
+    ...o,
+    company_id:   c.id,
+    company_nome: c.razao_social,
+  })));
+}
+
 async function renderDb() {
-  const tot  = CL.length;
-  const leads     = CL.filter(c => c.tier === 'lead').length;
+  const opps = todasOpps();
+  const abertas = opps.filter(o => o.estagio !== 'ganha' && o.estagio !== 'perdida');
+  const ganhas  = opps.filter(o => o.estagio === 'ganha');
+  const perdidas= opps.filter(o => o.estagio === 'perdida');
+
+  // ── Cards principais ──
+  const tot       = CL.length;
   const clientes  = CL.filter(c => c.tier === 'cliente').length;
   const contas    = CL.filter(c => c.tier === 'conta').length;
-  const oppsAbertas = CL.reduce((s,c) => s + (c.opps_abertas||0), 0);
-  const pipelineTot = CL.reduce((s,c) => s + (Number(c.valor_pipeline)||0), 0);
+  const leads     = CL.filter(c => c.tier === 'lead').length;
+  const pipelineTot = abertas.reduce((s,o) => s + (Number(o.valor_estimado)||0), 0);
+  const forecast    = abertas.reduce((s,o) => s + (Number(o.valor_estimado)||0) * (ESTAGIO_PROB[o.estagio]||0), 0);
+  const hoje  = new Date(); hoje.setHours(0,0,0,0);
+  const vencidos = abertas.filter(o => o.callback_date && new Date(o.callback_date) < hoje);
 
-  // Cards principais — reaproveita os 5 slots existentes
   const setSafe = (id, val) => { const el = document.getElementById(id); if (el) el.textContent = val; };
   setSafe('d1', tot);
-  setSafe('d2', clientes + contas); // "Compraram" = clientes + contas
-  setSafe('d3', leads);              // "Pendentes" = leads
-  setSafe('d4', oppsAbertas);        // "Retornos Vencidos" reaproveitado como Opps abertas
+  setSafe('d2', clientes + contas);
+  setSafe('d3', leads);
+  setSafe('d4', vencidos.length);
   setSafe('d5', fMoedaK(pipelineTot));
   const d2b = document.getElementById('d2b'); if (d2b) d2b.style.width = tot ? ((clientes+contas)/tot*100)+'%' : '0%';
   const d3b = document.getElementById('d3b'); if (d3b) d3b.style.width = tot ? (leads/tot*100)+'%' : '0%';
 
-  // Esconde seções que dependem de oportunidades / call_history
-  const hide = id => { const el = document.getElementById(id); if (el) el.style.display = 'none'; };
-  const showMsg = (id, msg) => { const el = document.getElementById(id); if (el) el.innerHTML = '<div class="deprecated-msg">'+msg+'</div>'; };
-  showMsg('funil-body', 'Funil por estágios de oportunidade virá no Sprint 3.3.');
-  document.getElementById('funil-taxa').textContent = '';
-  showMsg('dol', 'Alertas de retorno serão refeitos com callback_date das oportunidades (Sprint 3.3).');
-  document.getElementById('dob').textContent = '0';
-  showMsg('drl', 'Ranking com meta será refeito ao contar oportunidades ganhas por vendedor (Sprint 3.3).');
-  renderProdRep();
-  return; // pula tudo abaixo (código antigo)
-  // ↓ dead code preservado para referência durante o refactor
-  const comp = CL.filter(c=>c.status==='Comprou').length;
-  const pend = CL.filter(c=>c.status==='Pendente').length;
-  const vl   = CL.filter(c=>venc(c.callback_date)&&c.status!=='Comprou'&&c.status!=='Inativo');
-  const pct  = v => tot ? Math.round(v/tot*100) : 0;
+  // Atualiza labels dos cards pra fazer sentido com o novo modelo
+  const setLabel = (id, txt) => { const el = document.getElementById(id); if (el) el.textContent = txt; };
+  // Vou usar o sl2 mais próximo do cada sv. Como o HTML é fixo, mantenho como está mas
+  // garanto que o card de "Compraram" agora representa "Clientes + Contas" e "Pendentes" = "Leads".
 
-  // Cards principais
-  document.getElementById('d1').textContent = tot;
-  document.getElementById('d2').textContent = comp;
-  document.getElementById('d3').textContent = pend;
-  document.getElementById('d4').textContent = vl.length;
-  document.getElementById('d2b').style.width = pct(comp)+'%';
-  document.getElementById('d3b').style.width = pct(pend)+'%';
+  // ── Forecast: insere ou atualiza um card extra ──
+  let fcCard = document.getElementById('d-forecast');
+  if (!fcCard) {
+    const sg = document.querySelector('#db-view .sg5');
+    if (sg) {
+      fcCard = document.createElement('div');
+      fcCard.className = 'sk sk-pipe';
+      fcCard.innerHTML = `<div class="sic" style="color:#10b981"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 3v18h18"/><path d="M18.7 8L13 13.5l-4-4L3 16"/></svg></div><div><div class="sv" id="d-forecast-v" style="font-size:18px;margin-top:4px">-</div><div class="sl2">Forecast Ponderado</div></div>`;
+      fcCard.id = 'd-forecast';
+      sg.appendChild(fcCard);
+    }
+  }
+  setSafe('d-forecast-v', fMoedaK(forecast));
 
-  // Valor do pipeline (ativos)
-  const pipeline = CL
-    .filter(c=>['Pendente','Em contato'].includes(c.status))
-    .reduce((s,c)=>s+(parseFloat(c.estimated_value)||0), 0);
-  document.getElementById('d5').textContent = fMoedaK(pipeline);
-
-  // Alertas
-  const ob = document.getElementById('dob'); if(ob) ob.textContent = vl.length;
-  loadAlertasInatividade();
-  const ol = document.getElementById('dol');
-  ol.innerHTML = vl.length
-    ? vl.slice(0,10).map(c=>'<div class="ari"><div class="ad"></div><div><div class="an">'+c.name+'</div><div class="as">'+(c.seller_name||c.seller?.name||'Sem vendedor')+' — '+fData(c.callback_date)+' ('+fRel(c.callback_date)+')</div></div></div>').join('')
-    : '<div class="se" style="padding:12px 0"><p>Nenhum retorno vencido!</p></div>';
-
-  // Funil de conversão
+  // ── Funil de estágios ──
   const stages = [
-    {k:'Pendente',     color:'#6c7a89'},
-    {k:'Em contato',   color:'#5b7fdb'},
-    {k:'Comprou',      color:'#38a169'},
-    {k:'Nao comprou',  color:'#e53e3e'},
-    {k:'Inativo',      color:'#a0aec0'},
+    {k:'lead',              lbl:'Lead',              cor:'#6c7a89'},
+    {k:'qualificado',       lbl:'Qualificado',       cor:'#5b7fdb'},
+    {k:'proposta_enviada',  lbl:'Proposta enviada',  cor:'#d97706'},
+    {k:'em_negociacao',     lbl:'Em negociação',     cor:'#9a3412'},
+    {k:'ganha',             lbl:'Ganha',             cor:'#38a169'},
+    {k:'perdida',           lbl:'Perdida',           cor:'#e53e3e'},
   ];
-  const mx2 = Math.max(...stages.map(s=>CL.filter(c=>c.status===s.k).length), 1);
-  const taxaConv = tot > 0 ? Math.round(comp/tot*100) : 0;
-  document.getElementById('funil-taxa').textContent = 'Taxa de conversão: '+taxaConv+'%';
-  document.getElementById('funil-body').innerHTML = stages.map(s=>{
-    const n = CL.filter(c=>c.status===s.k).length;
-    const p = Math.round(n/mx2*100);
-    return '<div class="funnel-row">'
-      +'<div class="funnel-label">'+s.k+'</div>'
-      +'<div class="funnel-bar-wrap"><div class="funnel-bar" style="width:'+p+'%;background:'+s.color+'"><span class="funnel-n">'+n+'</span></div></div>'
-      +'<div class="funnel-pct">'+Math.round(n/(tot||1)*100)+'%</div>'
-      +'</div>';
+  const totOpps = opps.length;
+  const fechadas = ganhas.length + perdidas.length;
+  const taxaConv = fechadas > 0 ? Math.round(ganhas.length / fechadas * 100) : 0;
+  document.getElementById('funil-taxa').textContent = `Taxa de conversão: ${taxaConv}% (${ganhas.length}/${fechadas} fechadas)`;
+  const maxN = Math.max(...stages.map(s => opps.filter(o=>o.estagio===s.k).length), 1);
+  document.getElementById('funil-body').innerHTML = stages.map(s => {
+    const n = opps.filter(o=>o.estagio===s.k).length;
+    const p = Math.round(n/maxN*100);
+    return `<div class="funnel-row">
+      <div class="funnel-label">${s.lbl}</div>
+      <div class="funnel-bar-wrap"><div class="funnel-bar" style="width:${p}%;background:${s.cor}"><span class="funnel-n">${n}</span></div></div>
+      <div class="funnel-pct">${totOpps?Math.round(n/totOpps*100):0}%</div>
+    </div>`;
   }).join('');
 
-  // Ranking com metas
-  try {
-    const h = await api('GET','call_history','result=eq.Comprou&select=seller_id,seller:profiles(name)');
-    const cnt={},nms={};
-    (h||[]).forEach(x=>{cnt[x.seller_id]=(cnt[x.seller_id]||0)+1;if(x.seller)nms[x.seller_id]=x.seller.name;});
-    const metas = getMetas();
-    const t3 = Object.entries(cnt).sort((a,b)=>b[1]-a[1]).slice(0,4);
-    const md = ['r1','r2','r3'];
-    document.getElementById('drl').innerHTML = t3.length
-      ? t3.map(([s,n],i)=>{
-          const nome = nms[s]||'?';
-          const meta = metas[nome] || 10;
-          const prog = Math.min(Math.round(n/meta*100),100);
-          const done = n >= meta;
-          return '<div class="meta-row">'
-            +'<div class="rp '+md[i]+'">'+(i+1)+'</div>'
-            +'<div style="flex:1;margin:0 10px">'
-              +'<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:5px">'
-                +'<div class="meta-name">'+nome+(done?' ✓':'')+' </div>'
-                +'<div class="meta-nums">'+n+' / <input class="meta-input" type="number" min="1" max="999" value="'+meta+'" onchange="setMeta(\''+nome+'\',this.value);renderDb()" title="Meta mensal"> vendas</div>'
-              +'</div>'
-              +'<div class="meta-bar-wrap"><div class="meta-bar-fill'+(done?' done':'')+'" style="width:'+prog+'%"></div></div>'
-            +'</div>'
-            +'</div>';
-        }).join('')
-      : '<div class="se" style="padding:12px 0"><p>Nenhuma conversão ainda.</p></div>';
-  } catch(err) { console.error('Ranking de vendedores:', err); }
-  renderProdRep(); // relatório de produtos da Fase 5
+  // ── Alertas de retorno (oportunidades com callback_date vencido) ──
+  document.getElementById('dob').textContent = vencidos.length;
+  document.getElementById('dol').innerHTML = vencidos.length
+    ? vencidos.slice(0,10).map(o => `
+        <div class="ari" onclick="abrPerfil('${o.company_id}')" style="cursor:pointer">
+          <div class="ad"></div>
+          <div>
+            <div class="an">${escHtml(o.company_nome)} — <span style="font-weight:500;color:var(--mt)">${escHtml(o.titulo)}</span></div>
+            <div class="as">${escHtml(o.seller_name||'Sem vendedor')} · ${fData(o.callback_date)} (${fRel(o.callback_date)})</div>
+          </div>
+        </div>`).join('')
+    : '<div class="se" style="padding:12px 0"><p>Nenhum retorno vencido!</p></div>';
+
+  // ── Ranking de vendedores (oportunidades GANHAS no mês corrente) ──
+  const inicioMes = new Date();
+  inicioMes.setDate(1); inicioMes.setHours(0,0,0,0);
+  const cnt = {};
+  ganhas.forEach(o => {
+    if (!o.closed_at || new Date(o.closed_at) < inicioMes) return;
+    const nome = o.seller_name || 'Sem vendedor';
+    cnt[nome] = (cnt[nome]||0) + 1;
+  });
+  const metas = getMetas();
+  const ranking = Object.entries(cnt).sort((a,b)=>b[1]-a[1]).slice(0,5);
+  const md = ['r1','r2','r3'];
+  document.getElementById('drl').innerHTML = ranking.length
+    ? ranking.map(([nome,n],i) => {
+        const meta = metas[nome] || 10;
+        const prog = Math.min(Math.round(n/meta*100), 100);
+        const done = n >= meta;
+        return `<div class="meta-row">
+          <div class="rp ${md[i]||''}">${i+1}</div>
+          <div style="flex:1;margin:0 10px">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:5px">
+              <div class="meta-name">${escHtml(nome)}${done?' ✓':''}</div>
+              <div class="meta-nums">${n} / <input class="meta-input" type="number" min="1" max="999" value="${meta}" onchange="setMeta('${nome.replace(/'/g,"\\'")}',this.value);renderDb()" title="Meta mensal"> ganhas</div>
+            </div>
+            <div class="meta-bar-wrap"><div class="meta-bar-fill${done?' done':''}" style="width:${prog}%"></div></div>
+          </div>
+        </div>`;
+      }).join('')
+    : '<div class="se" style="padding:12px 0"><p>Nenhuma oportunidade ganha este mês ainda.</p></div>';
+
+  renderProdRep();
 }
 
 // ── Relatório de Produtos (Fase 5) ────────────────────────────────────────
@@ -1878,9 +1900,11 @@ function popularVendSelect() {
   if (!sel) return;
   const atual = sel.value;
   const nomes = new Set();
+  // Sprint 3: vendedores agora vêm das oportunidades
   for (const c of CL) {
-    const n = c.seller_name || c.seller?.name;
-    if (n) nomes.add(n);
+    for (const o of (c.oportunidades || [])) {
+      if (o.seller_name) nomes.add(o.seller_name);
+    }
   }
   for (const p of PF) if (p.name) nomes.add(p.name);
   sel.innerHTML = '<option value="">Todos os vendedores</option>' +
@@ -1888,47 +1912,61 @@ function popularVendSelect() {
 }
 
 // Agrega CL.produtos aplicando filtros de vendedor e período
+// Sprint 3.4: agrega opportunity_products de todas as oportunidades.
+// OPPS_PRODS é populado por carregarOppsProds() (uma só query) antes do render.
+let OPPS_PRODS = []; // [{opportunity_id, produto, embalagem, qtd_kg, preco_kg}]
+async function carregarOppsProds() {
+  try {
+    OPPS_PRODS = (await api('GET','opportunity_products','select=opportunity_id,produto,embalagem,qtd_kg,preco_kg')) || [];
+  } catch(err) { console.error('carregarOppsProds:', err); OPPS_PRODS = []; }
+}
+
 function agregarProdutos(filtroVend, filtroDias) {
   const cutoff = filtroDias > 0 ? Date.now() - filtroDias*86400000 : 0;
-  const map = new Map();
+  // Mapa opportunity_id → { empresa, opp, vend, created_at }
+  const oppIdx = new Map();
   for (const c of CL) {
-    const vend = c.seller_name || c.seller?.name || '(sem vendedor)';
-    if (filtroVend && vend !== filtroVend) continue;
-    if (cutoff && c.created_at && new Date(c.created_at).getTime() < cutoff) continue;
-    for (const p of (c.produtos || [])) {
-      if (!p.produto) continue;
-      const key = p.produto;
-      if (!map.has(key)) map.set(key, {
-        nome: p.produto, totalKg: 0, totalRS: 0,
-        clientes: new Map(), // id → {nome, qtd, valor, vendedor, embalagem}
-        embalagens: new Set(),
-        vendedores: new Set(),
-      });
-      const e = map.get(key);
-      if (p.embalagem) e.embalagens.add(p.embalagem);
-      e.vendedores.add(vend);
-      const q  = p.qtd_kg   != null ? Number(p.qtd_kg)   : 0;
-      const pr = p.preco_kg != null ? Number(p.preco_kg) : 0;
-      const valor = q * pr;
-      e.totalKg += q;
-      e.totalRS += valor;
-      const cli = e.clientes.get(c.id) || { id:c.id, nome:c.name, vendedor:vend, qtd:0, valor:0, embalagens:new Set() };
-      cli.qtd += q;
-      cli.valor += valor;
-      if (p.embalagem) cli.embalagens.add(p.embalagem);
-      e.clientes.set(c.id, cli);
+    for (const o of (c.oportunidades || [])) {
+      oppIdx.set(o.id, { empresa: c, opp: o, vend: o.seller_name || '(sem vendedor)' });
     }
+  }
+  const map = new Map();
+  for (const p of OPPS_PRODS) {
+    if (!p.produto) continue;
+    const ctx = oppIdx.get(p.opportunity_id);
+    if (!ctx) continue; // opp inexistente (deletada)
+    if (filtroVend && ctx.vend !== filtroVend) continue;
+    // Filtro de período: usa created_at da empresa
+    if (cutoff && ctx.empresa.created_at && new Date(ctx.empresa.created_at).getTime() < cutoff) continue;
+    const key = p.produto;
+    if (!map.has(key)) map.set(key, {
+      nome: p.produto, totalKg: 0, totalRS: 0,
+      clientes: new Map(),
+      embalagens: new Set(),
+      vendedores: new Set(),
+    });
+    const e = map.get(key);
+    if (p.embalagem) e.embalagens.add(p.embalagem);
+    e.vendedores.add(ctx.vend);
+    const q  = p.qtd_kg   != null ? Number(p.qtd_kg)   : 0;
+    const pr = p.preco_kg != null ? Number(p.preco_kg) : 0;
+    const valor = q * pr;
+    e.totalKg += q;
+    e.totalRS += valor;
+    const cliKey = ctx.empresa.id;
+    const cli = e.clientes.get(cliKey) || { id:cliKey, nome:ctx.empresa.razao_social, vendedor:ctx.vend, qtd:0, valor:0, embalagens:new Set() };
+    cli.qtd += q;
+    cli.valor += valor;
+    if (p.embalagem) cli.embalagens.add(p.embalagem);
+    e.clientes.set(cliKey, cli);
   }
   return [...map.values()];
 }
 
-function renderProdRep() {
+async function renderProdRep() {
   if (!document.getElementById('prod-rep-body')) return; // dashboard não montado ainda
-  // Sprint 3: agregação por produto será refeita a partir de opportunity_products (3.4)
-  document.getElementById('prod-rep-cards').innerHTML = '';
-  document.getElementById('prod-rep-body').innerHTML =
-    '<tr><td colspan="6" class="deprecated-msg">Relatório de produtos será refeito no Sprint 3.4 a partir de opportunity_products.</td></tr>';
-  return;
+  // Sprint 3.4: busca opportunity_products de todas as oportunidades
+  await carregarOppsProds();
   popularVendSelect();
   const filtroVend = document.getElementById('prod-rep-vend').value;
   const agg = agregarProdutos(filtroVend, prodRepPeriodo);

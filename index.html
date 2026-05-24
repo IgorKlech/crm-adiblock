@@ -485,6 +485,27 @@ td strong{color:var(--tx);font-weight:600}
 .rel-ok-box{background:var(--ok2);border:1px solid var(--ok);border-radius:var(--r);padding:14px 18px;font-size:13px;color:var(--ok);display:flex;align-items:center;gap:10px}
 .rel-footer{text-align:center;font-size:11px;color:var(--mt);margin-top:28px;padding-top:16px;border-top:1px solid var(--bdr)}
 
+/* ── Listas de contatos / oportunidades no perfil (Sprint 3.3) ── */
+.pf-list-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px}
+.pf-list-head h3{font-size:15px;font-weight:600;color:var(--tx);margin:0}
+.pf-card{background:var(--sur);border:1px solid var(--bdr);border-radius:var(--rs);padding:14px 16px;margin-bottom:10px;display:flex;justify-content:space-between;align-items:flex-start;gap:12px}
+.pf-card:hover{border-color:var(--bdr2)}
+.pf-card-main{flex:1;min-width:0}
+.pf-card-title{font-size:14px;font-weight:600;color:var(--tx);margin-bottom:4px}
+.pf-card-title .pf-badge-princ{background:#fef3c7;color:#92400e;font-size:9px;font-weight:700;padding:2px 6px;border-radius:99px;margin-left:6px;vertical-align:middle;text-transform:uppercase;letter-spacing:.04em}
+.pf-card-sub{font-size:12px;color:var(--mt);line-height:1.5}
+.pf-card-sub b{color:var(--tx);font-weight:500}
+.pf-card-actions{display:flex;gap:4px;flex-shrink:0}
+.pf-empty{text-align:center;padding:30px 20px;color:var(--mt);font-size:13px;border:1px dashed var(--bdr2);border-radius:var(--rs);background:var(--bg)}
+.pf-int-row{padding:10px 14px;border-bottom:1px solid var(--bdr);font-size:13px}
+.pf-int-row:last-child{border-bottom:none}
+.pf-int-meta{display:flex;justify-content:space-between;color:var(--mt);font-size:11px;margin-bottom:3px}
+.pf-int-result{font-weight:600;color:var(--tx)}
+.pf-int-notes{color:var(--tx2);margin-top:4px;line-height:1.5;white-space:pre-wrap}
+.pf-int-cb{font-size:11px;color:var(--p);margin-top:4px}
+.pf-opp-card{cursor:default}
+.pf-opp-actions{display:flex;flex-wrap:wrap;gap:4px;margin-top:8px}
+
 /* ── Tier / Estágio badges (Sprint 3) ── */
 .tier-badge{display:inline-block;font-size:10px;font-weight:700;padding:3px 8px;border-radius:99px;text-transform:uppercase;letter-spacing:.05em}
 .tier-lead{background:#fee2e2;color:#991b1b}
@@ -1068,8 +1089,7 @@ tr.row-selected{background:var(--ps)!important}
       <span id="pf-topname" style="font-size:15px;font-weight:600;color:var(--tx)"></span>
     </div>
     <div style="display:flex;gap:8px">
-      <button class="btn bg sm" onclick="abrPainelFromPerfil()">Ver Histórico</button>
-      <button class="btn bp sm" onclick="abrEditFromPerfil()">Editar</button>
+      <button class="btn bp sm" onclick="abrEditFromPerfil()">Editar Empresa</button>
     </div>
   </div>
   <div class="pf-hero">
@@ -1084,15 +1104,149 @@ tr.row-selected{background:var(--ps)!important}
   </div>
   <div class="pf-tabs">
     <button class="pf-tab ac" data-pt="resumo">Resumo</button>
-    <button class="pf-tab" data-pt="historico">Histórico de Contatos</button>
-    <button class="pf-tab" data-pt="notas">Notas Internas</button>
-    <button class="pf-tab" data-pt="alteracoes">Log de Alterações</button>
+    <button class="pf-tab" data-pt="contatos">Contatos</button>
+    <button class="pf-tab" data-pt="oportunidades">Oportunidades</button>
+    <button class="pf-tab" data-pt="historico">Histórico</button>
   </div>
   <div class="pf-body">
     <div class="pf-panel ac" id="pf-resumo"></div>
+    <div class="pf-panel" id="pf-contatos"></div>
+    <div class="pf-panel" id="pf-oportunidades"></div>
     <div class="pf-panel" id="pf-historico"></div>
-    <div class="pf-panel" id="pf-notas"></div>
-    <div class="pf-panel" id="pf-alteracoes"></div>
+  </div>
+</div>
+
+<!-- MODAL CONTATO (Sprint 3.3) -->
+<div class="mo" id="cont-m">
+  <div class="md" style="max-width:560px">
+    <div class="mh"><h3 id="cont-mtit">Novo Contato</h3><button class="mx" onclick="fechaContato()">✕</button></div>
+    <form id="cont-f">
+      <div class="fg"><label>Nome <span class="req">*</span></label><input type="text" id="cont-nome" required></div>
+      <div class="fr">
+        <div class="fg"><label>Cargo</label><input type="text" id="cont-cargo" placeholder="Ex: Engenheiro de Obra"></div>
+        <div class="fg"><label>Papel</label>
+          <select id="cont-papel">
+            <option value="">—</option>
+            <option value="comprador">Comprador</option>
+            <option value="decisor">Decisor</option>
+            <option value="tecnico">Técnico</option>
+            <option value="engenheiro">Engenheiro</option>
+            <option value="financeiro">Financeiro</option>
+            <option value="outro">Outro</option>
+          </select>
+        </div>
+      </div>
+      <div class="fr">
+        <div class="fg"><label>Email</label><input type="email" id="cont-email"></div>
+        <div class="fg"><label>Telefone</label><input type="text" id="cont-tel"></div>
+      </div>
+      <div class="fg"><label><input type="checkbox" id="cont-principal" style="margin-right:6px">Contato principal da empresa</label></div>
+      <div class="fg"><label>Observações</label><textarea id="cont-obs" rows="2"></textarea></div>
+      <div class="ma">
+        <button type="button" class="btn bg" onclick="fechaContato()">Cancelar</button>
+        <button type="submit" class="btn bp">Salvar</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- MODAL OPORTUNIDADE (Sprint 3.3) -->
+<div class="mo" id="opp-m">
+  <div class="md">
+    <div class="mh"><h3 id="opp-mtit">Nova Oportunidade</h3><button class="mx" onclick="fechaOpp()">✕</button></div>
+    <form id="opp-f">
+      <div class="fs"><div class="fsl">Identificação</div>
+        <div class="fg"><label>Título <span class="req">*</span></label><input type="text" id="opp-titulo" placeholder="Ex: Aditivo p/ Obra Mirataia" required></div>
+        <div class="fr">
+          <div class="fg"><label>Obra</label><input type="text" id="opp-obra" placeholder="Nome da obra"></div>
+          <div class="fg"><label>Contato responsável</label><select id="opp-contato"><option value="">—</option></select></div>
+        </div>
+      </div>
+      <div class="fs"><div class="fsl">Estágio do funil</div>
+        <div class="fr">
+          <div class="fg"><label>Estágio</label>
+            <select id="opp-estagio">
+              <option value="lead">Lead</option>
+              <option value="qualificado">Qualificado</option>
+              <option value="proposta_enviada">Proposta enviada</option>
+              <option value="em_negociacao">Em negociação</option>
+              <option value="ganha">Ganha</option>
+              <option value="perdida">Perdida</option>
+            </select>
+          </div>
+          <div class="fg"><label>Vendedor</label>
+            <input type="text" id="opp-vend" list="opp-vlist" autocomplete="off">
+            <datalist id="opp-vlist"></datalist>
+          </div>
+        </div>
+        <div class="fg" id="opp-perda-wrap" style="display:none">
+          <label>Motivo da perda</label>
+          <select id="opp-perda">
+            <option value="">Selecione...</option>
+            <option>Preço alto</option>
+            <option>Comprou do concorrente</option>
+            <option>Prazo não atendido</option>
+            <option>Produto não adequado</option>
+            <option>Sem verba no momento</option>
+            <option>Sem retorno do cliente</option>
+            <option>Outro</option>
+          </select>
+        </div>
+        <div class="fr">
+          <div class="fg"><label>Próximo retorno</label><input type="date" id="opp-cb"></div>
+          <div class="fg">
+            <label>Valor Estimado R$ <span id="opp-vl-auto" style="font-weight:400;color:var(--mt);font-size:11px;display:none">— calculado dos produtos</span></label>
+            <input type="number" id="opp-vl" placeholder="0,00" step="0.01" min="0">
+          </div>
+        </div>
+      </div>
+      <div class="fs">
+        <div class="fsl">Produtos da oportunidade</div>
+        <div class="prod-headers">
+          <span class="prod-h hn">Nome do Produto</span>
+          <span class="prod-h he">Embalagem</span>
+          <span class="prod-h hq">Qtd (kg)</span>
+          <span class="prod-h hp">Preço (R$/kg)</span>
+          <span class="prod-h hd"></span>
+        </div>
+        <div id="prod-lista"></div>
+        <button type="button" class="prod-add-btn" onclick="addProdRow()">+ Adicionar Produto</button>
+      </div>
+      <div class="fs"><div class="fg"><label>Observação</label><textarea id="opp-obs" rows="2"></textarea></div></div>
+      <div class="fa">
+        <p id="opp-err" class="em" style="flex:1;margin:0;align-self:center"></p>
+        <button type="button" class="btn bg" onclick="fechaOpp()">Cancelar</button>
+        <button type="submit" class="btn bp">Salvar Oportunidade</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- MODAL REGISTRAR INTERAÇÃO (Sprint 3.3) -->
+<div class="mo" id="int-m">
+  <div class="md" style="max-width:560px">
+    <div class="mh"><h3>Registrar Interação</h3><button class="mx" onclick="fechaInteracao()">✕</button></div>
+    <form id="int-f">
+      <div class="fg" id="int-opp-info" style="font-size:13px;color:var(--mt);padding:8px 12px;background:var(--bg);border-radius:6px"></div>
+      <div class="fr">
+        <div class="fg"><label>Resultado <span class="req">*</span></label>
+          <select id="int-res" required>
+            <option value="">Selecione...</option>
+            <option>Falou</option><option>Nao atendeu</option><option>Caixa postal</option>
+            <option>WhatsApp enviado</option><option>Email enviado</option>
+            <option>Reuniao agendada</option><option>Comprou</option>
+            <option>Nao tem interesse</option><option>Ligar de volta</option>
+          </select>
+        </div>
+        <div class="fg"><label>Próximo retorno</label><input type="date" id="int-cb"></div>
+      </div>
+      <div class="fg"><label>Contato com quem falou</label><select id="int-contato"><option value="">—</option></select></div>
+      <div class="fg"><label>Anotação</label><textarea id="int-notes" placeholder="O que foi conversado..." rows="3"></textarea></div>
+      <div class="ma">
+        <button type="button" class="btn bg" onclick="fechaInteracao()">Cancelar</button>
+        <button type="submit" class="btn bp">Registrar</button>
+      </div>
+    </form>
   </div>
 </div>
 
@@ -1581,7 +1735,7 @@ function renderCl() {
     const checked = selectedIds.has(id) ? ' checked' : '';
     const rowClass = selectedIds.has(id) ? 'row-selected' : '';
     return '<tr class="'+rowClass+'"><td><input type="checkbox" class="bulk-cb" data-id="'+id+'"'+checked+' onclick="toggleSelecionado(\''+id+'\',this.checked)" onchange="event.stopPropagation()"></td>'
-      +'<td><strong>'+escHtml(c.razao_social)+'</strong>'+(c.nome_fantasia?'<br><small style="color:var(--mt)">'+escHtml(c.nome_fantasia)+'</small>':'')+'</td>'
+      +'<td><strong><a class="cl-name" onclick="abrPerfil(\''+id+'\')" title="Abrir perfil da empresa">'+escHtml(c.razao_social)+'</a></strong>'+(c.nome_fantasia?'<br><small style="color:var(--mt)">'+escHtml(c.nome_fantasia)+'</small>':'')+'</td>'
       +'<td>'+cidade+'</td>'
       +'<td>'+cnpj+'</td>'
       +'<td>'+tierBadge+'</td>'
@@ -1590,6 +1744,7 @@ function renderCl() {
       +'<td>'+vc+'</td>'
       +'<td><div class="ac2">'
       +waBtn
+      +'<button class="btn bg sm" onclick="abrPerfil(\''+id+'\')">Perfil</button>'
       +'<button class="btn bp sm" onclick="abrEdit(\''+id+'\')">Editar</button>'
       +'<button class="btn bod sm" onclick="abrDel(\''+id+'\',\''+nm+'\')">Excluir</button>'
       +'</div></td></tr>';
@@ -1897,23 +2052,12 @@ function fechaPainel() { document.getElementById('sp').classList.remove('op'); d
 let valorTouched = false;
 
 function recalcValorEstimado() {
-  const rows = document.querySelectorAll('#prod-lista .prod-row');
-  let total = 0, hasAny = false;
-  rows.forEach(r => {
-    const q = parseNum(r.querySelector('.prod-qtd').value);
-    const p = parseNum(r.querySelector('.prod-preco').value);
-    if (q != null && p != null) { total += q * p; hasAny = true; }
-  });
-  const fvl = document.getElementById('fvl');
-  const tag = document.getElementById('fvl-auto');
-  if (!valorTouched && hasAny) {
-    fvl.value = total.toFixed(2);
-    if (tag) tag.style.display = '';
-  } else if (!hasAny && !valorTouched) {
-    fvl.value = '';
-    if (tag) tag.style.display = 'none';
-  } else {
-    if (tag) tag.style.display = 'none';
+  // Sprint 3: o campo de valor estimado mora no modal de OPORTUNIDADE (#opp-vl),
+  // não mais no modal de cliente. Se o modal de oportunidade estiver aberto,
+  // delega para recalcOppValor. Caso contrário, no-op.
+  if (typeof recalcOppValor === 'function'
+      && document.getElementById('opp-m')?.classList.contains('op')) {
+    recalcOppValor();
   }
 }
 
@@ -2404,11 +2548,15 @@ document.getElementById('gcf').addEventListener('submit', async e => {
   if (!GC_CLIENT_ID || !ME) return;
   const c = CL.find(x => x.id === GC_CLIENT_ID);
   if (!c) return;
+  // Sprint 3.3: se a cotação vem de uma oportunidade, busca os produtos via GC_OPP_PRODS;
+  // senão, fallback no array antigo (mantido para compat caso algum lugar ainda use).
+  const sourceProds = (GC_OPP_ID && GC_OPP_PRODS) ? GC_OPP_PRODS : (c.produtos || []);
+  const oppObj = GC_OPP_ID ? (c.oportunidades||[]).find(o => o.id === GC_OPP_ID) : null;
 
   const rows = [...document.querySelectorAll('#gc-prod-lista .gc-prow')];
   const prodsSnap = rows.map((r, idx) => {
     const i = parseInt(r.dataset.idx, 10);
-    const orig = (c.produtos||[])[i] || {};
+    const orig = sourceProds[i] || {};
     return {
       item: idx + 1,
       produto:   orig.produto || '—',
@@ -2420,11 +2568,21 @@ document.getElementById('gcf').addEventListener('submit', async e => {
     };
   });
 
+  // Pega o contato responsável da oportunidade pra ser o "Solicitante"
+  const contatoOpp = oppObj?.contact_id
+    ? (c.contatos||[]).find(ct => ct.id === oppObj.contact_id)
+    : (c.contatos||[]).find(ct => ct.principal) || (c.contatos||[])[0];
+  const solicitanteStr = contatoOpp
+    ? `${contatoOpp.nome}${contatoOpp.cargo?' ('+contatoOpp.cargo+')':''}${contatoOpp.telefone?' · '+contatoOpp.telefone:''}`
+    : null;
+
   const snapshot = {
     cliente: {
-      name: c.name, phone: c.phone, email: c.email,
+      name: c.razao_social, phone: c.telefone, email: c.email,
       endereco: c.endereco, cidade: c.cidade, uf: c.uf, cep: c.cep,
-      cnpj: c.cnpj, ie: c.ie, obra: c.obra, contato_outros: c.contato_outros,
+      cnpj: c.cnpj, ie: c.ie,
+      obra: oppObj?.obra || null,
+      contato_outros: solicitanteStr, // "Solicitante" na proposta
     },
     consultor:  { nome: MEP?.name || ME.email, email: ME.email, telefone: MEP?.telefone || null },
     office:     { nome: MEP?.office_nome || null, email: MEP?.office_email || null, telefone: MEP?.office_telefone || null },
@@ -2435,6 +2593,7 @@ document.getElementById('gcf').addEventListener('submit', async e => {
       validade_dias:   parseInt(document.getElementById('gc-val').value, 10) || 30,
       obs:             document.getElementById('gc-obs').value.trim() || null,
     },
+    oportunidade: oppObj ? { id: oppObj.id, titulo: oppObj.titulo, estagio: oppObj.estagio } : null,
   };
 
   const btn = document.getElementById('gc-sub');
@@ -2442,7 +2601,8 @@ document.getElementById('gcf').addEventListener('submit', async e => {
   try {
     const created = await api('POST', 'proposals', null, {
       ano: new Date().getFullYear(),
-      client_id: GC_CLIENT_ID,
+      company_id: GC_CLIENT_ID,
+      opportunity_id: GC_OPP_ID || null,
       seller_id: ME.id,
       snapshot,
     });
@@ -2662,8 +2822,10 @@ function renderCotacao(prop) {
 
 async function gerarRelatorio() {
   const corpo = document.getElementById('rel-body');
-  corpo.innerHTML = '<div class="sl"><div class="sp"></div>Gerando relatório...</div>';
-
+  // Sprint 3: relatório semanal dependia do modelo antigo (status, loss_reason, call_history).
+  // Vai voltar adaptado às oportunidades / estágios numa próxima fase.
+  corpo.innerHTML = '<div class="deprecated-msg" style="margin:24px">Relatório semanal será refeito a partir dos dados de oportunidades e interações (próxima fase do Sprint 3).</div>';
+  return;
   try {
     const agora   = new Date();
     const inicioSemana = new Date(Date.now() - 7 * 86400000);
@@ -2852,44 +3014,42 @@ async function logAudit(clientId, action, changes) {
 // ── Página de Perfil ──────────────────────────────────────────────────────
 let pfClientId = null;
 
-function abrPerfil(id) {
-  // Sprint 3.2: perfil completo da empresa (com abas Contatos/Oportunidades/Histórico) vem no 3.3
-  toast('Em breve', 'Perfil completo da empresa virá no Sprint 3.3 com contatos e oportunidades.', 'info');
-  return;
+// ── Sprint 3.3: perfil completo da empresa com abas ─────────────────────
+async function abrPerfil(id) {
+  const c = CL.find(x => x.id === id);
+  if (!c) { toast('Empresa não encontrada','','warning'); return; }
   pfClientId = id;
-  const c = CL.find(x=>x.id===id);
-  if (!c) return;
-
+  const nome = c.razao_social || '';
   // Header
-  const nv = c.seller_name||c.seller?.name||'Sem vendedor';
-  document.getElementById('pf-topname').textContent = c.name;
-  document.getElementById('pf-av').textContent = ini(c.name);
-  document.getElementById('pf-av').style.background = cor(c.name);
-  document.getElementById('pf-name').textContent = c.name;
+  document.getElementById('pf-topname').textContent = nome;
+  document.getElementById('pf-av').textContent = ini(nome);
+  document.getElementById('pf-av').style.background = cor(nome);
+  document.getElementById('pf-name').textContent = nome;
+  const tier = c.tier || 'lead';
   document.getElementById('pf-sub').innerHTML =
-    bStatus(c.status)+'<span>•</span><span>'+nv+'</span>'
-    +(c.callback_date?'<span>•</span><span>Retorno: '+fData(c.callback_date)+' ('+fRel(c.callback_date)+')</span>':'');
-  const nProds = (c.produtos?.length) || (c.produto ? 1 : 0);
+    `<span class="tier-badge tier-${tier}">${tier}</span>`
+    + (c.cnpj ? ` · CNPJ: ${escHtml(c.cnpj)}` : '')
+    + (c.cidade ? ` · ${escHtml(c.cidade)}${c.uf ? '/'+escHtml(c.uf) : ''}` : '');
   document.getElementById('pf-metrics').innerHTML = [
-    ['Telefone', c.phone||'—'],
-    ['Valor Est.', fMoeda(c.estimated_value)],
-    ['Produtos', nProds ? `${nProds} ${nProds===1?'item':'itens'}` : '—'],
-    ['Cadastrado', fData((c.created_at||'').split('T')[0])],
-  ].map(([l,v])=>`<div class="pf-met"><div class="pf-met-l">${l}</div><div class="pf-met-v">${v}</div></div>`).join('');
-
-  // Reset tabs
-  document.querySelectorAll('.pf-tab').forEach(t=>t.classList.remove('ac'));
-  document.querySelectorAll('.pf-panel').forEach(p=>p.classList.remove('ac'));
-  document.querySelector('.pf-tab[data-pt="resumo"]').classList.add('ac');
-  document.getElementById('pf-resumo').classList.add('ac');
-
+    ['Telefone', c.telefone||'—'],
+    ['Email', c.email||'—'],
+    ['Pipeline', fMoeda(c.valor_pipeline||0)],
+    ['Opps abertas', String(c.opps_abertas||0)],
+    ['Opps ganhas', String(c.opps_ganhas_total||0)],
+  ].map(([l,v]) => `<div class="pf-met"><div class="pf-met-l">${l}</div><div class="pf-met-v">${v}</div></div>`).join('');
+  // Renderiza todas as abas
+  renderPfResumo(c);
+  renderPfContatos(c);
+  renderPfOportunidades(c);
+  renderPfHistorico(c);
+  // Reset aba ativa pra Resumo
+  document.querySelectorAll('#pfpage .pf-tab').forEach(t => t.classList.remove('ac'));
+  document.querySelector('#pfpage .pf-tab[data-pt="resumo"]')?.classList.add('ac');
+  document.querySelectorAll('#pfpage .pf-panel').forEach(p => p.classList.remove('ac'));
+  document.getElementById('pf-resumo')?.classList.add('ac');
+  // Mostra a página
   document.getElementById('pfpage').classList.add('op');
   document.body.style.overflow = 'hidden';
-
-  renderPfResumo(c);
-  loadPfHistorico(id);
-  loadPfNotas(c);
-  loadPfAlteracoes(id);
 }
 
 function fechaPerfil() {
@@ -2898,124 +3058,480 @@ function fechaPerfil() {
   pfClientId = null;
 }
 
-function abrPainelFromPerfil() {
-  if (!pfClientId) return;
-  fechaPerfil();
-  setTimeout(() => abrPainel(pfClientId), 100);
+function renderPfResumo(c) {
+  const linhas = [
+    ['Razão Social', c.razao_social],
+    ['Nome Fantasia', c.nome_fantasia],
+    ['CNPJ', c.cnpj],
+    ['Inscrição Estadual', c.ie],
+    ['Indústria', c.industria],
+    ['Email', c.email],
+    ['Telefone', c.telefone],
+    ['Website', c.website],
+    ['Endereço', c.endereco],
+    ['Cidade/UF', c.cidade ? (c.cidade + (c.uf ? '/'+c.uf : '')) : null],
+    ['CEP', c.cep],
+    ['Faturamento estimado', c.faturamento_estimado != null ? fMoeda(c.faturamento_estimado) : null],
+    ['Observações', c.observacoes],
+  ].filter(([_, v]) => v != null && v !== '');
+  const html = linhas.length
+    ? `<div style="display:grid;grid-template-columns:200px 1fr;gap:8px 16px;font-size:13px">${
+        linhas.map(([k, v]) => `<div style="color:var(--mt)">${escHtml(k)}</div><div style="color:var(--tx)">${escHtml(String(v))}</div>`).join('')
+      }</div>`
+    : '<div class="pf-empty">Sem dados detalhados — clique em "Editar Empresa" para preencher.</div>';
+  document.getElementById('pf-resumo').innerHTML = html;
 }
+
+function renderPfContatos(c) {
+  const lista = c.contatos || [];
+  const head = `<div class="pf-list-head">
+    <h3>Contatos (${lista.length})</h3>
+    <button class="btn bp sm" onclick="abrContato('${c.id}')">+ Novo Contato</button>
+  </div>`;
+  const body = lista.length
+    ? lista.sort((a,b) => (b.principal?1:0) - (a.principal?1:0)).map(ct => `
+      <div class="pf-card">
+        <div class="pf-card-main">
+          <div class="pf-card-title">${escHtml(ct.nome)}${ct.principal?'<span class="pf-badge-princ">Principal</span>':''}</div>
+          <div class="pf-card-sub">
+            ${ct.cargo?`<b>${escHtml(ct.cargo)}</b>`:''}${ct.papel?` · ${escHtml(ct.papel)}`:''}
+            ${(ct.email||ct.telefone)?'<br>':''}
+            ${ct.email?`📧 ${escHtml(ct.email)} `:''}
+            ${ct.telefone?`📞 ${escHtml(ct.telefone)}`:''}
+          </div>
+        </div>
+        <div class="pf-card-actions">
+          <button class="btn bg sm" onclick="abrContato('${c.id}','${ct.id}')">Editar</button>
+          <button class="btn bod sm" onclick="delContato('${ct.id}','${escHtml(ct.nome).replace(/'/g,"\\'")}')">✕</button>
+        </div>
+      </div>`).join('')
+    : '<div class="pf-empty">Nenhum contato cadastrado ainda. Adicione o(s) responsável(eis) na empresa.</div>';
+  document.getElementById('pf-contatos').innerHTML = head + body;
+}
+
+const ESTAGIO_LBL = {
+  lead:'Lead', qualificado:'Qualificado', proposta_enviada:'Proposta enviada',
+  em_negociacao:'Em negociação', ganha:'Ganha', perdida:'Perdida'
+};
+
+function renderPfOportunidades(c) {
+  const lista = c.oportunidades || [];
+  const head = `<div class="pf-list-head">
+    <h3>Oportunidades (${lista.length})</h3>
+    <button class="btn bp sm" onclick="abrOpp('${c.id}')">+ Nova Oportunidade</button>
+  </div>`;
+  // Ordena: abertas primeiro, depois ganhas, depois perdidas, e por data
+  const ord = [...lista].sort((a,b) => {
+    const aClosed = a.estagio === 'ganha' || a.estagio === 'perdida';
+    const bClosed = b.estagio === 'ganha' || b.estagio === 'perdida';
+    if (aClosed !== bClosed) return aClosed ? 1 : -1;
+    return (b.callback_date||'').localeCompare(a.callback_date||'');
+  });
+  const body = ord.length
+    ? ord.map(o => `
+      <div class="pf-card pf-opp-card">
+        <div class="pf-card-main">
+          <div class="pf-card-title">${escHtml(o.titulo)} <span class="estagio-badge est-${o.estagio}">${ESTAGIO_LBL[o.estagio]||o.estagio}</span></div>
+          <div class="pf-card-sub">
+            ${o.obra?`Obra: <b>${escHtml(o.obra)}</b> · `:''}
+            ${o.seller_name?`Vendedor: ${escHtml(o.seller_name)} · `:''}
+            ${o.valor_estimado!=null?`Valor: <b>${fMoeda(o.valor_estimado)}</b>`:''}
+            ${o.callback_date?` · Retorno: <b>${fData(o.callback_date)}</b>`:''}
+          </div>
+          <div class="pf-opp-actions">
+            <button class="btn bg sm" onclick="abrInteracao('${o.id}','${c.id}')">Registrar interação</button>
+            <button class="btn bg sm" onclick="abrCotacaoFromOpp('${o.id}','${c.id}')">Gerar proposta</button>
+            <button class="btn bp sm" onclick="abrOpp('${c.id}','${o.id}')">Editar</button>
+            <button class="btn bod sm" onclick="delOpp('${o.id}','${escHtml(o.titulo).replace(/'/g,"\\'")}')">✕</button>
+          </div>
+        </div>
+      </div>`).join('')
+    : '<div class="pf-empty">Nenhuma oportunidade ainda. Crie uma pra começar a registrar produtos e gerar propostas.</div>';
+  document.getElementById('pf-oportunidades').innerHTML = head + body;
+}
+
+async function renderPfHistorico(c) {
+  const el = document.getElementById('pf-historico');
+  const opps = c.oportunidades || [];
+  if (!opps.length) {
+    el.innerHTML = '<div class="pf-empty">Sem oportunidades — sem histórico ainda. Crie uma oportunidade primeiro.</div>';
+    return;
+  }
+  el.innerHTML = '<div class="sl"><div class="sp"></div></div>';
+  try {
+    const oppIds = opps.map(o => `"${o.id}"`).join(',');
+    const ints = await api('GET','interactions',`opportunity_id=in.(${oppIds})&select=*,seller:profiles(name)&order=datetime.desc`);
+    if (!ints || !ints.length) {
+      el.innerHTML = '<div class="pf-empty">Nenhuma interação registrada ainda.</div>';
+      return;
+    }
+    // Agrupa por oportunidade
+    const byOpp = new Map();
+    ints.forEach(i => {
+      if (!byOpp.has(i.opportunity_id)) byOpp.set(i.opportunity_id, []);
+      byOpp.get(i.opportunity_id).push(i);
+    });
+    el.innerHTML = opps.filter(o => byOpp.has(o.id)).map(o => {
+      const rows = byOpp.get(o.id).map(i => `
+        <div class="pf-int-row">
+          <div class="pf-int-meta">
+            <span>${fDH(i.datetime)} · ${escHtml(i.seller?.name||'—')}</span>
+            <span class="pf-int-result">${escHtml(i.result||'—')}</span>
+          </div>
+          ${i.notes?`<div class="pf-int-notes">${escHtml(i.notes)}</div>`:''}
+          ${i.next_callback?`<div class="pf-int-cb">Próximo retorno: <b>${fData(i.next_callback)}</b></div>`:''}
+        </div>`).join('');
+      return `<div style="margin-bottom:18px">
+        <div style="font-size:13px;font-weight:600;color:var(--p);margin-bottom:8px">📋 ${escHtml(o.titulo)} <span class="estagio-badge est-${o.estagio}">${ESTAGIO_LBL[o.estagio]||o.estagio}</span></div>
+        <div style="background:var(--sur);border:1px solid var(--bdr);border-radius:var(--rs)">${rows}</div>
+      </div>`;
+    }).join('');
+  } catch(err) {
+    console.error('renderPfHistorico:', err);
+    el.innerHTML = '<div class="pf-empty" style="color:var(--er)">Erro ao carregar histórico: '+escHtml(err.message||'')+'</div>';
+  }
+}
+
+// ── CRUD de Contato (Sprint 3.3) ───────────────────────────────────────
+let CONT_CID = null; // company_id alvo
+let CONT_EID = null; // contact_id quando editando
+
+function abrContato(companyId, contactId) {
+  CONT_CID = companyId;
+  CONT_EID = contactId || null;
+  document.getElementById('cont-mtit').textContent = contactId ? 'Editar Contato' : 'Novo Contato';
+  document.getElementById('cont-f').reset();
+  if (contactId) {
+    const c = CL.find(x => x.id === companyId);
+    const ct = (c?.contatos || []).find(x => x.id === contactId);
+    if (ct) {
+      document.getElementById('cont-nome').value = ct.nome || '';
+      document.getElementById('cont-cargo').value = ct.cargo || '';
+      document.getElementById('cont-papel').value = ct.papel || '';
+      document.getElementById('cont-email').value = ct.email || '';
+      document.getElementById('cont-tel').value = ct.telefone || '';
+      document.getElementById('cont-principal').checked = !!ct.principal;
+      document.getElementById('cont-obs').value = ct.observacoes || '';
+    }
+  }
+  document.getElementById('cont-m').classList.add('op');
+  setTimeout(() => document.getElementById('cont-nome').focus(), 80);
+}
+
+function fechaContato() {
+  document.getElementById('cont-m').classList.remove('op');
+  CONT_CID = null; CONT_EID = null;
+}
+
+document.getElementById('cont-f').addEventListener('submit', async e => {
+  e.preventDefault();
+  if (!CONT_CID) return;
+  const d = {
+    company_id: CONT_CID,
+    nome:       document.getElementById('cont-nome').value.trim(),
+    cargo:      document.getElementById('cont-cargo').value.trim() || null,
+    papel:      document.getElementById('cont-papel').value || null,
+    email:      document.getElementById('cont-email').value.trim() || null,
+    telefone:   document.getElementById('cont-tel').value.trim() || null,
+    principal:  document.getElementById('cont-principal').checked,
+    observacoes:document.getElementById('cont-obs').value.trim() || null,
+  };
+  try {
+    if (CONT_EID) await api('PATCH','contacts',`id=eq.${CONT_EID}`, d);
+    else          await api('POST','contacts',null, d);
+    toast(CONT_EID?'Contato atualizado':'Contato criado','','success');
+    fechaContato();
+    CL = await fetchCl();
+    const c = CL.find(x => x.id === pfClientId);
+    if (c) renderPfContatos(c);
+    renderCl();
+  } catch(err) {
+    console.error('saveContato:', err);
+    toast('Erro ao salvar contato', err.message||'', 'warning');
+  }
+});
+
+function delContato(id, nome) {
+  conf('Excluir contato', `Remover "${nome}"?`, async () => {
+    try {
+      await apiDelete('contacts', `id=eq.${id}`);
+      CL = await fetchCl();
+      const c = CL.find(x => x.id === pfClientId);
+      if (c) renderPfContatos(c);
+      toast('Contato removido','','success');
+    } catch(err) {
+      console.error('delContato:', err);
+      toast('Erro', err.message||'', 'warning');
+    }
+  });
+}
+
+// ── CRUD de Oportunidade (Sprint 3.3) ──────────────────────────────────
+let OPP_CID = null; // company_id
+let OPP_EID = null; // opp id quando editando
+let oppValorTouched = false;
+
+function abrOpp(companyId, oppId) {
+  OPP_CID = companyId;
+  OPP_EID = oppId || null;
+  oppValorTouched = false;
+  document.getElementById('opp-mtit').textContent = oppId ? 'Editar Oportunidade' : 'Nova Oportunidade';
+  document.getElementById('opp-f').reset();
+  document.getElementById('opp-err').textContent = '';
+  // Popula select de contatos com contatos da empresa
+  const c = CL.find(x => x.id === companyId);
+  const contatos = c?.contatos || [];
+  document.getElementById('opp-contato').innerHTML = '<option value="">—</option>' +
+    contatos.map(ct => `<option value="${ct.id}">${escHtml(ct.nome)}${ct.cargo?' ('+escHtml(ct.cargo)+')':''}</option>`).join('');
+  // Popula datalist de vendedores
+  const dl = document.getElementById('opp-vlist');
+  const vendedores = new Set();
+  PF.forEach(p => p.name && vendedores.add(p.name));
+  dl.innerHTML = [...vendedores].sort().map(n => `<option value="${escHtml(n)}">`).join('');
+  // Carrega produtos da oportunidade ou vazio
+  if (oppId) {
+    const opp = (c?.oportunidades || []).find(x => x.id === oppId);
+    if (opp) {
+      document.getElementById('opp-titulo').value = opp.titulo || '';
+      document.getElementById('opp-obra').value = opp.obra || '';
+      document.getElementById('opp-contato').value = opp.contact_id || '';
+      document.getElementById('opp-estagio').value = opp.estagio || 'lead';
+      document.getElementById('opp-vend').value = opp.seller_name || '';
+      document.getElementById('opp-cb').value = opp.callback_date || '';
+      document.getElementById('opp-vl').value = opp.valor_estimado != null ? opp.valor_estimado : '';
+      document.getElementById('opp-obs').value = opp.observation || '';
+      document.getElementById('opp-perda').value = opp.perda_motivo || '';
+      oppValorTouched = opp.valor_estimado != null;
+    }
+    fetchOppProds(oppId).then(prods => renderProdutoRows(prods));
+  } else {
+    // novo: pré-preenche vendedor com o usuário logado
+    document.getElementById('opp-vend').value = MEP?.name || ME?.email?.split('@')[0] || '';
+    renderProdutoRows([]);
+  }
+  toggleOppPerda(document.getElementById('opp-estagio').value);
+  recalcOppValor();
+  document.getElementById('opp-m').classList.add('op');
+}
+
+function fechaOpp() {
+  document.getElementById('opp-m').classList.remove('op');
+  OPP_CID = null; OPP_EID = null;
+}
+
+function toggleOppPerda(estagio) {
+  document.getElementById('opp-perda-wrap').style.display = estagio === 'perdida' ? '' : 'none';
+}
+
+async function fetchOppProds(oppId) {
+  try {
+    const rows = await api('GET','opportunity_products',`opportunity_id=eq.${oppId}&select=*`);
+    return (rows||[]).map(p => ({ produto:p.produto, embalagem:p.embalagem, qtd_kg:p.qtd_kg, preco_kg:p.preco_kg }));
+  } catch(err) { console.error('fetchOppProds:', err); return []; }
+}
+
+function recalcOppValor() {
+  const rows = document.querySelectorAll('#prod-lista .prod-row');
+  let total = 0, hasAny = false;
+  rows.forEach(r => {
+    const q = parseNum(r.querySelector('.prod-qtd').value);
+    const p = parseNum(r.querySelector('.prod-preco').value);
+    if (q != null && p != null) { total += q * p; hasAny = true; }
+  });
+  const inp = document.getElementById('opp-vl');
+  const tag = document.getElementById('opp-vl-auto');
+  if (!oppValorTouched && hasAny && inp) {
+    inp.value = total.toFixed(2);
+    if (tag) tag.style.display = '';
+  } else if (!hasAny && !oppValorTouched && inp) {
+    inp.value = '';
+    if (tag) tag.style.display = 'none';
+  } else if (tag) tag.style.display = 'none';
+}
+
+document.getElementById('opp-estagio').addEventListener('change', e => toggleOppPerda(e.target.value));
+document.getElementById('opp-vl').addEventListener('input', () => {
+  oppValorTouched = true;
+  const tag = document.getElementById('opp-vl-auto');
+  if (tag) tag.style.display = 'none';
+});
+
+document.getElementById('opp-f').addEventListener('submit', async e => {
+  e.preventDefault();
+  if (!OPP_CID || !ME) return;
+  const estagio = document.getElementById('opp-estagio').value;
+  const d = {
+    company_id:     OPP_CID,
+    contact_id:     document.getElementById('opp-contato').value || null,
+    seller_id:      ME.id,
+    seller_name:    document.getElementById('opp-vend').value.trim() || null,
+    titulo:         document.getElementById('opp-titulo').value.trim(),
+    obra:           document.getElementById('opp-obra').value.trim() || null,
+    estagio,
+    valor_estimado: document.getElementById('opp-vl').value ? parseFloat(document.getElementById('opp-vl').value) : null,
+    callback_date:  document.getElementById('opp-cb').value || null,
+    perda_motivo:   estagio === 'perdida' ? (document.getElementById('opp-perda').value || null) : null,
+    observation:    document.getElementById('opp-obs').value.trim() || null,
+  };
+  try {
+    let saved;
+    if (OPP_EID) {
+      const ret = await api('PATCH','opportunities',`id=eq.${OPP_EID}`, d);
+      saved = Array.isArray(ret) ? ret[0] : ret;
+    } else {
+      const ret = await api('POST','opportunities',null, d);
+      saved = Array.isArray(ret) ? ret[0] : ret;
+    }
+    const oppId = OPP_EID || saved?.id;
+    // Salva produtos da oportunidade (replace all)
+    if (oppId) {
+      const produtos = getProdutosDoForm();
+      await api('DELETE', 'opportunity_products', `opportunity_id=eq.${oppId}`);
+      if (produtos.length > 0) {
+        await api('POST', 'opportunity_products', null,
+          produtos.map(p => ({ opportunity_id: oppId, produto: p.produto, embalagem: p.embalagem, qtd_kg: p.qtd_kg, preco_kg: p.preco_kg }))
+        );
+      }
+    }
+    toast(OPP_EID?'Oportunidade atualizada':'Oportunidade criada','','success');
+    fechaOpp();
+    CL = await fetchCl();
+    const c = CL.find(x => x.id === pfClientId);
+    if (c) { renderPfOportunidades(c); renderPfResumo(c); abrPerfil(pfClientId); }
+    renderCl();
+  } catch(err) {
+    console.error('saveOpp:', err);
+    document.getElementById('opp-err').textContent = err.message || 'Erro ao salvar';
+    toast('Erro ao salvar oportunidade', err.message||'', 'warning');
+  }
+});
+
+function delOpp(id, titulo) {
+  conf('Excluir oportunidade', `Remover "${titulo}" e todos os produtos/interações relacionados?`, async () => {
+    try {
+      await apiDelete('opportunities', `id=eq.${id}`);
+      CL = await fetchCl();
+      const c = CL.find(x => x.id === pfClientId);
+      if (c) { renderPfOportunidades(c); renderPfResumo(c); renderPfHistorico(c); }
+      toast('Oportunidade removida','','success');
+    } catch(err) {
+      console.error('delOpp:', err);
+      toast('Erro', err.message||'', 'warning');
+    }
+  });
+}
+
+// ── Registrar interação (Sprint 3.3) ───────────────────────────────────
+let INT_OID = null;
+let INT_CID = null;
+
+function abrInteracao(oppId, companyId) {
+  INT_OID = oppId; INT_CID = companyId;
+  document.getElementById('int-f').reset();
+  const c = CL.find(x => x.id === companyId);
+  const opp = (c?.oportunidades || []).find(x => x.id === oppId);
+  document.getElementById('int-opp-info').textContent = opp ? `Oportunidade: ${opp.titulo}` : '';
+  // Popula select de contatos
+  const contatos = c?.contatos || [];
+  document.getElementById('int-contato').innerHTML = '<option value="">—</option>' +
+    contatos.map(ct => `<option value="${ct.id}">${escHtml(ct.nome)}</option>`).join('');
+  document.getElementById('int-m').classList.add('op');
+  setTimeout(() => document.getElementById('int-res').focus(), 80);
+}
+
+function fechaInteracao() {
+  document.getElementById('int-m').classList.remove('op');
+  INT_OID = null; INT_CID = null;
+}
+
+document.getElementById('int-f').addEventListener('submit', async e => {
+  e.preventDefault();
+  if (!INT_OID || !ME) return;
+  const d = {
+    opportunity_id: INT_OID,
+    contact_id:     document.getElementById('int-contato').value || null,
+    seller_id:      ME.id,
+    datetime:       new Date().toISOString(),
+    result:         document.getElementById('int-res').value,
+    next_callback:  document.getElementById('int-cb').value || null,
+    notes:          document.getElementById('int-notes').value.trim() || null,
+  };
+  try {
+    await api('POST','interactions',null, d);
+    // Atualiza callback_date da oportunidade se vier definido
+    if (d.next_callback) {
+      await api('PATCH','opportunities',`id=eq.${INT_OID}`, { callback_date: d.next_callback });
+    }
+    toast('Interação registrada','','success');
+    fechaInteracao();
+    CL = await fetchCl();
+    const c = CL.find(x => x.id === pfClientId);
+    if (c) { renderPfHistorico(c); renderPfOportunidades(c); }
+  } catch(err) {
+    console.error('saveInteracao:', err);
+    toast('Erro ao registrar interação', err.message||'', 'warning');
+  }
+});
+
+// ── Cotação a partir de Oportunidade (Sprint 3.3) ──────────────────────
+async function abrCotacaoFromOpp(oppId, companyId) {
+  const c = CL.find(x => x.id === companyId);
+  if (!c) { toast('Empresa não encontrada','','warning'); return; }
+  const opp = (c.oportunidades || []).find(x => x.id === oppId);
+  if (!opp) { toast('Oportunidade não encontrada','','warning'); return; }
+  // Carrega produtos da opp
+  const prods = await fetchOppProds(oppId);
+  // Stash temporariamente como CL[i].produtos para reutilizar o flow do modal de cotação
+  GC_CLIENT_ID = companyId;
+  GC_OPP_ID    = oppId;
+  GC_OPP_PRODS = prods;
+  document.getElementById('gc-cli-title').textContent = c.razao_social + ' — ' + opp.titulo;
+  const resumo = [
+    c.cnpj ? `CNPJ: ${escHtml(c.cnpj)}` : null,
+    c.email ? `📧 ${escHtml(c.email)}` : null,
+    opp.obra ? `Obra: ${escHtml(opp.obra)}` : null,
+    `Estágio: ${ESTAGIO_LBL[opp.estagio]||opp.estagio}`,
+  ].filter(Boolean).join(' · ');
+  document.getElementById('gc-cli-resumo').innerHTML = resumo || '<span style="color:var(--mt2)">Sem dados extras.</span>';
+  const lista = document.getElementById('gc-prod-lista');
+  if (!prods.length) {
+    lista.innerHTML = '<div style="font-size:13px;color:var(--mt);padding:12px 0">Oportunidade sem produtos. Adicione produtos antes de gerar proposta.</div>';
+    document.getElementById('gc-sub').disabled = true;
+  } else {
+    document.getElementById('gc-sub').disabled = false;
+    lista.innerHTML = `<div class="gc-phead">
+      <div>Produto</div><div>Embalagem</div>
+      <div class="num">Qtd (kg)</div><div class="num">Preço R$/kg</div>
+      <div class="num">IPI %</div><div>Classificação</div>
+    </div>` + prods.map((p, i) => `<div class="gc-prow" data-idx="${i}">
+      <div>${escHtml(p.produto||'—')}</div>
+      <div>${escHtml(p.embalagem||'—')}</div>
+      <input class="num gc-qtd" type="number" step="0.01" min="0" value="${p.qtd_kg!=null?p.qtd_kg:''}">
+      <input class="num gc-prc" type="number" step="0.01" min="0" value="${p.preco_kg!=null?p.preco_kg:''}">
+      <input class="num gc-ipi" type="number" step="0.01" min="0" value="0">
+      <select class="gc-risco">${RISCOS.map(r=>`<option>${r}</option>`).join('')}</select>
+    </div>`).join('');
+  }
+  document.getElementById('gcm').classList.add('op');
+}
+
+// Variáveis novas pro contexto de cotação a partir de oportunidade
+let GC_OPP_ID = null;
+let GC_OPP_PRODS = [];
+
+// Sprint 3.3: as funções antigas _abrPerfilAntigo_DESATIVADO,
+// fechaPerfil duplicada e abrPainelFromPerfil foram removidas — vide
+// versões novas na seção "Sprint 3.3" mais acima.
 
 function abrEditFromPerfil() {
   if (!pfClientId) return;
   abrEdit(pfClientId); // modal abre por cima da página de perfil (z-index maior)
 }
 
-function renderPfResumo(c) {
-  const prods = (c.produtos && c.produtos.length > 0)
-    ? c.produtos
-    : (c.produto ? [{produto:c.produto, embalagem:null, qtd_kg:null, preco_kg:null, peso:c.peso}] : []);
-  const prodHtml = prods.length
-    ? prods.map(p=>{
-        const sub = [];
-        if (p.qtd_kg != null) sub.push(`${p.qtd_kg} kg`);
-        else if (p.peso)      sub.push(p.peso);
-        if (p.preco_kg != null) sub.push(`${fmtBRL(p.preco_kg)}/kg`);
-        if (p.qtd_kg != null && p.preco_kg != null) sub.push(`<b>${fmtBRL(p.qtd_kg * p.preco_kg)}</b>`);
-        return `<div class="pf-row" style="flex-wrap:wrap;gap:6px">
-          <div class="pf-rk" style="width:auto">${p.produto}${p.embalagem?` <span style="color:var(--mt);font-weight:400">· ${p.embalagem}</span>`:''}</div>
-          ${sub.length?`<div style="font-size:12px;color:var(--mt)">${sub.join(' · ')}</div>`:''}
-        </div>`;
-      }).join('')
-    : '<div style="font-size:13px;color:var(--mt)">Sem produtos cadastrados.</div>';
-
-  const rows = [
-    ['Nome', c.name], ['Telefone', c.phone||'—'], ['Vendedor', c.seller_name||c.seller?.name||'—'],
-    ['Status', c.status],
-    ['Valor Estimado', fMoeda(c.estimated_value)], ['Data de Retorno', c.callback_date?fData(c.callback_date):'—'],
-    ['Motivo da Perda', c.loss_reason||'—'],
-  ];
-  document.getElementById('pf-resumo').innerHTML = `
-    <div class="pf-grid">
-      <div>
-        <div class="dc2" style="margin-bottom:14px">
-          <div class="dch"><h3>Dados Cadastrais</h3></div>
-          ${rows.map(([k,v])=>`<div class="pf-row"><div class="pf-rk">${k}</div><div class="pf-rv">${v}</div></div>`).join('')}
-        </div>
-        <div class="dc2">
-          <div class="dch"><h3>Produtos (${prods.length})</h3></div>
-          ${prodHtml}
-        </div>
-      </div>
-      <div class="dc2">
-        <div class="dch"><h3>Observação</h3></div>
-        <div style="font-size:13px;color:var(--tx2);line-height:1.7">${c.observation||'<em style="color:var(--mt)">Sem observação.</em>'}</div>
-      </div>
-    </div>`;
-}
-
-async function loadPfHistorico(id) {
-  const el = document.getElementById('pf-historico');
-  el.innerHTML = '<div class="sl"><div class="sp"></div></div>';
-  try {
-    const h = await fetchHistorico(id);
-    if (!h.length) { el.innerHTML='<div class="se"><h3>Sem histórico</h3><p>Nenhum contato registrado.</p></div>'; return; }
-    const dotCls = r=>({Comprou:'dc',Falou:'df','Nao atendeu':'dn','Nao tem interesse':'di','WhatsApp enviado':'dw','Caixa postal':'dcp'}[r]||'');
-    const rCls = r=>r==='Comprou'?'rc':r==='Nao tem interesse'?'rni':r==='Nao atendeu'?'rna':'';
-    el.innerHTML = `<div class="tl" style="max-width:700px">${h.map(x=>`
-      <div class="tli"><div class="tld ${dotCls(x.result)}"></div>
-      <div class="tlc"><div class="tlm"><span class="tlt">${fDH(x.datetime)}</span><span class="tls">${x.seller?.name||'—'}</span></div>
-      <span class="tlr ${rCls(x.result)}">${x.result}</span>
-      ${x.notes?`<div class="tln">${x.notes}</div>`:''}
-      ${x.next_callback?`<div class="tlx">Próximo: <strong>${fData(x.next_callback)}</strong> (${fRel(x.next_callback)})</div>`:''}</div></div>`).join('')}</div>`;
-  } catch(e) { el.innerHTML=`<div class="se"><p style="color:var(--er)">${e.message}</p></div>`; }
-}
-
-function loadPfNotas(c) {
-  document.getElementById('pf-notas').innerHTML = `
-    <div style="max-width:700px">
-      <p style="font-size:13px;color:var(--mt);margin-bottom:14px">
-        Anotações permanentes sobre o cliente — visíveis por toda a equipe. Diferentes do histórico de ligações.
-      </p>
-      <textarea class="notes-area" id="notes-txt" placeholder="Ex: Prefere contato à tarde. Tem sócio chamado João. Indicado por Pedro em 03/2024...">${c.internal_notes||''}</textarea>
-      <div style="display:flex;justify-content:flex-end;margin-top:10px;gap:8px">
-        <button class="btn bp sm" onclick="salvarNotas()">Salvar Notas</button>
-      </div>
-    </div>`;
-}
-
-async function salvarNotas() {
-  const texto = document.getElementById('notes-txt')?.value||'';
-  try {
-    await api('PATCH','clients',`id=eq.${pfClientId}`,{internal_notes:texto});
-    const idx = CL.findIndex(c=>c.id===pfClientId);
-    if (idx>=0) CL[idx].internal_notes = texto;
-    try{localStorage.setItem('crm_cl',JSON.stringify(CL));}catch{}
-    toast('Notas salvas','','success');
-  } catch(e) { toast('Erro ao salvar',e.message,'warning'); }
-}
-
-async function loadPfAlteracoes(id) {
-  const el = document.getElementById('pf-alteracoes');
-  el.innerHTML = '<div class="sl"><div class="sp"></div></div>';
-  try {
-    const log = await api('GET','audit_log',`client_id=eq.${id}&order=created_at.desc&select=*`);
-    if (!log.length) {
-      el.innerHTML='<div class="se"><h3>Sem registros</h3><p>O log começa a ser gerado a partir de agora.</p></div>';
-      return;
-    }
-    const aLabel = {criado:'criou o cliente',editado:'editou o cliente'};
-    const aDot = {criado:'al-cr',editado:'al-ed'};
-    el.innerHTML = `<div style="max-width:700px">${log.map(l=>{
-      const changes = l.changes ? (typeof l.changes==='string'?JSON.parse(l.changes):l.changes) : [];
-      return `<div class="al-item">
-        <div class="al-dot ${aDot[l.action]||''}"></div>
-        <div style="flex:1">
-          <div class="al-header"><strong>${l.user_name||'Usuário'}</strong> ${aLabel[l.action]||l.action} — ${fDH(l.created_at)}</div>
-          ${Array.isArray(changes)?changes.map(ch=>`<div class="al-change"><strong>${ch.label}</strong>: <span class="al-from">${ch.from||'(vazio)'}</span> → <span class="al-to">${ch.to||'(vazio)'}</span></div>`).join(''):''}
-        </div>
-      </div>`;
-    }).join('')}</div>`;
-  } catch(e) { el.innerHTML=`<div class="se"><p style="color:var(--er)">${e.message}</p></div>`; }
-}
+// Sprint 3.3: renderPfResumo, loadPfHistorico, loadPfNotas, loadPfAlteracoes
+// foram REMOVIDOS porque dependiam do modelo antigo de clients e foram
+// substituídos por renderPfResumo/Contatos/Oportunidades/Historico definidos
+// na seção "Sprint 3.3: perfil completo da empresa com abas" mais acima.
 
 // Tabs da página de perfil
 document.querySelectorAll('.pf-tab').forEach(t => t.addEventListener('click', () => {
@@ -3500,32 +4016,33 @@ function hideSearch() {
 function renderSearch(q) {
   const el = document.getElementById('gs-results');
   const term = q.toLowerCase();
-  const res = !term ? CL.slice(0, 8) : CL.filter(c =>
-    (c.name||'').toLowerCase().includes(term) ||
-    (c.phone||'').includes(term) ||
-    (c.seller_name||c.seller?.name||'').toLowerCase().includes(term)
-  ).slice(0, 10);
+  const res = !term ? CL.slice(0, 8) : CL.filter(c => {
+    const hay = ((c.razao_social||'')+' '+(c.nome_fantasia||'')+' '+(c.cnpj||'')+' '+(c.telefone||'')+' '+(c.email||'')+' '+(empresaVendedor(c)||'')).toLowerCase();
+    return hay.includes(term);
+  }).slice(0, 10);
   gsIdx = -1;
   if (!res.length) {
-    el.innerHTML = '<div class="gs-empty">Nenhum cliente encontrado</div>';
+    el.innerHTML = '<div class="gs-empty">Nenhuma empresa encontrada</div>';
     return;
   }
   el.innerHTML = res.map((c,i) => {
-    const nv = c.seller_name||c.seller?.name||'';
-    const sub = [c.phone, nv, c.status].filter(Boolean).join(' · ');
+    const nome = c.razao_social || '';
+    const vend = empresaVendedor(c) || '';
+    const sub  = [c.cnpj, c.cidade && c.uf?c.cidade+'/'+c.uf:'', vend].filter(Boolean).join(' · ');
+    const tier = c.tier || 'lead';
     return `<div class="gs-item" data-id="${c.id}" onclick="gsOpen('${c.id}')">
-      <div class="gs-av" style="background:${cor(c.name)}">${ini(c.name)}</div>
+      <div class="gs-av" style="background:${cor(nome)}">${ini(nome)}</div>
       <div class="gs-info">
-        <div class="gs-name">${c.name}</div>
-        <div class="gs-sub">${sub}</div>
+        <div class="gs-name">${escHtml(nome)}</div>
+        <div class="gs-sub">${escHtml(sub)}</div>
       </div>
-      ${bStatus(c.status)}
+      <span class="tier-badge tier-${tier}">${tier}</span>
     </div>`;
   }).join('');
 }
 function gsOpen(id) {
   hideSearch();
-  abrEdit(id);
+  abrPerfil(id);
 }
 function gsMove(dir) {
   const items = document.querySelectorAll('.gs-item');

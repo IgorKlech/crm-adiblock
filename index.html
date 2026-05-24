@@ -190,6 +190,8 @@ td strong{color:var(--tx);font-weight:600}
 
 /* MODAL */
 .mo{display:none;position:fixed;inset:0;background:rgba(0,0,0,.35);z-index:200;align-items:center;justify-content:center;padding:20px}
+/* Modais que abrem POR CIMA do perfil da empresa (#pfpage z-index 280) */
+#cont-m,#opp-m,#int-m{z-index:290}
 .mo.op{display:flex}
 .md{background:var(--sur);border-radius:var(--r);padding:28px;width:100%;max-width:600px;max-height:92vh;overflow-y:auto;box-shadow:var(--shl);animation:mIn .18s ease;border:1px solid var(--bdr)}
 @keyframes mIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}

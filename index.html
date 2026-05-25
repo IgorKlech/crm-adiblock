@@ -804,6 +804,7 @@ tr.row-selected{background:var(--ps)!important}
       <div class="ph">
         <div><h2>Empresas</h2><span class="ps" id="cst">Carregando...</span></div>
         <div class="pa">
+          <button class="btn bg sm" onclick="abrImport()">↑ Importar CSV</button>
           <button class="btn bp" id="ncbtn">+ Nova Empresa</button>
         </div>
       </div>
@@ -1385,32 +1386,35 @@ tr.row-selected{background:var(--ps)!important}
   </div>
 </div>
 
-<!-- MODAL IMPORTAR CSV -->
+<!-- MODAL IMPORTAR CSV — Sprint 4.5 reescrito para empresas -->
 <div class="mo" id="im">
-  <div class="md" style="max-width:620px">
-    <div class="mh"><h3>Importar Clientes via CSV</h3><button class="mx" onclick="fechaImport()">✕</button></div>
+  <div class="md" style="max-width:780px">
+    <div class="mh"><h3>Importar Empresas via CSV</h3><button class="mx" onclick="fechaImport()">✕</button></div>
     <div id="im-s1">
       <div class="im-drop" id="im-drop">
         <div style="font-size:32px;margin-bottom:12px">📄</div>
         <p>Arraste um arquivo <strong>.csv</strong> aqui ou</p>
         <button class="btn bp sm" onclick="document.getElementById('im-file').click()">Escolher arquivo</button>
         <input type="file" id="im-file" accept=".csv,.txt" style="display:none">
-        <p style="font-size:11px;margin-top:14px;color:var(--mt)">
-          Colunas detectadas automaticamente: Nome, Telefone, Vendedor, Status, Produto, Peso, Valor, Observação, Data Retorno<br>
-          Separador: vírgula <code>,</code> ou ponto e vírgula <code>;</code> (detectado automaticamente)
+        <p style="font-size:11px;margin-top:14px;color:var(--mt);line-height:1.6">
+          <b>Colunas reconhecidas automaticamente</b> (qualquer ordem, headers em PT-BR ou EN):<br>
+          <code>razao_social</code>, <code>nome_fantasia</code>, <code>cnpj</code>, <code>ie</code>, <code>email</code>, <code>telefone</code>, <code>website</code>, <code>industria</code>, <code>endereco</code>, <code>cidade</code>, <code>uf</code>, <code>cep</code>, <code>classificacao</code><br>
+          Separador: <code>,</code> ou <code>;</code> (auto). Empresas com CNPJ duplicado são <b>ignoradas</b> (não sobrescreve dados existentes).
         </p>
       </div>
     </div>
     <div id="im-s2" style="display:none">
-      <div id="im-info" style="margin-bottom:12px"></div>
-      <div style="overflow-x:auto;border-radius:var(--rs);border:1px solid var(--bdr)"><div id="im-prev"></div></div>
-      <div class="fa">
-        <button class="btn bg" onclick="resetImport()">← Voltar</button>
-        <button class="btn bp" id="im-ok">Importar <span id="im-n">0</span> clientes</button>
+      <div id="im-info" style="margin-bottom:12px;font-size:13px"></div>
+      <div style="max-height:340px;overflow-y:auto;border-radius:var(--rs);border:1px solid var(--bdr)">
+        <table style="width:100%;font-size:12px;border-collapse:collapse" id="im-prev-tab"></table>
+      </div>
+      <div class="fa" style="margin-top:14px">
+        <button type="button" class="btn bg" onclick="resetImport()">← Voltar</button>
+        <button type="button" class="btn bp" id="im-ok" onclick="executarImport()">Importar <span id="im-n">0</span> empresa(s)</button>
       </div>
     </div>
-    <div id="im-s3" style="display:none;text-align:center;padding:10px 0">
-      <div class="im-prog"><div class="im-prog-fill" id="im-bar" style="width:0%"></div></div>
+    <div id="im-s3" style="display:none;text-align:center;padding:24px 0">
+      <div class="im-prog" style="height:8px;background:var(--bg);border-radius:99px;overflow:hidden;margin-bottom:14px"><div class="im-prog-fill" id="im-bar" style="width:0%;height:100%;background:var(--p);transition:width .2s"></div></div>
       <div class="im-result" id="im-res">Importando...</div>
     </div>
   </div>
@@ -4312,9 +4316,7 @@ function validarCliente() {
   return ok;
 }
 
-// ── Importar CSV ──────────────────────────────────────────────────────────
-let importRows = [];
-
+// ── Importar CSV (Sprint 4.5) ──────────────────────────────────────────
 function abrImport() {
   document.getElementById('im').classList.add('op');
   resetImport();
@@ -4328,104 +4330,160 @@ function resetImport() {
   document.getElementById('im-s3').style.display = 'none';
   document.getElementById('im-file').value = '';
   importRows = [];
+  importNovas = [];
+  importDup = [];
+}
+
+// Sprint 4.5: Import CSV de empresas com dedupe por CNPJ
+const CSV_FIELD_MAP = {
+  // chave canonica → regex do header
+  razao_social:  /^(razao_social|razao\s*social|raz\s*social|nome|name|empresa|company|razão social)$/i,
+  nome_fantasia: /^(nome_fantasia|fantasia|nome\s*fantasia|trade\s*name)$/i,
+  cnpj:          /^(cnpj|cpf|cnpj\s*\/?\s*cpf|tax\s*id|documento)$/i,
+  ie:            /^(ie|i\.?e\.?|inscricao\s*estadual|inscrição\s*estadual)$/i,
+  email:         /^(email|e-?mail)$/i,
+  telefone:      /^(telefone|fone|phone|celular|whatsapp|tel)$/i,
+  website:       /^(website|site|web|url)$/i,
+  industria:     /^(industria|indústria|segmento|setor|industry)$/i,
+  endereco:      /^(endereco|endereço|rua|address|logradouro)$/i,
+  cidade:        /^(cidade|city|municipio|município)$/i,
+  uf:            /^(uf|estado|state)$/i,
+  cep:           /^(cep|zip|postal\s*code)$/i,
+  classificacao: /^(classificacao|classificação|tier|tipo)$/i,
+};
+
+const CLASSIF_NORM = { // normaliza valores comuns para chaves do enum
+  'lead':'lead_novo', 'lead novo':'lead_novo', 'lead_novo':'lead_novo',
+  'prospect':'prospect', 'prospecto':'prospect',
+  'cliente':'cliente_ativo', 'cliente ativo':'cliente_ativo', 'cliente_ativo':'cliente_ativo',
+  'inativo':'inativo',
+  'indicacao':'indicacao', 'indicação':'indicacao', 'indicado':'indicacao',
+};
+
+function normCnpj(s) {
+  return String(s||'').replace(/\D/g, '');
 }
 
 function parseCSV(text) {
   const lines = text.split(/\r?\n/).filter(l => l.trim());
-  if (!lines.length) return [];
+  if (!lines.length) return { rows: [], headers: [], unmapped: [] };
   const sep = lines[0].split(';').length >= lines[0].split(',').length ? ';' : ',';
-  const headers = lines[0].split(sep).map(h => h.trim().replace(/^["']|["']$/g,'').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,''));
-  const idx = {};
-  headers.forEach((h,i) => {
-    if (/^nome|^name/.test(h))                       idx.name = i;
-    else if (/fone|telefone|phone|celular|whatsapp/.test(h)) idx.phone = i;
-    else if (/vendedor|seller/.test(h))              idx.seller_name = i;
-    else if (/^status/.test(h))                      idx.status = i;
-    else if (/produto|product/.test(h))              idx.produto = i;
-    else if (/peso|weight|quant/.test(h))            idx.peso = i;
-    else if (/valor|value|preco|price/.test(h))      idx.estimated_value = i;
-    else if (/obs|observ|note|descr|anotac/.test(h)) idx.observation = i;
-    else if (/retorno|callback|data|prazo/.test(h))  idx.callback_date = i;
+  const headersRaw = lines[0].split(sep).map(h => h.trim().replace(/^["']|["']$/g,''));
+  const idx = {}; // canonica → index
+  const unmapped = [];
+  headersRaw.forEach((h,i) => {
+    const norm = h.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'').trim();
+    let matched = false;
+    for (const [key, re] of Object.entries(CSV_FIELD_MAP)) {
+      if (re.test(norm) || re.test(h.trim())) { idx[key] = i; matched = true; break; }
+    }
+    if (!matched && h.trim()) unmapped.push(h.trim());
   });
-  const statusValidos = ['Pendente','Em contato','Comprou','Nao comprou','Inativo'];
   const rows = [];
   for (let i = 1; i < lines.length; i++) {
     const c = lines[i].split(sep).map(x => x.trim().replace(/^["']|["']$/g,''));
     const r = {};
-    r.name = idx.name !== undefined ? c[idx.name] : '';
-    if (!r.name) continue;
-    r.phone           = idx.phone !== undefined ? (c[idx.phone]||null) : null;
-    r.seller_name     = idx.seller_name !== undefined ? (c[idx.seller_name]||null) : null;
-    r.produto         = idx.produto !== undefined ? (c[idx.produto]||null) : null;
-    r.peso            = idx.peso !== undefined ? (c[idx.peso]||null) : null;
-    r.observation     = idx.observation !== undefined ? (c[idx.observation]||null) : null;
-    if (idx.status !== undefined && statusValidos.includes(c[idx.status])) r.status = c[idx.status];
-    else r.status = 'Pendente';
-    if (idx.estimated_value !== undefined) {
-      const v = parseFloat(String(c[idx.estimated_value]||'').replace(',','.').replace(/[^\d.]/g,''));
-      r.estimated_value = isNaN(v) ? null : v;
-    }
-    if (idx.callback_date !== undefined) {
-      const d = c[idx.callback_date]||'';
-      if (/^\d{2}\/\d{2}\/\d{4}$/.test(d)) { const [dd,mm,yy]=d.split('/'); r.callback_date=`${yy}-${mm}-${dd}`; }
-      else if (/^\d{4}-\d{2}-\d{2}$/.test(d)) r.callback_date = d;
+    const razao = idx.razao_social !== undefined ? c[idx.razao_social] : '';
+    if (!razao) continue;
+    r.razao_social = razao;
+    for (const [key, _] of Object.entries(CSV_FIELD_MAP)) {
+      if (key === 'razao_social' || idx[key] === undefined) continue;
+      const val = (c[idx[key]] || '').trim();
+      if (!val) continue;
+      if (key === 'cnpj')      r.cnpj = val;
+      else if (key === 'uf')   r.uf = val.toUpperCase().slice(0,2);
+      else if (key === 'classificacao') {
+        const norm = CLASSIF_NORM[val.toLowerCase().trim()];
+        if (norm) r.classificacao = norm;
+      }
+      else r[key] = val;
     }
     rows.push(r);
   }
-  return rows;
+  return { rows, headers: headersRaw, unmapped };
 }
+
+let importRows = []; // populated by processarCSV
+let importNovas = [];
+let importDup = [];
 
 function processarCSV(file) {
   const reader = new FileReader();
   reader.onload = e => {
     try {
-      const rows = parseCSV(e.target.result);
-      if (!rows.length) { toast('Arquivo vazio', 'Nenhum cliente válido encontrado no CSV.', 'warning'); return; }
+      const { rows, unmapped } = parseCSV(e.target.result);
+      if (!rows.length) { toast('CSV vazio','Nenhuma empresa válida encontrada (precisa ter razão social na linha).','warning'); return; }
+      // Dedupe por CNPJ contra CL existente
+      const cnpjsExistentes = new Set(CL.filter(c => c.cnpj).map(c => normCnpj(c.cnpj)));
+      const cnpjsImport     = new Set();
+      importNovas = [];
+      importDup   = [];
+      rows.forEach(r => {
+        const cnpjNorm = normCnpj(r.cnpj);
+        if (cnpjNorm && (cnpjsExistentes.has(cnpjNorm) || cnpjsImport.has(cnpjNorm))) {
+          importDup.push(r);
+        } else {
+          if (cnpjNorm) cnpjsImport.add(cnpjNorm);
+          importNovas.push(r);
+        }
+      });
       importRows = rows;
       document.getElementById('im-s1').style.display = 'none';
       document.getElementById('im-s2').style.display = 'block';
-      document.getElementById('im-n').textContent = rows.length;
+      document.getElementById('im-n').textContent = importNovas.length;
+      document.getElementById('im-ok').disabled = importNovas.length === 0;
+      const unmappedMsg = unmapped.length
+        ? `<div style="color:#92400e;background:#fef3c7;padding:6px 10px;border-radius:6px;font-size:11px;margin-top:6px">⚠ Colunas ignoradas (não reconhecidas): ${escHtml(unmapped.join(', '))}</div>`
+        : '';
       document.getElementById('im-info').innerHTML =
-        `<p style="font-size:13px;color:var(--tx2)"><strong>${rows.length}</strong> cliente(s) encontrado(s). Prévia dos primeiros 5:</p>`;
-      const cols = ['name','phone','seller_name','status','produto','peso'];
-      const lab  = {name:'Nome',phone:'Telefone',seller_name:'Vendedor',status:'Status',produto:'Produto',peso:'Peso'};
-      document.getElementById('im-prev').innerHTML =
-        `<table class="im-table"><thead><tr>${cols.map(c=>`<th>${lab[c]}</th>`).join('')}</tr></thead><tbody>`
-        + rows.slice(0,5).map(r=>`<tr>${cols.map(c=>`<td>${r[c]||'—'}</td>`).join('')}</tr>`).join('')
-        + '</tbody></table>';
+        `<strong>${rows.length}</strong> linha(s) no CSV · <span style="color:var(--ok)"><b>${importNovas.length}</b> nova(s)</span>`
+        + (importDup.length ? ` · <span style="color:var(--er)"><b>${importDup.length}</b> duplicada(s)</span> (CNPJ já existe — serão puladas)` : '')
+        + unmappedMsg;
+      const cols = ['razao_social','cnpj','cidade','uf','telefone','email'];
+      const lab  = {razao_social:'Razão Social', cnpj:'CNPJ', cidade:'Cidade', uf:'UF', telefone:'Telefone', email:'Email'};
+      const preview = [...importNovas.slice(0,30), ...importDup.slice(0,5)];
+      document.getElementById('im-prev-tab').innerHTML =
+        `<thead><tr style="background:var(--bg)">${cols.map(c=>`<th style="text-align:left;padding:6px 10px;border-bottom:1px solid var(--bdr);font-size:11px;text-transform:uppercase;color:var(--mt)">${lab[c]}</th>`).join('')}<th style="padding:6px 10px;border-bottom:1px solid var(--bdr);font-size:11px;text-transform:uppercase;color:var(--mt)">Status</th></tr></thead><tbody>`
+        + preview.map(r => {
+            const dup = r.cnpj && new Set(CL.filter(c=>c.cnpj).map(c=>normCnpj(c.cnpj))).has(normCnpj(r.cnpj));
+            return `<tr style="${dup?'opacity:.5':''}">${cols.map(c => `<td style="padding:6px 10px;border-bottom:1px solid var(--bdr)">${escHtml(r[c]||'—')}</td>`).join('')}<td style="padding:6px 10px;border-bottom:1px solid var(--bdr);font-size:10px;font-weight:700;color:${dup?'var(--er)':'var(--ok)'}">${dup?'DUPLICADA':'NOVA'}</td></tr>`;
+          }).join('')
+        + (preview.length < rows.length ? `<tr><td colspan="7" style="text-align:center;padding:8px;color:var(--mt);font-style:italic">... e mais ${rows.length - preview.length} linha(s)</td></tr>` : '')
+        + '</tbody>';
     } catch(err) {
+      console.error('parseCSV:', err);
       toast('Erro ao ler CSV', err.message, 'warning');
     }
   };
   reader.readAsText(file, 'UTF-8');
 }
 
-async function doImport() {
-  if (!importRows.length) return;
+async function executarImport() {
+  if (!importNovas.length) return;
   document.getElementById('im-s2').style.display = 'none';
   document.getElementById('im-s3').style.display = 'block';
   document.getElementById('im-bar').style.width = '30%';
-  document.getElementById('im-res').textContent = `Importando ${importRows.length} cliente(s)...`;
+  document.getElementById('im-res').textContent = `Importando ${importNovas.length} empresa(s)...`;
   try {
-    await api('POST','clients',null,importRows);
+    await api('POST','companies',null, importNovas.map(r => ({ ...r, created_by: ME?.id || null })));
     document.getElementById('im-bar').style.width = '100%';
-    document.getElementById('im-res').innerHTML = `<span style="color:var(--ok);font-size:22px">✓</span><br><strong>${importRows.length}</strong> cliente(s) importado(s) com sucesso!`;
+    document.getElementById('im-res').innerHTML = `<span style="color:var(--ok);font-size:28px">✓</span><br><strong>${importNovas.length}</strong> empresa(s) importada(s)${importDup.length?` · ${importDup.length} duplicada(s) ignorada(s)`:''}`;
     CL = await fetchCl();
     try { localStorage.setItem('crm_cl',JSON.stringify(CL)); } catch {}
     renderCl();
-    toast(`${importRows.length} clientes importados`,'','success');
+    toast(`${importNovas.length} empresa(s) importadas`,'','success');
     setTimeout(fechaImport, 2500);
   } catch(e) {
+    console.error('executarImport:', e);
     document.getElementById('im-bar').style.width = '100%';
     document.getElementById('im-bar').style.background = 'var(--er)';
-    document.getElementById('im-res').innerHTML = `<span style="color:var(--er)">Erro: ${e.message}</span>`;
+    document.getElementById('im-res').innerHTML = `<span style="color:var(--er)">Erro: ${escHtml(e.message)}</span>`;
     toast('Erro na importação', e.message, 'warning');
   }
 }
 
 // Eventos do import
 document.getElementById('im-file').addEventListener('change', e => { if(e.target.files[0]) processarCSV(e.target.files[0]); });
-document.getElementById('im-ok').addEventListener('click', doImport);
 document.getElementById('im').addEventListener('click', e => { if(e.target===e.currentTarget) fechaImport(); });
 
 // Drag and drop

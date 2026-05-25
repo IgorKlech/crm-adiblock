@@ -487,6 +487,30 @@ td strong{color:var(--tx);font-weight:600}
 .rel-ok-box{background:var(--ok2);border:1px solid var(--ok);border-radius:var(--r);padding:14px 18px;font-size:13px;color:var(--ok);display:flex;align-items:center;gap:10px}
 .rel-footer{text-align:center;font-size:11px;color:var(--mt);margin-top:28px;padding-top:16px;border-top:1px solid var(--bdr)}
 
+/* ── Pipeline Kanban (Sprint 4.4) ── */
+#kb-board{display:grid;grid-template-columns:repeat(5,1fr);gap:12px;min-height:60vh;overflow-x:auto}
+@media(max-width:1100px){#kb-board{grid-template-columns:repeat(2,1fr)}}
+.kb-col{background:var(--bg);border:1px solid var(--bdr);border-radius:var(--rs);display:flex;flex-direction:column;min-width:200px}
+.kb-col-head{padding:10px 12px;border-bottom:1px solid var(--bdr);display:flex;justify-content:space-between;align-items:center;font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;color:var(--tx);background:var(--sur);border-top-left-radius:var(--rs);border-top-right-radius:var(--rs)}
+.kb-col-head .kb-col-count{background:var(--p);color:#fff;font-size:10px;padding:2px 7px;border-radius:99px;font-weight:700}
+.kb-col-body{flex:1;padding:8px;display:flex;flex-direction:column;gap:8px;min-height:120px;transition:background .15s}
+.kb-col-body.kb-drag-over{background:var(--ps)}
+.kb-card{background:var(--sur);border:1px solid var(--bdr);border-radius:var(--rs);padding:10px 12px;cursor:grab;transition:all .15s;font-size:12px;line-height:1.4;user-select:none}
+.kb-card:hover{border-color:var(--p);box-shadow:var(--sh)}
+.kb-card.kb-dragging{opacity:.4;cursor:grabbing}
+.kb-card-emp{font-size:11px;color:var(--mt);font-weight:500;margin-bottom:2px}
+.kb-card-tit{font-size:13px;font-weight:600;color:var(--tx);margin-bottom:6px}
+.kb-card-meta{display:flex;flex-wrap:wrap;gap:6px;font-size:10.5px;color:var(--mt)}
+.kb-card-meta .kb-meta-val{color:var(--p);font-weight:600}
+.kb-card-vend{font-size:10px;color:var(--mt2);margin-top:4px}
+.kb-col-total{font-size:11px;color:var(--mt);font-weight:500;padding:6px 12px;background:var(--sur);border-top:1px solid var(--bdr);text-align:right;border-bottom-left-radius:var(--rs);border-bottom-right-radius:var(--rs)}
+.kb-col-total b{color:var(--p)}
+.kb-col-lead .kb-col-head{border-top:3px solid #6c7a89}
+.kb-col-qualificado .kb-col-head{border-top:3px solid #5b7fdb}
+.kb-col-proposta_enviada .kb-col-head{border-top:3px solid #d97706}
+.kb-col-em_negociacao .kb-col-head{border-top:3px solid #9a3412}
+.kb-col-ganha .kb-col-head{border-top:3px solid #38a169}
+
 /* ── Equipe (Sprint 4.3) ── */
 .eq-info{padding:12px 16px;background:#fef3c7;border:1px solid #fbbf24;color:#78350f;border-radius:var(--rs);font-size:12.5px;line-height:1.5;margin-bottom:18px}
 .eq-card{background:var(--sur);border:1px solid var(--bdr);border-radius:var(--rs);padding:14px 18px;margin-bottom:10px;display:flex;justify-content:space-between;align-items:center;gap:12px}
@@ -732,6 +756,10 @@ tr.row-selected{background:var(--ps)!important}
           <svg width="14" height="14" viewBox="0 0 20 20" fill="currentColor"><path d="M9 6a3 3 0 11-6 0 3 3 0 016 0zM17 6a3 3 0 11-6 0 3 3 0 016 0zM12.93 17c.046-.327.07-.66.07-1a6.97 6.97 0 00-1.5-4.33A5 5 0 0119 16v1h-6.07zM6 11a5 5 0 015 5v1H1v-1a5 5 0 015-5z"/></svg>
           Empresas
         </button>
+        <button class="tb" data-tab="kb">
+          <svg width="14" height="14" viewBox="0 0 20 20" fill="currentColor"><path d="M3 4a1 1 0 011-1h3a1 1 0 011 1v12a1 1 0 01-1 1H4a1 1 0 01-1-1V4zM9 4a1 1 0 011-1h3a1 1 0 011 1v6a1 1 0 01-1 1h-3a1 1 0 01-1-1V4zM15 4a1 1 0 011-1h1a1 1 0 011 1v3a1 1 0 01-1 1h-1a1 1 0 01-1-1V4z"/></svg>
+          Pipeline
+        </button>
         <button class="tb" data-tab="db">
           <svg width="14" height="14" viewBox="0 0 20 20" fill="currentColor"><path d="M2 11a1 1 0 011-1h2a1 1 0 011 1v5a1 1 0 01-1 1H3a1 1 0 01-1-1v-5zM8 7a1 1 0 011-1h2a1 1 0 011 1v9a1 1 0 01-1 1H9a1 1 0 01-1-1V7zM14 4a1 1 0 011-1h2a1 1 0 011 1v12a1 1 0 01-1 1h-2a1 1 0 01-1-1V4z"/></svg>
           Dashboard
@@ -836,6 +864,20 @@ tr.row-selected{background:var(--ps)!important}
           <tbody id="ctb"><tr><td colspan="9"><div class="sl"><div class="sp"></div>Carregando...</div></td></tr></tbody>
         </table>
       </div>
+    </div>
+
+    <!-- PIPELINE KANBAN (Sprint 4.4) -->
+    <div id="kb-view" class="vw">
+      <div class="ph">
+        <div><h2>Pipeline</h2><span class="ps" id="kb-stats">—</span></div>
+        <div class="pa">
+          <select class="fs2" id="kb-vend" onchange="renderKanban()" style="margin-right:6px">
+            <option value="">Todos vendedores</option>
+          </select>
+          <button class="btn bg sm" onclick="renderKanban()">↺ Atualizar</button>
+        </div>
+      </div>
+      <div id="kb-board"></div>
     </div>
 
     <!-- DASHBOARD -->
@@ -2391,6 +2433,7 @@ document.querySelectorAll('.tb').forEach(b => b.addEventListener('click',()=>{
   document.getElementById(b.dataset.tab+'-view').classList.add('ac');
   if (b.dataset.tab==='db') renderDb();
   if (b.dataset.tab==='eq') renderEquipe();
+  if (b.dataset.tab==='kb') renderKanban();
 }));
 
 // Sort
@@ -2769,6 +2812,86 @@ function fecharCotacao() {
 }
 
 // ── Minhas Configurações (perfil do vendedor) ─────────────────────────────
+// ── Pipeline Kanban (Sprint 4.4) ────────────────────────────────────────
+const KB_ESTAGIOS = ['lead','qualificado','proposta_enviada','em_negociacao','ganha'];
+
+function renderKanban() {
+  const board = document.getElementById('kb-board');
+  if (!board) return;
+  // Popula select de vendedor
+  const sel = document.getElementById('kb-vend');
+  const vAtual = sel.value;
+  const vendedores = new Set();
+  for (const c of CL) for (const o of (c.oportunidades||[])) if (o.seller_name) vendedores.add(o.seller_name);
+  sel.innerHTML = '<option value="">Todos vendedores</option>' +
+    [...vendedores].sort().map(n => `<option value="${escHtml(n)}"${n===vAtual?' selected':''}>${escHtml(n)}</option>`).join('');
+  const filtroVend = sel.value;
+
+  // Agrupa oportunidades por estágio
+  const opps = todasOpps().filter(o => !filtroVend || o.seller_name === filtroVend);
+  const byEst = {};
+  KB_ESTAGIOS.forEach(e => byEst[e] = []);
+  for (const o of opps) if (byEst[o.estagio]) byEst[o.estagio].push(o);
+
+  const totAbertas = opps.filter(o => o.estagio !== 'ganha' && o.estagio !== 'perdida').length;
+  const totGanhas  = opps.filter(o => o.estagio === 'ganha').length;
+  document.getElementById('kb-stats').textContent =
+    `${totAbertas} aberta(s) · ${totGanhas} ganha(s) · ${opps.length} no total`;
+
+  board.innerHTML = KB_ESTAGIOS.map(est => {
+    const itens = byEst[est] || [];
+    const total = itens.reduce((s,o)=> s + (Number(o.valor_estimado)||0), 0);
+    const cards = itens.length
+      ? itens.map(o => `<div class="kb-card" draggable="true" data-id="${o.id}" data-est="${o.estagio}" onclick="abrPerfil('${o.company_id}')">
+          <div class="kb-card-emp">${escHtml(o.company_nome||'')}</div>
+          <div class="kb-card-tit">${escHtml(o.titulo||'')}</div>
+          <div class="kb-card-meta">
+            ${o.valor_estimado!=null?`<span class="kb-meta-val">${fMoeda(o.valor_estimado)}</span>`:''}
+            ${o.callback_date?`<span>📅 ${fData(o.callback_date)}</span>`:''}
+          </div>
+          ${o.seller_name?`<div class="kb-card-vend">👤 ${escHtml(o.seller_name)}</div>`:''}
+        </div>`).join('')
+      : '<div style="color:var(--mt2);font-size:11px;text-align:center;padding:20px 0">— vazio —</div>';
+    return `<div class="kb-col kb-col-${est}">
+      <div class="kb-col-head"><span>${escHtml(ESTAGIO_LBL[est])}</span><span class="kb-col-count">${itens.length}</span></div>
+      <div class="kb-col-body" data-est="${est}">${cards}</div>
+      ${total>0?`<div class="kb-col-total"><b>${fMoeda(total)}</b></div>`:''}
+    </div>`;
+  }).join('');
+
+  // Wire drag-drop
+  board.querySelectorAll('.kb-card').forEach(card => {
+    card.addEventListener('dragstart', e => {
+      e.dataTransfer.setData('opp-id', card.dataset.id);
+      e.dataTransfer.setData('from-est', card.dataset.est);
+      card.classList.add('kb-dragging');
+    });
+    card.addEventListener('dragend', () => card.classList.remove('kb-dragging'));
+  });
+  board.querySelectorAll('.kb-col-body').forEach(body => {
+    body.addEventListener('dragover', e => { e.preventDefault(); body.classList.add('kb-drag-over'); });
+    body.addEventListener('dragleave', () => body.classList.remove('kb-drag-over'));
+    body.addEventListener('drop', async e => {
+      e.preventDefault();
+      body.classList.remove('kb-drag-over');
+      const oppId = e.dataTransfer.getData('opp-id');
+      const fromEst = e.dataTransfer.getData('from-est');
+      const toEst = body.dataset.est;
+      if (!oppId || fromEst === toEst) return;
+      try {
+        await api('PATCH', 'opportunities', `id=eq.${oppId}`, { estagio: toEst });
+        toast('Estágio atualizado', `Movido para "${ESTAGIO_LBL[toEst]}"`, 'success');
+        CL = await fetchCl();
+        renderKanban();
+        renderCl();
+      } catch(err) {
+        console.error('kb drop:', err);
+        toast('Erro ao mover', err.message||'', 'warning');
+      }
+    });
+  });
+}
+
 // ── Equipe (Sprint 4.3) ─────────────────────────────────────────────────
 let EQ_EID = null; // profile id sendo editado
 

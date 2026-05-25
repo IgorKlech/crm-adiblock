@@ -487,6 +487,17 @@ td strong{color:var(--tx);font-weight:600}
 .rel-ok-box{background:var(--ok2);border:1px solid var(--ok);border-radius:var(--r);padding:14px 18px;font-size:13px;color:var(--ok);display:flex;align-items:center;gap:10px}
 .rel-footer{text-align:center;font-size:11px;color:var(--mt);margin-top:28px;padding-top:16px;border-top:1px solid var(--bdr)}
 
+/* ── Equipe (Sprint 4.3) ── */
+.eq-info{padding:12px 16px;background:#fef3c7;border:1px solid #fbbf24;color:#78350f;border-radius:var(--rs);font-size:12.5px;line-height:1.5;margin-bottom:18px}
+.eq-card{background:var(--sur);border:1px solid var(--bdr);border-radius:var(--rs);padding:14px 18px;margin-bottom:10px;display:flex;justify-content:space-between;align-items:center;gap:12px}
+.eq-av{width:44px;height:44px;border-radius:50%;color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:17px;flex-shrink:0}
+.eq-info-main{flex:1;min-width:0}
+.eq-info-main .eq-nome{font-size:14px;font-weight:600;color:var(--tx)}
+.eq-info-main .eq-meta{font-size:12px;color:var(--mt);margin-top:3px;line-height:1.5}
+.eq-info-main .eq-role{display:inline-block;font-size:9px;font-weight:700;padding:2px 7px;border-radius:99px;text-transform:uppercase;letter-spacing:.05em;margin-left:6px}
+.eq-role.admin{background:#fef3c7;color:#92400e}
+.eq-role.vendedor{background:#dbeafe;color:#1e40af}
+
 /* ── Listas de contatos / oportunidades no perfil (Sprint 3.3) ── */
 .pf-list-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px}
 .pf-list-head h3{font-size:15px;font-weight:600;color:var(--tx);margin:0}
@@ -507,6 +518,10 @@ td strong{color:var(--tx);font-weight:600}
 .pf-int-cb{font-size:11px;color:var(--p);margin-top:4px}
 .pf-opp-card{cursor:default}
 .pf-opp-actions{display:flex;flex-wrap:wrap;gap:4px;margin-top:8px}
+.pf-opp-cb{cursor:pointer;width:16px;height:16px;accent-color:var(--p);margin-top:4px;flex-shrink:0}
+.pf-opp-selected{background:var(--ps);border-color:var(--p)}
+#pf-bulk-bar{display:flex;align-items:center;gap:10px;padding:10px 14px;background:var(--ps);border:1px solid var(--p);border-radius:var(--rs);margin-bottom:10px;font-size:13px}
+#pf-bulk-bar select{font-size:12px;padding:5px 8px;border:1px solid var(--bdr);border-radius:6px;background:var(--sur);color:var(--tx)}
 
 /* ── Tier / Estágio badges (Sprint 3) ── */
 .tier-badge{display:inline-block;font-size:10px;font-weight:700;padding:3px 8px;border-radius:99px;text-transform:uppercase;letter-spacing:.05em}
@@ -721,6 +736,10 @@ tr.row-selected{background:var(--ps)!important}
           <svg width="14" height="14" viewBox="0 0 20 20" fill="currentColor"><path d="M2 11a1 1 0 011-1h2a1 1 0 011 1v5a1 1 0 01-1 1H3a1 1 0 01-1-1v-5zM8 7a1 1 0 011-1h2a1 1 0 011 1v9a1 1 0 01-1 1H9a1 1 0 01-1-1V7zM14 4a1 1 0 011-1h2a1 1 0 011 1v12a1 1 0 01-1 1h-2a1 1 0 01-1-1V4z"/></svg>
           Dashboard
         </button>
+        <button class="tb" data-tab="eq">
+          <svg width="14" height="14" viewBox="0 0 20 20" fill="currentColor"><path d="M13 6a3 3 0 11-6 0 3 3 0 016 0zM18 8a2 2 0 11-4 0 2 2 0 014 0zM14 15a4 4 0 00-8 0v3h8v-3zM6 8a2 2 0 11-4 0 2 2 0 014 0zM16 18v-3a5.972 5.972 0 00-.75-2.906A3.005 3.005 0 0119 15v3h-3zM4.75 12.094A5.973 5.973 0 004 15v3H1v-3a3 3 0 013.75-2.906z"/></svg>
+          Equipe
+        </button>
       </div>
     </div>
     <div class="nbr">
@@ -891,6 +910,51 @@ tr.row-selected{background:var(--ps)!important}
         </div>
       </div>
     </div>
+
+    <!-- EQUIPE (Sprint 4.3) -->
+    <div id="eq-view" class="vw">
+      <div class="ph">
+        <div><h2>Equipe</h2><span class="ps" id="eq-cst">Carregando...</span></div>
+        <div class="pa">
+          <a class="btn bg sm" href="https://supabase.com/dashboard/project/kgiynhrytnzfdywgjhby/auth/users" target="_blank" title="Cadastrar novo vendedor pelo Supabase Auth">+ Convidar via Supabase</a>
+        </div>
+      </div>
+      <div class="eq-info">
+        💡 Para adicionar um novo vendedor: clique no botão acima, crie o usuário no Supabase Auth (marque "Auto Confirm User"). Em segundos o trigger cria o perfil aqui. Depois edite nome/cargo/contatos abaixo.
+      </div>
+      <div id="eq-list"></div>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL EDITAR PERFIL DE VENDEDOR (Sprint 4.3) -->
+<div class="mo" id="eq-m">
+  <div class="md" style="max-width:560px">
+    <div class="mh"><h3 id="eq-mtit">Editar Vendedor</h3><button class="mx" onclick="fechaEqEdit()">✕</button></div>
+    <form id="eq-f">
+      <div class="fg"><label>Nome <span class="req">*</span></label><input type="text" id="eq-nome" required></div>
+      <div class="fg"><label>Email</label><input type="email" id="eq-email" disabled style="opacity:.6;cursor:not-allowed" title="Email só muda via Supabase Auth"></div>
+      <div class="fr">
+        <div class="fg"><label>Telefone pessoal</label><input type="text" id="eq-tel"></div>
+        <div class="fg"><label>Papel</label>
+          <select id="eq-role">
+            <option value="vendedor">Vendedor</option>
+            <option value="admin">Admin</option>
+          </select>
+        </div>
+      </div>
+      <div class="fs"><div class="fsl">Contato Office <span style="font-weight:400;color:var(--mt);font-size:11px">— aparece nas propostas geradas</span></div>
+        <div class="fg"><label>Nome</label><input type="text" id="eq-off-nome" placeholder="Ex: Laiz Oliveira"></div>
+        <div class="fr">
+          <div class="fg"><label>Email</label><input type="email" id="eq-off-email" placeholder="comercial@adiblock.online"></div>
+          <div class="fg"><label>Telefone</label><input type="text" id="eq-off-tel" placeholder="(21) 99591-5422"></div>
+        </div>
+      </div>
+      <div class="ma">
+        <button type="button" class="btn bg" onclick="fechaEqEdit()">Cancelar</button>
+        <button type="submit" class="btn bp">Salvar</button>
+      </div>
+    </form>
   </div>
 </div>
 
@@ -2326,6 +2390,7 @@ document.querySelectorAll('.tb').forEach(b => b.addEventListener('click',()=>{
   b.classList.add('ac');
   document.getElementById(b.dataset.tab+'-view').classList.add('ac');
   if (b.dataset.tab==='db') renderDb();
+  if (b.dataset.tab==='eq') renderEquipe();
 }));
 
 // Sort
@@ -2704,6 +2769,86 @@ function fecharCotacao() {
 }
 
 // ── Minhas Configurações (perfil do vendedor) ─────────────────────────────
+// ── Equipe (Sprint 4.3) ─────────────────────────────────────────────────
+let EQ_EID = null; // profile id sendo editado
+
+async function renderEquipe() {
+  const el = document.getElementById('eq-list');
+  const cst = document.getElementById('eq-cst');
+  if (!el) return;
+  el.innerHTML = '<div class="sl"><div class="sp"></div></div>';
+  try {
+    const profs = await api('GET', 'profiles', 'select=*&order=name');
+    PF = profs || [];
+    cst.textContent = PF.length + ' membro(s)';
+    if (!PF.length) {
+      el.innerHTML = '<div class="pf-empty">Nenhum vendedor cadastrado ainda. Use o botão acima.</div>';
+      return;
+    }
+    el.innerHTML = PF.map(p => {
+      const nome = p.name || (p.email||'').split('@')[0] || '?';
+      return `<div class="eq-card">
+        <div class="eq-av" style="background:${cor(nome)}">${ini(nome)}</div>
+        <div class="eq-info-main">
+          <div class="eq-nome">${escHtml(nome)} <span class="eq-role ${p.role||'vendedor'}">${p.role||'vendedor'}</span></div>
+          <div class="eq-meta">
+            ${escHtml(p.email||'—')}${p.telefone?` · 📞 ${escHtml(p.telefone)}`:''}
+            ${p.office_nome?`<br>📋 Office: <b>${escHtml(p.office_nome)}</b>${p.office_email?` · ${escHtml(p.office_email)}`:''}`:''}
+          </div>
+        </div>
+        <button class="btn bp sm" onclick="abrEqEdit('${p.id}')">Editar</button>
+      </div>`;
+    }).join('');
+  } catch(err) {
+    console.error('renderEquipe:', err);
+    el.innerHTML = '<div class="pf-empty" style="color:var(--er)">Erro ao carregar equipe: '+escHtml(err.message||'')+'</div>';
+  }
+}
+
+function abrEqEdit(id) {
+  const p = PF.find(x => x.id === id);
+  if (!p) return;
+  EQ_EID = id;
+  document.getElementById('eq-mtit').textContent = 'Editar ' + (p.name || p.email);
+  document.getElementById('eq-nome').value      = p.name || '';
+  document.getElementById('eq-email').value     = p.email || '';
+  document.getElementById('eq-tel').value       = p.telefone || '';
+  document.getElementById('eq-role').value      = p.role || 'vendedor';
+  document.getElementById('eq-off-nome').value  = p.office_nome || '';
+  document.getElementById('eq-off-email').value = p.office_email || '';
+  document.getElementById('eq-off-tel').value   = p.office_telefone || '';
+  document.getElementById('eq-m').classList.add('op');
+}
+
+function fechaEqEdit() {
+  document.getElementById('eq-m').classList.remove('op');
+  EQ_EID = null;
+}
+
+document.getElementById('eq-f').addEventListener('submit', async e => {
+  e.preventDefault();
+  if (!EQ_EID) return;
+  const d = {
+    name:            document.getElementById('eq-nome').value.trim(),
+    telefone:        document.getElementById('eq-tel').value.trim()      || null,
+    role:            document.getElementById('eq-role').value,
+    office_nome:     document.getElementById('eq-off-nome').value.trim() || null,
+    office_email:    document.getElementById('eq-off-email').value.trim()|| null,
+    office_telefone: document.getElementById('eq-off-tel').value.trim()  || null,
+  };
+  try {
+    await api('PATCH', 'profiles', `id=eq.${EQ_EID}`, d);
+    // Se foi o próprio usuário logado, atualiza MEP em memória
+    if (EQ_EID === ME?.id) Object.assign(MEP || {}, d);
+    toast('Vendedor atualizado','','success');
+    fechaEqEdit();
+    renderEquipe();
+  } catch(err) {
+    console.error('saveEqEdit:', err);
+    toast('Erro ao salvar', err.message||'', 'warning');
+  }
+});
+
 function abrConfig() {
   if (!MEP) { toast('Carregando perfil...','','info'); return; }
   document.getElementById('cfg-tel').value      = MEP.telefone        || '';
@@ -3205,6 +3350,9 @@ const CLASSIF_LBL = {
   indicacao: 'Indicação',
 };
 
+// Sprint 4.2: bulk de oportunidades no perfil da empresa
+let pfOppSelected = new Set();
+
 function renderPfOportunidades(c) {
   const lista = c.oportunidades || [];
   const head = `<div class="pf-list-head">
@@ -3218,9 +3366,29 @@ function renderPfOportunidades(c) {
     if (aClosed !== bClosed) return aClosed ? 1 : -1;
     return (b.callback_date||'').localeCompare(a.callback_date||'');
   });
+  // Limpa seleções de opps que sumiram
+  pfOppSelected = new Set([...pfOppSelected].filter(id => ord.some(o => o.id === id)));
+  const bulkBar = pfOppSelected.size
+    ? `<div id="pf-bulk-bar">
+        <span><b>${pfOppSelected.size}</b> selecionada(s):</span>
+        <select onchange="if(this.value){bulkOppEstagio(this.value);this.value='';}">
+          <option value="">Mudar estágio para...</option>
+          <option value="lead">Lead</option>
+          <option value="qualificado">Qualificado</option>
+          <option value="proposta_enviada">Proposta enviada</option>
+          <option value="em_negociacao">Em negociação</option>
+          <option value="ganha">Ganha</option>
+          <option value="perdida">Perdida</option>
+        </select>
+        <button class="btn bod sm" onclick="bulkOppExcluir()">🗑 Excluir</button>
+        <button class="btn bg sm" onclick="bulkOppLimpar()">Cancelar</button>
+      </div>`
+    : '';
   const body = ord.length
-    ? ord.map(o => `
-      <div class="pf-card pf-opp-card">
+    ? ord.map(o => {
+        const sel = pfOppSelected.has(o.id);
+        return `<div class="pf-card pf-opp-card ${sel?'pf-opp-selected':''}">
+        <input type="checkbox" class="pf-opp-cb" ${sel?'checked':''} onclick="toggleOppSel('${o.id}',this.checked)" title="Selecionar pra ação em massa">
         <div class="pf-card-main">
           <div class="pf-card-title">${escHtml(o.titulo)} <span class="estagio-badge est-${o.estagio}">${ESTAGIO_LBL[o.estagio]||o.estagio}</span></div>
           <div class="pf-card-sub">
@@ -3236,9 +3404,64 @@ function renderPfOportunidades(c) {
             <button class="btn bod sm" onclick="delOpp('${o.id}','${escHtml(o.titulo).replace(/'/g,"\\'")}')">✕</button>
           </div>
         </div>
-      </div>`).join('')
+      </div>`;
+      }).join('')
     : '<div class="pf-empty">Nenhuma oportunidade ainda. Crie uma pra começar a registrar produtos e gerar propostas.</div>';
-  document.getElementById('pf-oportunidades').innerHTML = head + body;
+  document.getElementById('pf-oportunidades').innerHTML = head + bulkBar + body;
+}
+
+function toggleOppSel(id, on) {
+  if (on) pfOppSelected.add(id); else pfOppSelected.delete(id);
+  const c = CL.find(x => x.id === pfClientId);
+  if (c) renderPfOportunidades(c);
+}
+
+function bulkOppLimpar() {
+  pfOppSelected.clear();
+  const c = CL.find(x => x.id === pfClientId);
+  if (c) renderPfOportunidades(c);
+}
+
+async function bulkOppEstagio(novoEstagio) {
+  if (!pfOppSelected.size) return;
+  const ids = [...pfOppSelected];
+  conf('Mudar estágio', `Alterar ${ids.length} oportunidade(s) para "${ESTAGIO_LBL[novoEstagio]}"?`, async () => {
+    try {
+      const idsList = ids.map(i => `"${i}"`).join(',');
+      await api('PATCH', 'opportunities', `id=in.(${idsList})`, { estagio: novoEstagio });
+      toast('Estágio atualizado', `${ids.length} oportunidade(s) movida(s)`, 'success');
+      pfOppSelected.clear();
+      CL = await fetchCl();
+      const c = CL.find(x => x.id === pfClientId);
+      if (c) { renderPfOportunidades(c); renderPfResumo(c); }
+      renderCl();
+    } catch(err) {
+      console.error('bulkOppEstagio:', err);
+      toast('Erro', err.message||'', 'warning');
+    }
+  });
+}
+
+async function bulkOppExcluir() {
+  if (!pfOppSelected.size) return;
+  const ids = [...pfOppSelected];
+  conf('⚠ Excluir oportunidades',
+    `Remover ${ids.length} oportunidade(s) com produtos e interações relacionados? Não há volta.`,
+    async () => {
+      try {
+        const idsList = ids.map(i => `"${i}"`).join(',');
+        await apiDelete('opportunities', `id=in.(${idsList})`);
+        toast('Excluídas', `${ids.length} oportunidade(s) removida(s)`, 'success');
+        pfOppSelected.clear();
+        CL = await fetchCl();
+        const c = CL.find(x => x.id === pfClientId);
+        if (c) { renderPfOportunidades(c); renderPfResumo(c); renderPfHistorico(c); }
+        renderCl();
+      } catch(err) {
+        console.error('bulkOppExcluir:', err);
+        toast('Erro', err.message||'', 'warning');
+      }
+    });
 }
 
 async function renderPfHistorico(c) {

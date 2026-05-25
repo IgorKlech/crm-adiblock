@@ -513,6 +513,13 @@ td strong{color:var(--tx);font-weight:600}
 .tier-lead{background:#fee2e2;color:#991b1b}
 .tier-cliente{background:#dbeafe;color:#1e40af}
 .tier-conta{background:#dcfce7;color:#166534}
+/* Classificação manual (Sprint 4.1) — sobrescreve o tier auto na display */
+.classif-badge{display:inline-block;font-size:10px;font-weight:700;padding:3px 8px;border-radius:99px;text-transform:uppercase;letter-spacing:.05em;border:1.5px solid transparent}
+.classif-lead_novo{background:#fef3c7;color:#92400e;border-color:#fbbf24}
+.classif-prospect{background:#e0e7ff;color:#3730a3;border-color:#818cf8}
+.classif-cliente_ativo{background:#dcfce7;color:#166534;border-color:#34d399}
+.classif-inativo{background:#f3f4f6;color:#4b5563;border-color:#9ca3af}
+.classif-indicacao{background:#fce7f3;color:#9d174d;border-color:#f472b6}
 .estagio-badge{display:inline-block;font-size:10px;font-weight:600;padding:3px 8px;border-radius:99px}
 .est-lead{background:#f3f4f6;color:#4b5563}
 .est-qualificado{background:#dbeafe;color:#1e40af}
@@ -759,10 +766,19 @@ tr.row-selected{background:var(--ps)!important}
           <input type="text" class="sb" id="srch" placeholder="Buscar por razão social, CNPJ, email...">
         </div>
         <select class="fs2" id="stf" onchange="renderCl()">
-          <option value="">Todos os tiers</option>
-          <option value="lead">Lead</option>
-          <option value="cliente">Cliente</option>
-          <option value="conta">Conta</option>
+          <option value="">Todas as classificações</option>
+          <optgroup label="Classificação manual">
+            <option value="m:lead_novo">Lead novo</option>
+            <option value="m:prospect">Prospect</option>
+            <option value="m:cliente_ativo">Cliente ativo</option>
+            <option value="m:inativo">Inativo</option>
+            <option value="m:indicacao">Indicação</option>
+          </optgroup>
+          <optgroup label="Tier automático">
+            <option value="lead">Lead (auto)</option>
+            <option value="cliente">Cliente (auto)</option>
+            <option value="conta">Conta (auto)</option>
+          </optgroup>
         </select>
         <input type="text" class="fi" id="svf" placeholder="Filtrar por vendedor..." oninput="renderCl()">
         <div class="period-btns">
@@ -935,6 +951,17 @@ tr.row-selected{background:var(--ps)!important}
               <option>Reforma e revestimento</option><option>Outro</option>
             </datalist>
           </div>
+        </div>
+        <div class="fg">
+          <label>Classificação <span style="font-weight:400;color:var(--mt);font-size:11px">— como o vendedor enxerga a empresa hoje</span></label>
+          <select id="f-classif">
+            <option value="">Não classificada (usa tier automático)</option>
+            <option value="lead_novo">Lead novo</option>
+            <option value="prospect">Prospect (em prospecção)</option>
+            <option value="cliente_ativo">Cliente ativo</option>
+            <option value="inativo">Inativo</option>
+            <option value="indicacao">Indicação</option>
+          </select>
         </div>
       </div>
 
@@ -1529,14 +1556,18 @@ function updSug() {
 // ── Ordenação / Filtro ────────────────────────────────────────────────────
 function filtrar() {
   const q  = (document.getElementById('srch').value||'').toLowerCase();
-  const tf = document.getElementById('stf').value; // agora filtra TIER (lead/cliente/conta)
+  const tf = document.getElementById('stf').value; // tier auto OU "m:classif_manual"
   const vf = (document.getElementById('svf').value||'').toLowerCase();
   const cutoff = periodoFiltro > 0 ? new Date(Date.now() - periodoFiltro * 86400000) : null;
+  const tfMan = tf.startsWith('m:') ? tf.slice(2) : null;  // classificação manual
+  const tfAuto = !tfMan ? tf : null;                         // tier automático
   return CL.filter(c => {
     const vend = (empresaVendedor(c)||'').toLowerCase();
     const okP = !cutoff || (c.created_at && new Date(c.created_at) >= cutoff);
     const hay = ((c.razao_social||'')+' '+(c.nome_fantasia||'')+' '+(c.cnpj||'')+' '+(c.telefone||'')+' '+(c.email||'')).toLowerCase();
-    return hay.includes(q) && (!tf || c.tier === tf) && (!vf || vend.includes(vf)) && okP;
+    const okTier = !tfAuto || c.tier === tfAuto;
+    const okClassif = !tfMan || c.classificacao === tfMan;
+    return hay.includes(q) && okTier && okClassif && (!vf || vend.includes(vf)) && okP;
   });
 }
 // ── Bulk actions (Sprint 1) ───────────────────────────────────────────────
@@ -1725,7 +1756,11 @@ function renderCl() {
     const cidade = c.cidade ? escHtml(c.cidade) + (c.uf ? '/' + escHtml(c.uf) : '') : '—';
     const cnpj = c.cnpj ? '<span style="font-family:ui-monospace,Consolas,monospace;font-size:12px">'+escHtml(c.cnpj)+'</span>' : '<span style="color:var(--mt2)">—</span>';
     const tier = c.tier || 'lead';
-    const tierBadge = '<span class="tier-badge tier-'+tier+'">'+tier+'</span>';
+    // Sprint 4.1: classificacao manual tem prioridade sobre tier auto
+    const classLbl = CLASSIF_LBL[c.classificacao];
+    const tierBadge = classLbl
+      ? '<span class="classif-badge classif-'+c.classificacao+'" title="Classificação manual (tier auto: '+tier+')">'+classLbl+'</span>'
+      : '<span class="tier-badge tier-'+tier+'">'+tier+'</span>';
     const oppsCell = c.opps_abertas
       ? '<span class="tier-badge tier-cliente">'+c.opps_abertas+' aberta(s)</span>'
       : '<span style="color:var(--mt2)">—</span>';
@@ -2137,6 +2172,7 @@ function abrEdit(id) {
   document.getElementById('f-uf').value       = c.uf    || '';
   document.getElementById('f-cep').value      = c.cep   || '';
   document.getElementById('f-fat').value      = c.faturamento_estimado || '';
+  document.getElementById('f-classif').value  = c.classificacao || '';
   document.getElementById('fob').value        = c.observacoes || '';
   // LGPD
   document.getElementById('f-lgpd-consent').checked = !!c.lgpd_consent_at;
@@ -2179,7 +2215,7 @@ async function checkSchema() {
   // Lista de tabelas + colunas que o app precisa. Se o Supabase rejeita
   // o select, sabemos que falta rodar o supabase_setup.sql.
   const PROBES = [
-    ['companies',            'id,razao_social,nome_fantasia,cnpj,ie,email,telefone,website,industria,faturamento_estimado,endereco,cidade,uf,cep,observacoes,internal_notes,lgpd_consent_at,lgpd_consent_by,lgpd_delete_requested_at,lgpd_delete_requested_by,created_at,updated_at'],
+    ['companies',            'id,razao_social,nome_fantasia,cnpj,ie,email,telefone,website,industria,faturamento_estimado,endereco,cidade,uf,cep,observacoes,internal_notes,classificacao,lgpd_consent_at,lgpd_consent_by,lgpd_delete_requested_at,lgpd_delete_requested_by,created_at,updated_at'],
     ['companies_with_tier',  'id,razao_social,cnpj,tier,opps_total,opps_abertas,opps_ganhas_total,opps_ganhas_12m,valor_pipeline'],
     ['profiles',             'id,name,email,role,seller_status,telefone,office_nome,office_email,office_telefone'],
     ['contacts',             'id,company_id,nome,cargo,email,telefone,papel,principal,created_at'],
@@ -2350,6 +2386,7 @@ document.getElementById('clf').addEventListener('submit', async e => {
       uf:                   document.getElementById('f-uf').value.trim().toUpperCase() || null,
       cep:                  document.getElementById('f-cep').value.trim() || null,
       faturamento_estimado: document.getElementById('f-fat').value ? parseFloat(document.getElementById('f-fat').value) : null,
+      classificacao:        document.getElementById('f-classif').value || null,
       observacoes:          document.getElementById('fob').value.trim() || null,
       // LGPD: timestamp só quando passa de off→on
       ...(() => {
@@ -3066,8 +3103,12 @@ async function abrPerfil(id) {
   document.getElementById('pf-av').style.background = cor(nome);
   document.getElementById('pf-name').textContent = nome;
   const tier = c.tier || 'lead';
+  const classLbl = CLASSIF_LBL[c.classificacao];
+  const badgeHtml = classLbl
+    ? `<span class="classif-badge classif-${c.classificacao}" title="Tier auto: ${tier}">${classLbl}</span>`
+    : `<span class="tier-badge tier-${tier}">${tier}</span>`;
   document.getElementById('pf-sub').innerHTML =
-    `<span class="tier-badge tier-${tier}">${tier}</span>`
+    badgeHtml
     + (c.cnpj ? ` · CNPJ: ${escHtml(c.cnpj)}` : '')
     + (c.cidade ? ` · ${escHtml(c.cidade)}${c.uf ? '/'+escHtml(c.uf) : ''}` : '');
   document.getElementById('pf-metrics').innerHTML = [
@@ -3105,6 +3146,7 @@ function renderPfResumo(c) {
     ['CNPJ', c.cnpj],
     ['Inscrição Estadual', c.ie],
     ['Indústria', c.industria],
+    ['Classificação', CLASSIF_LBL[c.classificacao] || null],
     ['Email', c.email],
     ['Telefone', c.telefone],
     ['Website', c.website],
@@ -3152,6 +3194,15 @@ function renderPfContatos(c) {
 const ESTAGIO_LBL = {
   lead:'Lead', qualificado:'Qualificado', proposta_enviada:'Proposta enviada',
   em_negociacao:'Em negociação', ganha:'Ganha', perdida:'Perdida'
+};
+
+// Sprint 4.1: classificação manual da empresa (escolhida pelo vendedor no cadastro)
+const CLASSIF_LBL = {
+  lead_novo: 'Lead novo',
+  prospect: 'Prospect',
+  cliente_ativo: 'Cliente ativo',
+  inativo: 'Inativo',
+  indicacao: 'Indicação',
 };
 
 function renderPfOportunidades(c) {

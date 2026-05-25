@@ -73,6 +73,12 @@ CREATE TABLE IF NOT EXISTS public.companies (
 CREATE INDEX IF NOT EXISTS idx_companies_razao_social ON public.companies(razao_social);
 CREATE INDEX IF NOT EXISTS idx_companies_cidade_uf    ON public.companies(cidade, uf);
 
+-- Sprint 4.1: classificação manual escolhida pelo vendedor (paralela ao tier auto)
+ALTER TABLE public.companies
+  ADD COLUMN IF NOT EXISTS classificacao text;
+-- Valores aceitos: 'lead_novo','prospect','cliente_ativo','inativo','indicacao' (text livre por flexibilidade)
+CREATE INDEX IF NOT EXISTS idx_companies_classificacao ON public.companies(classificacao);
+
 ALTER TABLE public.companies ENABLE ROW LEVEL SECURITY;
 DROP POLICY IF EXISTS "auth_all_companies" ON public.companies;
 CREATE POLICY "auth_all_companies" ON public.companies

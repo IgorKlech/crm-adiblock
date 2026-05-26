@@ -772,6 +772,9 @@ body.role-leitor .read-only-banner{display:block}
       <p id="lerr" class="em"></p>
       <button type="submit" class="btn bp bl" id="lb" style="margin-top:8px">Entrar</button>
     </form>
+    <div style="text-align:center;margin-top:14px;font-size:12px;color:var(--mt)">
+      Travou em "Entrando..."? <a href="#" id="lrec" style="color:var(--p);text-decoration:none;font-weight:600">Limpar sessão e tentar de novo</a>
+    </div>
   </div>
 </div>
 
@@ -2454,11 +2457,13 @@ function mostrarBannerSchema(issues) {
 
 // ── Init ──────────────────────────────────────────────────────────────────
 async function iniciar(user) {
+  console.log('[iniciar] start', user.email);
   ME = user;
   // Cache instantâneo
   try { const c=localStorage.getItem('crm_cl'); if(c){CL=JSON.parse(c);renderCl();} } catch {}
   // Perfil
-  try { MEP = await fetchMePf(user.id); } catch { MEP={name:user.email.split('@')[0],role:'vendedor'}; }
+  try { MEP = await fetchMePf(user.id); console.log('[iniciar] perfil ok', MEP?.role); }
+  catch(err) { console.error('[iniciar] perfil falhou:', err); MEP={name:user.email.split('@')[0],role:'vendedor'}; }
   // Sprint 5.1: aplica role no body pra CSS condicional
   aplicarRoleBody();
   const nm = MEP?.name||user.email;
@@ -2498,20 +2503,44 @@ document.getElementById('lf').addEventListener('submit', async e => {
   const btn=document.getElementById('lb'), err=document.getElementById('lerr');
   btn.disabled=true; btn.textContent='Entrando...'; err.textContent='';
   try {
-    const {error} = await sb.auth.signInWithPassword({
-      email:document.getElementById('le').value.trim(),
-      password:document.getElementById('lp').value
-    });
-    if (error) throw error;
-  } catch(e) { err.textContent=e.message||'Email ou senha incorretos.'; btn.disabled=false; btn.textContent='Entrar'; }
+    // Timeout de 12s pra detectar travas (ex: Supabase fora do ar, token corrompido)
+    const result = await Promise.race([
+      sb.auth.signInWithPassword({
+        email:document.getElementById('le').value.trim(),
+        password:document.getElementById('lp').value
+      }),
+      new Promise((_,rej)=>setTimeout(()=>rej(new Error('Tempo esgotado. Clique em "Limpar sessao" abaixo e tente de novo.')), 12000))
+    ]);
+    if (result?.error) throw result.error;
+    console.log('[login] signInWithPassword OK');
+    // Se em 5s o onAuthStateChange nao tiver levado pra app, reseta botao
+    setTimeout(() => {
+      if (document.getElementById('ls').style.display !== 'none') {
+        btn.disabled=false; btn.textContent='Entrar';
+        err.textContent='Login feito mas app nao carregou. Clique em "Limpar sessao" abaixo.';
+      }
+    }, 5000);
+  } catch(e) {
+    console.error('[login] erro:', e);
+    err.textContent=e.message||'Email ou senha incorretos.';
+    btn.disabled=false; btn.textContent='Entrar';
+  }
 });
 
-// Logout
+// Logout (limpa tudo: signOut + tokens sb-* + cache crm_*)
 document.getElementById('lob').addEventListener('click', async () => {
   stopAutoRefresh();
   stopRealtime();
-  localStorage.removeItem('crm_cl');
   try { await Promise.race([sb.auth.signOut(),new Promise(r=>setTimeout(r,2000))]); } catch {}
+  limparSessao();
+  window.location.reload();
+});
+
+// Link "Limpar sessao" da tela de login (recuperacao sem F12)
+document.getElementById('lrec')?.addEventListener('click', async e => {
+  e.preventDefault();
+  try { await Promise.race([sb.auth.signOut(),new Promise(r=>setTimeout(r,1500))]); } catch {}
+  limparSessao();
   window.location.reload();
 });
 
@@ -4909,8 +4938,24 @@ function stopRealtime() {
 }
 
 // ── Auth ──────────────────────────────────────────────────────────────────
+// Remove tokens do Supabase (sb-*) + cache de dados de sessao (crm_cl).
+// PRESERVA preferencias do usuario: crm_theme, crm_metas, crm_visoes.
+function limparSessao() {
+  try {
+    Object.keys(localStorage).filter(k => k.startsWith('sb-')).forEach(k => localStorage.removeItem(k));
+    Object.keys(sessionStorage).filter(k => k.startsWith('sb-')).forEach(k => sessionStorage.removeItem(k));
+    localStorage.removeItem('crm_cl');
+  } catch(err) { console.error('limparSessao:', err); }
+}
 function showApp(){document.getElementById('ls').style.display='none';document.getElementById('app').style.display='flex';}
-function showLogin(){document.getElementById('ls').style.display='flex';document.getElementById('app').style.display='none';ME=null;MEP=null;CL=[];PF=[];}
+function showLogin(){
+  document.getElementById('ls').style.display='flex';
+  document.getElementById('app').style.display='none';
+  ME=null;MEP=null;CL=[];PF=[];
+  // Reseta o botao "Entrando..." pra "Entrar" caso tenha ficado travado
+  const lb = document.getElementById('lb');
+  if (lb) { lb.disabled = false; lb.textContent = 'Entrar'; }
+}
 
 // Sprint 5.3: força challenge MFA se usuário tem 2FA ativo e sessão está em AAL1
 let mfaChallengePending = null; // { factorId, challengeId }
@@ -4964,17 +5009,43 @@ async function mfaLoginCancel() {
   showLogin();
 }
 
-sb.auth.onAuthStateChange(async(_,s)=>{
+// Watchdog: se iniciar() nao completar em 15s, mostra opcao de limpar sessao
+// (evita o usuario leigo ficar preso em "Entrando..." sem saber o que fazer)
+let initWatchdog = null;
+function armarWatchdog() {
+  if (initWatchdog) clearTimeout(initWatchdog);
+  initWatchdog = setTimeout(() => {
+    if (!confirm('O login esta demorando muito. Deseja limpar a sessao e tentar de novo?')) return;
+    limparSessao();
+    window.location.reload();
+  }, 15000);
+}
+function desarmarWatchdog() { if (initWatchdog) { clearTimeout(initWatchdog); initWatchdog = null; } }
+
+sb.auth.onAuthStateChange(async(ev,s)=>{
+  console.log('[auth] event:', ev, 'user:', s?.user?.email);
   if (s?.user) {
-    const ok = await checkMfaChallenge(s.user);
-    if (ok) { showApp(); await iniciar(s.user); }
+    armarWatchdog();
+    try {
+      console.log('[auth] checando MFA...');
+      const ok = await checkMfaChallenge(s.user);
+      console.log('[auth] MFA ok=', ok, '— iniciando app');
+      if (ok) { showApp(); await iniciar(s.user); console.log('[auth] iniciar() completo'); }
+    } catch(err) { console.error('[auth] erro no fluxo pos-login:', err); }
+      finally { desarmarWatchdog(); }
   } else showLogin();
 });
 (async()=>{
+  console.log('[boot] verificando sessao existente...');
   const{data:{session}}=await sb.auth.getSession();
+  console.log('[boot] sessao:', session?.user?.email || '(nenhuma)');
   if (session?.user) {
-    const ok = await checkMfaChallenge(session.user);
-    if (ok) { showApp(); await iniciar(session.user); }
+    armarWatchdog();
+    try {
+      const ok = await checkMfaChallenge(session.user);
+      if (ok) { showApp(); await iniciar(session.user); console.log('[boot] iniciar() completo'); }
+    } catch(err) { console.error('[boot] erro:', err); }
+      finally { desarmarWatchdog(); }
   }
 })();
 

@@ -359,9 +359,12 @@ CREATE TABLE IF NOT EXISTS public.audit_log (
   new_data    jsonb,
   changes     jsonb,             -- diff calculado: lista de {field, from, to}
   created_at  timestamptz NOT NULL DEFAULT now(),
-  -- Atalhos pra perguntas frequentes
-  company_id  uuid REFERENCES public.companies(id) ON DELETE SET NULL
+  -- Atalho para filtrar histórico por empresa (sem FK: audit log sobrevive à exclusão)
+  company_id  uuid
 );
+
+-- Migracao: se a tabela ja existe com FK, remove pra permitir DELETE em companies
+ALTER TABLE public.audit_log DROP CONSTRAINT IF EXISTS audit_log_company_id_fkey;
 
 CREATE INDEX IF NOT EXISTS idx_audit_log_company_id ON public.audit_log(company_id);
 CREATE INDEX IF NOT EXISTS idx_audit_log_table_row  ON public.audit_log(table_name, row_id);

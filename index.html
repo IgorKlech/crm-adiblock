@@ -191,7 +191,7 @@ td strong{color:var(--tx);font-weight:600}
 /* MODAL */
 .mo{display:none;position:fixed;inset:0;background:rgba(0,0,0,.35);z-index:200;align-items:center;justify-content:center;padding:20px}
 /* Modais que abrem POR CIMA do perfil da empresa (#pfpage z-index 280) */
-#cont-m,#opp-m,#int-m{z-index:290}
+#cont-m,#opp-m,#int-m,#gcm{z-index:290}
 .mo.op{display:flex}
 .md{background:var(--sur);border-radius:var(--r);padding:28px;width:100%;max-width:600px;max-height:92vh;overflow-y:auto;box-shadow:var(--shl);animation:mIn .18s ease;border:1px solid var(--bdr)}
 @keyframes mIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
@@ -1179,6 +1179,7 @@ body.role-leitor .read-only-banner{display:block}
           <div class="fg"><label>Frete</label>
             <select id="gc-frete"><option>FOB</option><option>CIF</option></select>
           </div>
+          <div class="fg"><label>Valor do frete (R$)</label><input type="number" id="gc-frete-val" step="0.01" min="0" placeholder="0,00"></div>
           <div class="fg"><label>Validade (dias)</label><input type="number" id="gc-val" min="1" value="30"></div>
         </div>
         <div class="fg"><label>Observações adicionais</label><textarea id="gc-obs" placeholder="Ex: local de entrega, condições especiais..." rows="2"></textarea></div>
@@ -2900,6 +2901,7 @@ document.getElementById('gcf').addEventListener('submit', async e => {
     condicoes: {
       prazo_pagamento: document.getElementById('gc-pgto').value.trim() || '30DD',
       frete:           document.getElementById('gc-frete').value,
+      frete_valor:     parseNum(document.getElementById('gc-frete-val').value) || 0,
       validade_dias:   parseInt(document.getElementById('gc-val').value, 10) || 30,
       obs:             document.getElementById('gc-obs').value.trim() || null,
     },
@@ -3336,10 +3338,19 @@ function renderCotacao(prop) {
           <th class="num">Valor Total</th>
           <th>Class. risco</th>
         </tr></thead>
-        <tbody>${rowsHtml||'<tr><td colspan="8" style="text-align:center;color:var(--mt);padding:20px">Sem produtos.</td></tr>'}</tbody>
-        ${totalGeral > 0 ? `<tfoot><tr>
+        <tbody>${rowsHtml||'<tr><td colspan="8" style="text-align:center;color:var(--mt);padding:20px">Sem produtos.</td></tr>'}${(Number(cond.frete_valor)||0) > 0 ? `<tr>
+          <td class="num"></td>
+          <td><b>Frete</b> <span style="color:var(--mt)">(${escHtml(cond.frete||'FOB')})</span></td>
+          <td class="num">—</td>
+          <td class="num">—</td>
+          <td class="num">${fmtBRL(Number(cond.frete_valor))}</td>
+          <td class="num">—</td>
+          <td class="num">${fmtBRL(Number(cond.frete_valor))}</td>
+          <td>—</td>
+        </tr>`:''}</tbody>
+        ${(totalGeral + (Number(cond.frete_valor)||0)) > 0 ? `<tfoot><tr>
           <td colspan="6" class="cot-total-lbl">Valor Total</td>
-          <td colspan="2" class="cot-total-val">${fmtBRL(totalGeral)}</td>
+          <td colspan="2" class="cot-total-val">${fmtBRL(totalGeral + (Number(cond.frete_valor)||0))}</td>
         </tr></tfoot>` : ''}
       </table>
     </div>
@@ -3357,7 +3368,7 @@ function renderCotacao(prop) {
     <div class="cot-h1" style="margin-bottom:18px">Condições Comerciais</div>
     <table class="cot-condicoes">
       <tr><td>Prazo de pagamento</td><td><b>${escHtml(cond.prazo_pagamento||'30DD')}</b></td></tr>
-      <tr><td>Frete</td><td><b>${escHtml(cond.frete||'FOB')}</b></td></tr>
+      <tr><td>Frete</td><td><b>${escHtml(cond.frete||'FOB')}</b>${(Number(cond.frete_valor)||0)>0?` — <b>${fmtBRL(Number(cond.frete_valor))}</b> <span style="color:var(--mt);font-size:11px">(incluso no Valor Total)</span>`:''}</td></tr>
       <tr><td>Condições sobre o transporte</td><td>Quando a carga conter produtos classificados como perigosos para efeito de transporte terrestre, em atenção à legislação da ANTT, o veículo deverá possuir as placas adequadas, bem como o motorista deverá possuir MOPP válido.</td></tr>
       <tr><td>Prazo de entrega</td><td>Até 10 dias úteis após confirmação da proposta por e-mail.</td></tr>
       <tr><td>Impostos inclusos sobre a fatura</td><td><b>ICMS incluso</b> — Optante pelo Simples Nacional.</td></tr>
@@ -4260,6 +4271,8 @@ async function abrCotacaoFromOpp(oppId, companyId) {
       <select class="gc-risco">${RISCOS.map(r=>`<option>${r}</option>`).join('')}</select>
     </div>`).join('');
   }
+  document.getElementById('gc-frete-val').value = '';
+  document.getElementById('gc-obs').value = '';
   document.getElementById('gcm').classList.add('op');
 }
 

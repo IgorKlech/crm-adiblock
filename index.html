@@ -582,6 +582,21 @@ tr.row-selected{background:var(--ps)!important}
 .lgpd-badge{display:inline-block;background:#dcfce7;color:#166534;font-size:10px;font-weight:600;padding:2px 8px;border-radius:99px;text-transform:uppercase;letter-spacing:.04em}
 .lgpd-badge-pending{background:#fee2e2;color:#991b1b}
 
+/* ── Roles (Sprint 5.1) — esconde controles de escrita pra usuário "leitor" ── */
+body.role-leitor .write-only{display:none!important}
+body:not(.role-admin) .admin-only{display:none!important}
+/* Leitor não vê bulk actions (checkbox + barra) */
+body.role-leitor #bulk-bar,
+body.role-leitor .bulk-cb,
+body.role-leitor #bulk-master,
+body.role-leitor .pf-opp-cb,
+body.role-leitor #pf-bulk-bar{display:none!important}
+/* Leitor não vê botões de excluir/editar inline (heuristica: classe bod = excluir, bp sm = editar dentro de ac2) */
+body.role-leitor .btn.bod{display:none!important}
+/* Banner discreto avisando modo leitura */
+.read-only-banner{display:none;position:fixed;bottom:14px;left:50%;transform:translateX(-50%);background:#fef3c7;border:1px solid #f59e0b;color:#78350f;padding:6px 14px;border-radius:99px;font-size:11px;font-weight:600;z-index:90;box-shadow:0 4px 12px rgba(0,0,0,.15)}
+body.role-leitor .read-only-banner{display:block}
+
 /* ── Banner de aviso de schema desatualizado ── */
 #schema-banner{position:fixed;top:60px;left:50%;transform:translateX(-50%);z-index:400;background:#fef3c7;border:2px solid #f59e0b;border-radius:8px;padding:14px 18px;max-width:720px;width:calc(100% - 40px);box-shadow:0 10px 30px rgba(0,0,0,.18);font-size:13px;color:#78350f}
 .schema-banner-title{font-weight:700;font-size:14px;margin-bottom:6px;color:#92400e}
@@ -808,8 +823,8 @@ tr.row-selected{background:var(--ps)!important}
       <div class="ph">
         <div><h2>Empresas</h2><span class="ps" id="cst">Carregando...</span></div>
         <div class="pa">
-          <button class="btn bg sm" onclick="abrImport()">↑ Importar CSV</button>
-          <button class="btn bp" id="ncbtn">+ Nova Empresa</button>
+          <button class="btn bg sm write-only" onclick="abrImport()">↑ Importar CSV</button>
+          <button class="btn bp write-only" id="ncbtn">+ Nova Empresa</button>
         </div>
       </div>
       <div class="fb">
@@ -963,7 +978,7 @@ tr.row-selected{background:var(--ps)!important}
       <div class="ph">
         <div><h2>Equipe</h2><span class="ps" id="eq-cst">Carregando...</span></div>
         <div class="pa">
-          <a class="btn bg sm" href="https://supabase.com/dashboard/project/kgiynhrytnzfdywgjhby/auth/users" target="_blank" title="Cadastrar novo vendedor pelo Supabase Auth">+ Convidar via Supabase</a>
+          <a class="btn bg sm admin-only" href="https://supabase.com/dashboard/project/kgiynhrytnzfdywgjhby/auth/users" target="_blank" title="Cadastrar novo vendedor pelo Supabase Auth">+ Convidar via Supabase</a>
         </div>
       </div>
       <div class="eq-info">
@@ -983,10 +998,11 @@ tr.row-selected{background:var(--ps)!important}
       <div class="fg"><label>Email</label><input type="email" id="eq-email" disabled style="opacity:.6;cursor:not-allowed" title="Email só muda via Supabase Auth"></div>
       <div class="fr">
         <div class="fg"><label>Telefone pessoal</label><input type="text" id="eq-tel"></div>
-        <div class="fg"><label>Papel</label>
+        <div class="fg"><label>Papel <span style="font-weight:400;color:var(--mt);font-size:11px" id="eq-role-note"></span></label>
           <select id="eq-role">
             <option value="vendedor">Vendedor</option>
             <option value="admin">Admin</option>
+            <option value="leitor">Leitor (só lê)</option>
           </select>
         </div>
       </div>
@@ -1225,7 +1241,7 @@ tr.row-selected{background:var(--ps)!important}
       <span id="pf-topname" style="font-size:15px;font-weight:600;color:var(--tx)"></span>
     </div>
     <div style="display:flex;gap:8px">
-      <button class="btn bp sm" onclick="abrEditFromPerfil()">Editar Empresa</button>
+      <button class="btn bp sm write-only" onclick="abrEditFromPerfil()">Editar Empresa</button>
     </div>
   </div>
   <div class="pf-hero">
@@ -2320,6 +2336,21 @@ function abrDel(id, nome) {
   });
 }
 
+// ── Roles e permissões (Sprint 5.1) ─────────────────────────────────────
+function myRole()   { return MEP?.role || 'vendedor'; }
+function ehAdmin()  { return myRole() === 'admin'; }
+function ehLeitor() { return myRole() === 'leitor'; }
+function canWrite() { return !ehLeitor(); }
+function ehDono(rec) { return rec && rec.created_by === ME?.id; }
+function podeEditarEmpresa(c) { return ehAdmin() || ehDono(c); }
+function podeExcluirEmpresa(c) { return ehAdmin() || ehDono(c); }
+
+function aplicarRoleBody() {
+  const r = myRole();
+  document.body.classList.remove('role-admin','role-vendedor','role-leitor');
+  document.body.classList.add('role-' + r);
+}
+
 // ── Schema self-check (detecta colunas/tabelas faltando no boot) ──────────
 async function checkSchema() {
   // Lista de tabelas + colunas que o app precisa. Se o Supabase rejeita
@@ -2328,6 +2359,7 @@ async function checkSchema() {
     ['companies',            'id,razao_social,nome_fantasia,cnpj,ie,email,telefone,website,industria,faturamento_estimado,endereco,cidade,uf,cep,observacoes,internal_notes,classificacao,lgpd_consent_at,lgpd_consent_by,lgpd_delete_requested_at,lgpd_delete_requested_by,created_at,updated_at'],
     ['companies_with_tier',  'id,razao_social,cnpj,tier,opps_total,opps_abertas,opps_ganhas_total,opps_ganhas_12m,valor_pipeline'],
     ['profiles',             'id,name,email,role,seller_status,telefone,office_nome,office_email,office_telefone'],
+    // ↓ funções de Sprint 5.1 (not tabela — checadas via .rpc se quiser depois)
     ['contacts',             'id,company_id,nome,cargo,email,telefone,papel,principal,created_at'],
     ['opportunities',        'id,company_id,contact_id,seller_id,seller_name,titulo,obra,estagio,valor_estimado,callback_date,perda_motivo,observation,estagio_changed_at,closed_at,created_at,updated_at'],
     ['opportunity_products', 'id,opportunity_id,produto,embalagem,qtd_kg,preco_kg,created_at'],
@@ -2375,6 +2407,8 @@ async function iniciar(user) {
   try { const c=localStorage.getItem('crm_cl'); if(c){CL=JSON.parse(c);renderCl();} } catch {}
   // Perfil
   try { MEP = await fetchMePf(user.id); } catch { MEP={name:user.email.split('@')[0],role:'vendedor'}; }
+  // Sprint 5.1: aplica role no body pra CSS condicional
+  aplicarRoleBody();
   const nm = MEP?.name||user.email;
   document.getElementById('unm').textContent = nm;
   document.getElementById('uav').textContent = ini(nm);
@@ -2940,7 +2974,11 @@ function abrEqEdit(id) {
   document.getElementById('eq-nome').value      = p.name || '';
   document.getElementById('eq-email').value     = p.email || '';
   document.getElementById('eq-tel').value       = p.telefone || '';
-  document.getElementById('eq-role').value      = p.role || 'vendedor';
+  const roleSel = document.getElementById('eq-role');
+  roleSel.value = p.role || 'vendedor';
+  // Só admin pode mudar role de qualquer pessoa (inclusive a própria)
+  roleSel.disabled = !ehAdmin();
+  document.getElementById('eq-role-note').textContent = ehAdmin() ? '' : '— só admin pode alterar';
   document.getElementById('eq-off-nome').value  = p.office_nome || '';
   document.getElementById('eq-off-email').value = p.office_email || '';
   document.getElementById('eq-off-tel').value   = p.office_telefone || '';
@@ -3440,7 +3478,7 @@ function renderPfContatos(c) {
   const lista = c.contatos || [];
   const head = `<div class="pf-list-head">
     <h3>Contatos (${lista.length})</h3>
-    <button class="btn bp sm" onclick="abrContato('${c.id}')">+ Novo Contato</button>
+    <button class="btn bp sm write-only" onclick="abrContato('${c.id}')">+ Novo Contato</button>
   </div>`;
   const body = lista.length
     ? lista.sort((a,b) => (b.principal?1:0) - (a.principal?1:0)).map(ct => `
@@ -3484,7 +3522,7 @@ function renderPfOportunidades(c) {
   const lista = c.oportunidades || [];
   const head = `<div class="pf-list-head">
     <h3>Oportunidades (${lista.length})</h3>
-    <button class="btn bp sm" onclick="abrOpp('${c.id}')">+ Nova Oportunidade</button>
+    <button class="btn bp sm write-only" onclick="abrOpp('${c.id}')">+ Nova Oportunidade</button>
   </div>`;
   // Ordena: abertas primeiro, depois ganhas, depois perdidas, e por data
   const ord = [...lista].sort((a,b) => {
@@ -4692,6 +4730,9 @@ document.addEventListener('keydown', e => {
   if (e.key === 'c' || e.key === 'C') { e.preventDefault(); document.querySelector('.tb[data-tab="cl"]')?.click(); }
 });
 </script>
+
+<!-- Banner discreto de modo leitura (Sprint 5.1) -->
+<div class="read-only-banner">🔒 Modo somente leitura — você não pode criar nem editar registros</div>
 
 <!-- MODAL AJUDA DE ATALHOS -->
 <div id="kbd-help" onclick="if(event.target.id==='kbd-help')this.classList.remove('op')">

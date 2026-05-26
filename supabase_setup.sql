@@ -20,6 +20,54 @@ ALTER TABLE public.profiles
   ADD COLUMN IF NOT EXISTS office_email       text,
   ADD COLUMN IF NOT EXISTS office_telefone    text;
 
+-- Sprint 5.1: garante valores válidos pro campo role (admin/vendedor/leitor)
+-- O default fica 'vendedor' pra novos usuários criados via trigger handle_new_user
+DO $$ BEGIN
+  ALTER TABLE public.profiles
+    ALTER COLUMN role SET DEFAULT 'vendedor';
+EXCEPTION WHEN OTHERS THEN NULL; END $$;
+
+-- Atualiza valores legados (admin/Admin/etc.) pra valores canônicos
+UPDATE public.profiles SET role = 'admin'    WHERE lower(role) IN ('admin','administrador');
+UPDATE public.profiles SET role = 'vendedor' WHERE role IS NULL OR lower(role) NOT IN ('admin','vendedor','leitor');
+
+-- Função helper: retorna o role do usuário logado
+CREATE OR REPLACE FUNCTION public.current_user_role()
+RETURNS text LANGUAGE sql SECURITY DEFINER STABLE AS $$
+  SELECT COALESCE(role, 'vendedor') FROM public.profiles WHERE id = auth.uid();
+$$;
+
+-- Função helper: é admin?
+CREATE OR REPLACE FUNCTION public.is_admin()
+RETURNS boolean LANGUAGE sql SECURITY DEFINER STABLE AS $$
+  SELECT public.current_user_role() = 'admin';
+$$;
+
+-- Função helper: é leitor (read-only)?
+CREATE OR REPLACE FUNCTION public.is_leitor()
+RETURNS boolean LANGUAGE sql SECURITY DEFINER STABLE AS $$
+  SELECT public.current_user_role() = 'leitor';
+$$;
+
+GRANT EXECUTE ON FUNCTION public.current_user_role() TO authenticated;
+GRANT EXECUTE ON FUNCTION public.is_admin() TO authenticated;
+GRANT EXECUTE ON FUNCTION public.is_leitor() TO authenticated;
+
+-- RLS de profiles: todos veem, cada um edita o próprio, admin edita qualquer um
+ALTER TABLE public.profiles ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "profiles_select"      ON public.profiles;
+DROP POLICY IF EXISTS "profiles_update_self" ON public.profiles;
+DROP POLICY IF EXISTS "profiles_update_admin"ON public.profiles;
+DROP POLICY IF EXISTS "profiles_delete_admin"ON public.profiles;
+CREATE POLICY "profiles_select"      ON public.profiles FOR SELECT TO authenticated USING (true);
+CREATE POLICY "profiles_update_self" ON public.profiles FOR UPDATE TO authenticated
+  USING (id = auth.uid()) WITH CHECK (id = auth.uid() AND role = (SELECT role FROM public.profiles WHERE id = auth.uid()));
+-- Nota: a policy update_self proíbe usuário comum de mudar PRÓPRIO role
+CREATE POLICY "profiles_update_admin" ON public.profiles FOR UPDATE TO authenticated
+  USING (public.is_admin()) WITH CHECK (public.is_admin());
+CREATE POLICY "profiles_delete_admin" ON public.profiles FOR DELETE TO authenticated
+  USING (public.is_admin());
+
 
 -- -------------------------------------------------------------------------
 -- 1) DROP do modelo antigo (clients + tabelas dependentes)
@@ -80,9 +128,27 @@ ALTER TABLE public.companies
 CREATE INDEX IF NOT EXISTS idx_companies_classificacao ON public.companies(classificacao);
 
 ALTER TABLE public.companies ENABLE ROW LEVEL SECURITY;
-DROP POLICY IF EXISTS "auth_all_companies" ON public.companies;
-CREATE POLICY "auth_all_companies" ON public.companies
-  FOR ALL TO authenticated USING (true) WITH CHECK (true);
+-- Sprint 5.1: RLS granular por role
+DROP POLICY IF EXISTS "auth_all_companies"      ON public.companies;
+DROP POLICY IF EXISTS "companies_select"        ON public.companies;
+DROP POLICY IF EXISTS "companies_insert"        ON public.companies;
+DROP POLICY IF EXISTS "companies_update_owner"  ON public.companies;
+DROP POLICY IF EXISTS "companies_delete_owner"  ON public.companies;
+-- SELECT: todos autenticados leem (transparência interna)
+CREATE POLICY "companies_select" ON public.companies
+  FOR SELECT TO authenticated USING (true);
+-- INSERT: admin e vendedor podem criar (leitor não)
+CREATE POLICY "companies_insert" ON public.companies
+  FOR INSERT TO authenticated WITH CHECK (NOT public.is_leitor());
+-- UPDATE: admin ou owner (created_by)
+CREATE POLICY "companies_update_owner" ON public.companies
+  FOR UPDATE TO authenticated
+  USING (public.is_admin() OR created_by = auth.uid())
+  WITH CHECK (public.is_admin() OR created_by = auth.uid());
+-- DELETE: admin ou owner
+CREATE POLICY "companies_delete_owner" ON public.companies
+  FOR DELETE TO authenticated
+  USING (public.is_admin() OR created_by = auth.uid());
 
 
 -- -------------------------------------------------------------------------
@@ -104,9 +170,12 @@ CREATE TABLE IF NOT EXISTS public.contacts (
 CREATE INDEX IF NOT EXISTS idx_contacts_company_id ON public.contacts(company_id);
 
 ALTER TABLE public.contacts ENABLE ROW LEVEL SECURITY;
-DROP POLICY IF EXISTS "auth_all_contacts" ON public.contacts;
-CREATE POLICY "auth_all_contacts" ON public.contacts
-  FOR ALL TO authenticated USING (true) WITH CHECK (true);
+DROP POLICY IF EXISTS "auth_all_contacts"  ON public.contacts;
+DROP POLICY IF EXISTS "contacts_select"    ON public.contacts;
+DROP POLICY IF EXISTS "contacts_write"     ON public.contacts;
+CREATE POLICY "contacts_select" ON public.contacts FOR SELECT TO authenticated USING (true);
+CREATE POLICY "contacts_write"  ON public.contacts FOR ALL TO authenticated
+  USING (NOT public.is_leitor()) WITH CHECK (NOT public.is_leitor());
 
 
 -- -------------------------------------------------------------------------
@@ -160,8 +229,11 @@ CREATE TRIGGER tg_opportunity_estagio_changed
 
 ALTER TABLE public.opportunities ENABLE ROW LEVEL SECURITY;
 DROP POLICY IF EXISTS "auth_all_opportunities" ON public.opportunities;
-CREATE POLICY "auth_all_opportunities" ON public.opportunities
-  FOR ALL TO authenticated USING (true) WITH CHECK (true);
+DROP POLICY IF EXISTS "opportunities_select"   ON public.opportunities;
+DROP POLICY IF EXISTS "opportunities_write"    ON public.opportunities;
+CREATE POLICY "opportunities_select" ON public.opportunities FOR SELECT TO authenticated USING (true);
+CREATE POLICY "opportunities_write"  ON public.opportunities FOR ALL TO authenticated
+  USING (NOT public.is_leitor()) WITH CHECK (NOT public.is_leitor());
 
 
 -- -------------------------------------------------------------------------
@@ -180,9 +252,12 @@ CREATE TABLE IF NOT EXISTS public.opportunity_products (
 CREATE INDEX IF NOT EXISTS idx_opportunity_products_opp_id ON public.opportunity_products(opportunity_id);
 
 ALTER TABLE public.opportunity_products ENABLE ROW LEVEL SECURITY;
-DROP POLICY IF EXISTS "auth_all_opp_products" ON public.opportunity_products;
-CREATE POLICY "auth_all_opp_products" ON public.opportunity_products
-  FOR ALL TO authenticated USING (true) WITH CHECK (true);
+DROP POLICY IF EXISTS "auth_all_opp_products"   ON public.opportunity_products;
+DROP POLICY IF EXISTS "opp_products_select"     ON public.opportunity_products;
+DROP POLICY IF EXISTS "opp_products_write"      ON public.opportunity_products;
+CREATE POLICY "opp_products_select" ON public.opportunity_products FOR SELECT TO authenticated USING (true);
+CREATE POLICY "opp_products_write"  ON public.opportunity_products FOR ALL TO authenticated
+  USING (NOT public.is_leitor()) WITH CHECK (NOT public.is_leitor());
 
 
 -- -------------------------------------------------------------------------
@@ -204,8 +279,11 @@ CREATE INDEX IF NOT EXISTS idx_interactions_opp_id ON public.interactions(opport
 
 ALTER TABLE public.interactions ENABLE ROW LEVEL SECURITY;
 DROP POLICY IF EXISTS "auth_all_interactions" ON public.interactions;
-CREATE POLICY "auth_all_interactions" ON public.interactions
-  FOR ALL TO authenticated USING (true) WITH CHECK (true);
+DROP POLICY IF EXISTS "interactions_select"   ON public.interactions;
+DROP POLICY IF EXISTS "interactions_write"    ON public.interactions;
+CREATE POLICY "interactions_select" ON public.interactions FOR SELECT TO authenticated USING (true);
+CREATE POLICY "interactions_write"  ON public.interactions FOR ALL TO authenticated
+  USING (NOT public.is_leitor()) WITH CHECK (NOT public.is_leitor());
 
 
 -- -------------------------------------------------------------------------
@@ -246,9 +324,15 @@ CREATE TRIGGER tg_atribui_numero_proposta
   FOR EACH ROW EXECUTE FUNCTION public.atribui_numero_proposta();
 
 ALTER TABLE public.proposals ENABLE ROW LEVEL SECURITY;
+-- Sprint 5.1: propostas geradas SO podem ser deletadas por admin (rastreabilidade)
 DROP POLICY IF EXISTS "auth_all_proposals" ON public.proposals;
-CREATE POLICY "auth_all_proposals" ON public.proposals
-  FOR ALL TO authenticated USING (true) WITH CHECK (true);
+DROP POLICY IF EXISTS "proposals_select"   ON public.proposals;
+DROP POLICY IF EXISTS "proposals_insert"   ON public.proposals;
+DROP POLICY IF EXISTS "proposals_delete"   ON public.proposals;
+CREATE POLICY "proposals_select" ON public.proposals FOR SELECT TO authenticated USING (true);
+CREATE POLICY "proposals_insert" ON public.proposals FOR INSERT TO authenticated WITH CHECK (NOT public.is_leitor());
+-- Propostas NÃO podem ser editadas (snapshot imutável) — somente admin pode deletar (correção de erro)
+CREATE POLICY "proposals_delete" ON public.proposals FOR DELETE TO authenticated USING (public.is_admin());
 
 
 -- -------------------------------------------------------------------------
@@ -268,9 +352,12 @@ CREATE TABLE IF NOT EXISTS public.lgpd_requests (
 CREATE INDEX IF NOT EXISTS idx_lgpd_requests_company_id ON public.lgpd_requests(company_id);
 
 ALTER TABLE public.lgpd_requests ENABLE ROW LEVEL SECURITY;
-DROP POLICY IF EXISTS "auth_all_lgpd" ON public.lgpd_requests;
-CREATE POLICY "auth_all_lgpd" ON public.lgpd_requests
-  FOR ALL TO authenticated USING (true) WITH CHECK (true);
+-- Sprint 5.1: log LGPD imutável (todos veem, qualquer um insere, NINGUÉM edita/deleta)
+DROP POLICY IF EXISTS "auth_all_lgpd"      ON public.lgpd_requests;
+DROP POLICY IF EXISTS "lgpd_select"        ON public.lgpd_requests;
+DROP POLICY IF EXISTS "lgpd_insert"        ON public.lgpd_requests;
+CREATE POLICY "lgpd_select" ON public.lgpd_requests FOR SELECT TO authenticated USING (true);
+CREATE POLICY "lgpd_insert" ON public.lgpd_requests FOR INSERT TO authenticated WITH CHECK (true);
 
 
 -- -------------------------------------------------------------------------
@@ -323,8 +410,13 @@ CREATE TABLE IF NOT EXISTS public.products (
 CREATE INDEX IF NOT EXISTS idx_products_nome ON public.products(nome);
 
 ALTER TABLE public.products ENABLE ROW LEVEL SECURITY;
+-- Sprint 5.1: catálogo é lido por todos, mas só admin altera preços/produtos
 DROP POLICY IF EXISTS "auth_read_products" ON public.products;
-CREATE POLICY "auth_read_products" ON public.products FOR SELECT TO authenticated USING (true);
+DROP POLICY IF EXISTS "products_select"    ON public.products;
+DROP POLICY IF EXISTS "products_write"     ON public.products;
+CREATE POLICY "products_select" ON public.products FOR SELECT TO authenticated USING (true);
+CREATE POLICY "products_write"  ON public.products FOR ALL TO authenticated
+  USING (public.is_admin()) WITH CHECK (public.is_admin());
 
 -- Seed do catálogo (re-runnable via ON CONFLICT). Só insere se ainda não houver.
 INSERT INTO public.products (nome, embalagem, preco_materia_prima, preco_office, preco_pj) VALUES

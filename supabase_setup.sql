@@ -801,19 +801,33 @@ DO $$ BEGIN ALTER PUBLICATION supabase_realtime ADD TABLE public.proposals;     
 -- Sprint 6.1: callback ganha HORA (date -> timestamptz)
 -- Vendedor agora agenda "retorno 14:30", nao so "retorno dia 5".
 -- Para dados antigos (date puro), assume 09:00 horario local (America/Sao_Paulo).
--- Idempotente: se ja for timestamptz, ALTER vira no-op.
+-- Idempotente: detecta tipo atual e so converte se ainda for date.
+-- (Concatenar ' 09:00:00-03' numa coluna que ja eh timestamptz produz string
+-- invalida tipo "2026-05-29 12:00:00+00 09:00:00-03" — por isso o check.)
 -- -------------------------------------------------------------------------
-DO $$ BEGIN
-  ALTER TABLE public.opportunities
-    ALTER COLUMN callback_date TYPE timestamptz
-    USING (callback_date::text || ' 09:00:00-03')::timestamptz;
-EXCEPTION WHEN OTHERS THEN NULL; END $$;
+DO $$
+DECLARE v_type text;
+BEGIN
+  SELECT data_type INTO v_type FROM information_schema.columns
+   WHERE table_schema='public' AND table_name='opportunities' AND column_name='callback_date';
+  IF v_type = 'date' THEN
+    ALTER TABLE public.opportunities
+      ALTER COLUMN callback_date TYPE timestamptz
+      USING (callback_date::text || ' 09:00:00-03')::timestamptz;
+  END IF;
+END $$;
 
-DO $$ BEGIN
-  ALTER TABLE public.interactions
-    ALTER COLUMN next_callback TYPE timestamptz
-    USING (next_callback::text || ' 09:00:00-03')::timestamptz;
-EXCEPTION WHEN OTHERS THEN NULL; END $$;
+DO $$
+DECLARE v_type text;
+BEGIN
+  SELECT data_type INTO v_type FROM information_schema.columns
+   WHERE table_schema='public' AND table_name='interactions' AND column_name='next_callback';
+  IF v_type = 'date' THEN
+    ALTER TABLE public.interactions
+      ALTER COLUMN next_callback TYPE timestamptz
+      USING (next_callback::text || ' 09:00:00-03')::timestamptz;
+  END IF;
+END $$;
 
 -- Indice para acelerar a tela "Hoje" (filtro por intervalo de tempo + status aberto)
 CREATE INDEX IF NOT EXISTS idx_opportunities_callback_at

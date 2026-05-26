@@ -1198,6 +1198,22 @@ body.role-leitor .read-only-banner{display:block}
           <div class="fg"><label>Telefone</label><input type="text" id="cfg-off-tel" placeholder="(21) 99591-5422"></div>
         </div>
       </div>
+      <div class="fs"><div class="fsl">Segurança</div>
+        <div id="mfa-status" style="font-size:13px;padding:10px 12px;background:var(--bg);border-radius:var(--rs);border:1px solid var(--bdr)">Carregando status do 2FA...</div>
+        <div id="mfa-actions" style="margin-top:8px;display:flex;gap:8px;flex-wrap:wrap"></div>
+        <div id="mfa-enroll" style="display:none;margin-top:12px;padding:14px;background:var(--bg);border-radius:var(--rs);border:1px solid var(--bdr)">
+          <div style="font-size:12.5px;color:var(--tx);margin-bottom:10px"><b>Passo 1:</b> Abra um app autenticador (Google Authenticator, Authy, 1Password) e escaneie:</div>
+          <div id="mfa-qr" style="text-align:center;margin:10px 0"></div>
+          <div style="font-size:11px;color:var(--mt);text-align:center;word-break:break-all;margin-bottom:12px">Segredo (caso o QR não funcione): <code id="mfa-secret"></code></div>
+          <div style="font-size:12.5px;color:var(--tx);margin-bottom:6px"><b>Passo 2:</b> Digite o código de 6 dígitos do app:</div>
+          <div style="display:flex;gap:8px">
+            <input type="text" id="mfa-code" maxlength="6" placeholder="000000" style="font-family:ui-monospace,Consolas,monospace;font-size:16px;letter-spacing:.2em;text-align:center;flex:1">
+            <button type="button" class="btn bp" onclick="confirmarMfa()">Confirmar</button>
+            <button type="button" class="btn bg" onclick="cancelarMfa()">Cancelar</button>
+          </div>
+          <div id="mfa-err" style="color:var(--er);font-size:12px;margin-top:6px;display:none"></div>
+        </div>
+      </div>
       <div class="ma">
         <button type="button" class="btn bg" onclick="document.getElementById('cfgm').classList.remove('op')">Cancelar</button>
         <button type="submit" class="btn bp">Salvar</button>
@@ -3039,6 +3055,110 @@ function abrConfig() {
   document.getElementById('cfg-off-email').value= MEP.office_email    || '';
   document.getElementById('cfg-off-tel').value  = MEP.office_telefone || '';
   document.getElementById('cfgm').classList.add('op');
+  loadMfaStatus();
+}
+
+// ── 2FA opcional via TOTP (Sprint 5.3) ──────────────────────────────────
+let mfaCurrentFactorId = null; // factor sendo enrolado (antes de verificar)
+
+async function loadMfaStatus() {
+  const statusEl = document.getElementById('mfa-status');
+  const actionsEl = document.getElementById('mfa-actions');
+  const enrollEl = document.getElementById('mfa-enroll');
+  enrollEl.style.display = 'none';
+  statusEl.innerHTML = 'Verificando 2FA...';
+  actionsEl.innerHTML = '';
+  try {
+    const { data, error } = await sb.auth.mfa.listFactors();
+    if (error) throw error;
+    const totpVerified = (data?.totp || []).find(f => f.status === 'verified');
+    if (totpVerified) {
+      statusEl.innerHTML = '✅ <b>2FA ativo</b> — código TOTP via app autenticador. Cadastrado em ' + new Date(totpVerified.created_at).toLocaleDateString('pt-BR');
+      actionsEl.innerHTML = `<button type="button" class="btn bod sm" onclick="removerMfa('${totpVerified.id}')">Desativar 2FA</button>`;
+    } else {
+      statusEl.innerHTML = '⚠️ <b>2FA não está ativo.</b> Recomendado pra proteger sua conta — uma camada extra além da senha.';
+      actionsEl.innerHTML = `<button type="button" class="btn bp sm" onclick="iniciarMfa()">Ativar 2FA (TOTP)</button>`;
+      // Limpa fatores não-verificados pendurados (de enrolls anteriores cancelados)
+      const naoVerif = (data?.totp || []).filter(f => f.status !== 'verified');
+      for (const f of naoVerif) {
+        try { await sb.auth.mfa.unenroll({ factorId: f.id }); } catch {}
+      }
+    }
+  } catch(err) {
+    console.error('loadMfaStatus:', err);
+    statusEl.innerHTML = '<span style="color:var(--er)">Erro ao verificar 2FA: ' + escHtml(err.message||'') + '</span>';
+  }
+}
+
+async function iniciarMfa() {
+  try {
+    const { data, error } = await sb.auth.mfa.enroll({ factorType: 'totp', friendlyName: 'CRM Adiblock' });
+    if (error) throw error;
+    mfaCurrentFactorId = data.id;
+    const qrSvg = data.totp?.qr_code; // SVG do QR
+    const secret = data.totp?.secret;
+    const qrWrap = document.getElementById('mfa-qr');
+    if (qrSvg) {
+      // QR vem como SVG inline ou data URL — Supabase 2.x retorna SVG string
+      qrWrap.innerHTML = qrSvg.startsWith('<svg') ? qrSvg : `<img src="${qrSvg}" alt="QR Code 2FA" style="max-width:200px">`;
+    } else {
+      qrWrap.innerHTML = '<em style="color:var(--mt)">QR não disponível — use o segredo abaixo</em>';
+    }
+    document.getElementById('mfa-secret').textContent = secret || '—';
+    document.getElementById('mfa-code').value = '';
+    document.getElementById('mfa-err').style.display = 'none';
+    document.getElementById('mfa-enroll').style.display = '';
+    document.getElementById('mfa-actions').innerHTML = '';
+    setTimeout(() => document.getElementById('mfa-code').focus(), 80);
+  } catch(err) {
+    console.error('iniciarMfa:', err);
+    toast('Erro ao iniciar 2FA', err.message||'', 'warning');
+  }
+}
+
+async function confirmarMfa() {
+  if (!mfaCurrentFactorId) return;
+  const code = document.getElementById('mfa-code').value.trim();
+  if (!/^\d{6}$/.test(code)) {
+    document.getElementById('mfa-err').textContent = 'Digite os 6 dígitos do app.';
+    document.getElementById('mfa-err').style.display = '';
+    return;
+  }
+  try {
+    const { data: ch, error: chErr } = await sb.auth.mfa.challenge({ factorId: mfaCurrentFactorId });
+    if (chErr) throw chErr;
+    const { error: vErr } = await sb.auth.mfa.verify({ factorId: mfaCurrentFactorId, challengeId: ch.id, code });
+    if (vErr) throw vErr;
+    toast('2FA ativado!', 'Da próxima vez que logar, o app vai pedir o código do autenticador.', 'success');
+    mfaCurrentFactorId = null;
+    loadMfaStatus();
+  } catch(err) {
+    console.error('confirmarMfa:', err);
+    document.getElementById('mfa-err').textContent = 'Código inválido. Tente novamente.';
+    document.getElementById('mfa-err').style.display = '';
+  }
+}
+
+async function cancelarMfa() {
+  if (mfaCurrentFactorId) {
+    try { await sb.auth.mfa.unenroll({ factorId: mfaCurrentFactorId }); } catch {}
+    mfaCurrentFactorId = null;
+  }
+  loadMfaStatus();
+}
+
+async function removerMfa(factorId) {
+  conf('Desativar 2FA', 'Tem certeza? Sua conta vai voltar a precisar só de senha pra entrar.', async () => {
+    try {
+      const { error } = await sb.auth.mfa.unenroll({ factorId });
+      if (error) throw error;
+      toast('2FA desativado','','success');
+      loadMfaStatus();
+    } catch(err) {
+      console.error('removerMfa:', err);
+      toast('Erro', err.message||'', 'warning');
+    }
+  });
 }
 
 document.getElementById('cfgf').addEventListener('submit', async e => {
@@ -4767,13 +4887,70 @@ function stopRealtime() {
 function showApp(){document.getElementById('ls').style.display='none';document.getElementById('app').style.display='flex';}
 function showLogin(){document.getElementById('ls').style.display='flex';document.getElementById('app').style.display='none';ME=null;MEP=null;CL=[];PF=[];}
 
+// Sprint 5.3: força challenge MFA se usuário tem 2FA ativo e sessão está em AAL1
+let mfaChallengePending = null; // { factorId, challengeId }
+async function checkMfaChallenge(user) {
+  try {
+    const { data: aal } = await sb.auth.mfa.getAuthenticatorAssuranceLevel();
+    if (!aal || aal.currentLevel === aal.nextLevel) return true; // tudo OK
+    // currentLevel < nextLevel → precisa upgrade pra AAL2
+    const { data: facts } = await sb.auth.mfa.listFactors();
+    const totp = (facts?.totp || []).find(f => f.status === 'verified');
+    if (!totp) return true; // sem fator, não tem como exigir
+    const { data: ch, error: chErr } = await sb.auth.mfa.challenge({ factorId: totp.id });
+    if (chErr) throw chErr;
+    mfaChallengePending = { factorId: totp.id, challengeId: ch.id };
+    document.getElementById('mfa-ch-code').value = '';
+    document.getElementById('mfa-ch-err').style.display = 'none';
+    document.getElementById('mfa-challenge-m').classList.add('op');
+    setTimeout(() => document.getElementById('mfa-ch-code').focus(), 80);
+    return false; // não inicia o app ainda
+  } catch(err) {
+    console.error('checkMfaChallenge:', err);
+    return true; // se algo der errado, segue (não trava o login)
+  }
+}
+
+async function mfaLoginConfirm() {
+  if (!mfaChallengePending) return;
+  const code = document.getElementById('mfa-ch-code').value.trim();
+  if (!/^\d{6}$/.test(code)) {
+    document.getElementById('mfa-ch-err').textContent = 'Digite os 6 dígitos.';
+    document.getElementById('mfa-ch-err').style.display = '';
+    return;
+  }
+  try {
+    const { error } = await sb.auth.mfa.verify({ ...mfaChallengePending, code });
+    if (error) throw error;
+    document.getElementById('mfa-challenge-m').classList.remove('op');
+    mfaChallengePending = null;
+    const { data: { user } } = await sb.auth.getUser();
+    if (user) { showApp(); await iniciar(user); }
+  } catch(err) {
+    document.getElementById('mfa-ch-err').textContent = 'Código inválido.';
+    document.getElementById('mfa-ch-err').style.display = '';
+  }
+}
+
+async function mfaLoginCancel() {
+  document.getElementById('mfa-challenge-m').classList.remove('op');
+  mfaChallengePending = null;
+  await sb.auth.signOut();
+  showLogin();
+}
+
 sb.auth.onAuthStateChange(async(_,s)=>{
-  if(s?.user){showApp();await iniciar(s.user);}
-  else showLogin();
+  if (s?.user) {
+    const ok = await checkMfaChallenge(s.user);
+    if (ok) { showApp(); await iniciar(s.user); }
+  } else showLogin();
 });
 (async()=>{
   const{data:{session}}=await sb.auth.getSession();
-  if(session?.user){showApp();await iniciar(session.user);}
+  if (session?.user) {
+    const ok = await checkMfaChallenge(session.user);
+    if (ok) { showApp(); await iniciar(session.user); }
+  }
 })();
 
 // ── Tema (modo escuro) e atalhos de teclado ─────────────────────────────
@@ -4825,6 +5002,20 @@ document.addEventListener('keydown', e => {
   if (e.key === 'c' || e.key === 'C') { e.preventDefault(); document.querySelector('.tb[data-tab="cl"]')?.click(); }
 });
 </script>
+
+<!-- MODAL 2FA CHALLENGE (Sprint 5.3) -->
+<div class="mo" id="mfa-challenge-m" style="z-index:600">
+  <div class="md" style="max-width:380px;text-align:center">
+    <div class="mh" style="border:none;justify-content:center"><h3>🔐 Verificação 2FA</h3></div>
+    <p style="font-size:13px;color:var(--mt);margin-bottom:14px">Abra seu app autenticador e digite o código de 6 dígitos</p>
+    <input type="text" id="mfa-ch-code" maxlength="6" placeholder="000000" style="font-family:ui-monospace,Consolas,monospace;font-size:22px;letter-spacing:.3em;text-align:center;width:100%;padding:12px;border:1.5px solid var(--bdr);border-radius:var(--rs);background:var(--sur);color:var(--tx)">
+    <div id="mfa-ch-err" style="color:var(--er);font-size:12px;margin-top:8px;display:none"></div>
+    <div class="ma" style="margin-top:14px;justify-content:center">
+      <button type="button" class="btn bg" onclick="mfaLoginCancel()">Cancelar</button>
+      <button type="button" class="btn bp" onclick="mfaLoginConfirm()">Verificar</button>
+    </div>
+  </div>
+</div>
 
 <!-- Banner discreto de modo leitura (Sprint 5.1) -->
 <div class="read-only-banner">🔒 Modo somente leitura — você não pode criar nem editar registros</div>

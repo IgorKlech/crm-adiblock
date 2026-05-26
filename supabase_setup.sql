@@ -798,6 +798,30 @@ DO $$ BEGIN ALTER PUBLICATION supabase_realtime ADD TABLE public.proposals;     
 
 
 -- -------------------------------------------------------------------------
+-- Sprint 6.1: callback ganha HORA (date -> timestamptz)
+-- Vendedor agora agenda "retorno 14:30", nao so "retorno dia 5".
+-- Para dados antigos (date puro), assume 09:00 horario local (America/Sao_Paulo).
+-- Idempotente: se ja for timestamptz, ALTER vira no-op.
+-- -------------------------------------------------------------------------
+DO $$ BEGIN
+  ALTER TABLE public.opportunities
+    ALTER COLUMN callback_date TYPE timestamptz
+    USING (callback_date::text || ' 09:00:00-03')::timestamptz;
+EXCEPTION WHEN OTHERS THEN NULL; END $$;
+
+DO $$ BEGIN
+  ALTER TABLE public.interactions
+    ALTER COLUMN next_callback TYPE timestamptz
+    USING (next_callback::text || ' 09:00:00-03')::timestamptz;
+EXCEPTION WHEN OTHERS THEN NULL; END $$;
+
+-- Indice para acelerar a tela "Hoje" (filtro por intervalo de tempo + status aberto)
+CREATE INDEX IF NOT EXISTS idx_opportunities_callback_at
+  ON public.opportunities(callback_date)
+  WHERE estagio NOT IN ('ganha','perdida');
+
+
+-- -------------------------------------------------------------------------
 -- 12) Recarrega o schema do PostgREST
 -- -------------------------------------------------------------------------
 NOTIFY pgrst, 'reload schema';

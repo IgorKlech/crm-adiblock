@@ -637,7 +637,7 @@ tr.row-selected{background:var(--ps)!important}
 .gc-prow .num{text-align:right}
 
 /* ── Cotação imprimível ── */
-#cot-page{display:none;position:fixed;inset:0;background:var(--bg);z-index:285;overflow-y:auto}
+#cot-page{display:none;position:fixed;inset:0;background:var(--bg);z-index:295;overflow-y:auto}
 #cot-page.op{display:block}
 .cot-body{max-width:880px;margin:24px auto;padding:24px 32px;background:#fff;border:1px solid var(--bdr);border-radius:var(--r)}
 .cot-header{display:flex;justify-content:space-between;align-items:flex-start;border-bottom:2px solid var(--p);padding-bottom:10px;margin-bottom:14px;gap:16px}
@@ -677,8 +677,12 @@ tr.row-selected{background:var(--ps)!important}
 
 /* ── @media print ── */
 @media print{
-  #nb,#nav-tabs,.pf-topbar,.rel-topbar,.cot-topbar,#tc,#gs-overlay,#pfpage,#sp,#po,.mo,.ac2,#sidebar{display:none!important}
-  #rel-page,#cot-page{position:static!important;overflow:visible!important}
+  /* Esconde TUDO por padrão (app principal, login, painéis, modais, banners) */
+  body > *{display:none!important}
+  /* Mostra apenas a página que está sendo impressa (cot-page ou rel-page) */
+  body > #cot-page.op,
+  body > #rel-page.op{display:block!important;position:static!important;overflow:visible!important;background:#fff!important;z-index:auto!important}
+  /* Esconde topbars das páginas impressas (só conteúdo) */
   .rel-topbar,.cot-topbar{display:none!important}
   body{background:#fff!important}
   .rel-card,.rel-table,.rel-section,.cot-sect,.cot-tab tr{break-inside:avoid}

@@ -540,6 +540,21 @@ td strong{color:var(--tx);font-weight:600}
 .pf-int-result{font-weight:600;color:var(--tx)}
 .pf-int-notes{color:var(--tx2);margin-top:4px;line-height:1.5;white-space:pre-wrap}
 .pf-int-cb{font-size:11px;color:var(--p);margin-top:4px}
+/* Audit log timeline (Sprint 5.2) */
+.al-item{display:flex;gap:12px;padding:10px 14px;border-bottom:1px solid var(--bdr);font-size:12.5px}
+.al-item:last-child{border-bottom:none}
+.al-dot{width:8px;height:8px;border-radius:50%;background:var(--mt2);margin-top:6px;flex-shrink:0}
+.al-dot.al-INSERT{background:#10b981}
+.al-dot.al-UPDATE{background:#3b82f6}
+.al-dot.al-DELETE{background:#ef4444}
+.al-main{flex:1;min-width:0}
+.al-head{color:var(--mt);font-size:11px;margin-bottom:4px}
+.al-head b{color:var(--tx);font-weight:600}
+.al-changes{font-size:11.5px;line-height:1.6;color:var(--tx2)}
+.al-changes b{color:var(--tx);font-weight:600}
+.al-from{color:#991b1b;text-decoration:line-through}
+.al-to{color:#166534}
+
 .pf-opp-card{cursor:default}
 .pf-opp-actions{display:flex;flex-wrap:wrap;gap:4px;margin-top:8px}
 .pf-opp-cb{cursor:pointer;width:16px;height:16px;accent-color:var(--p);margin-top:4px;flex-shrink:0}
@@ -1258,13 +1273,15 @@ body.role-leitor .read-only-banner{display:block}
     <button class="pf-tab ac" data-pt="resumo">Resumo</button>
     <button class="pf-tab" data-pt="contatos">Contatos</button>
     <button class="pf-tab" data-pt="oportunidades">Oportunidades</button>
-    <button class="pf-tab" data-pt="historico">Histórico</button>
+    <button class="pf-tab" data-pt="historico">Interações</button>
+    <button class="pf-tab" data-pt="alteracoes">Alterações</button>
   </div>
   <div class="pf-body">
     <div class="pf-panel ac" id="pf-resumo"></div>
     <div class="pf-panel" id="pf-contatos"></div>
     <div class="pf-panel" id="pf-oportunidades"></div>
     <div class="pf-panel" id="pf-historico"></div>
+    <div class="pf-panel" id="pf-alteracoes"></div>
   </div>
 </div>
 
@@ -2367,6 +2384,7 @@ async function checkSchema() {
     ['products',             'id,nome,embalagem,preco_materia_prima,preco_office,preco_pj'],
     ['proposals',            'id,ano,numero,opportunity_id,company_id,seller_id,snapshot,created_at'],
     ['lgpd_requests',        'id,company_id,company_name,acao,detalhes,requested_by,created_at'],
+    ['audit_log',            'id,table_name,row_id,action,user_id,user_name,user_role,old_data,new_data,changes,company_id,created_at'],
   ];
   const issues = [];
   for (const [tabela, cols] of PROBES) {
@@ -3433,6 +3451,7 @@ async function abrPerfil(id) {
   renderPfContatos(c);
   renderPfOportunidades(c);
   renderPfHistorico(c);
+  renderPfAlteracoes(c);
   // Reset aba ativa pra Resumo
   document.querySelectorAll('#pfpage .pf-tab').forEach(t => t.classList.remove('ac'));
   document.querySelector('#pfpage .pf-tab[data-pt="resumo"]')?.classList.add('ac');
@@ -3667,6 +3686,82 @@ async function renderPfHistorico(c) {
     }).join('');
   } catch(err) {
     console.error('renderPfHistorico:', err);
+    el.innerHTML = '<div class="pf-empty" style="color:var(--er)">Erro ao carregar histórico: '+escHtml(err.message||'')+'</div>';
+  }
+}
+
+// ── Render aba "Alterações" (Sprint 5.2 — audit log) ───────────────────
+const AUDIT_TABLE_LBL = {
+  companies: 'empresa', contacts: 'contato', opportunities: 'oportunidade',
+  opportunity_products: 'produto', proposals: 'proposta'
+};
+const AUDIT_ACTION_LBL = { INSERT: 'criou', UPDATE: 'alterou', DELETE: 'excluiu' };
+// Campos que não precisam aparecer na timeline (ruído)
+const AUDIT_SKIP_FIELDS = new Set(['created_at','created_by','id','snapshot','company_id']);
+// Labels mais amigáveis pros campos
+const AUDIT_FIELD_LBL = {
+  razao_social: 'Razão Social', nome_fantasia: 'Nome Fantasia', cnpj: 'CNPJ', ie: 'I.E.',
+  email: 'Email', telefone: 'Telefone', website: 'Site', industria: 'Indústria',
+  faturamento_estimado: 'Faturamento', endereco: 'Endereço', cidade: 'Cidade', uf: 'UF', cep: 'CEP',
+  observacoes: 'Observações', internal_notes: 'Notas internas',
+  classificacao: 'Classificação', lgpd_consent_at: 'LGPD consentimento',
+  lgpd_delete_requested_at: 'LGPD exclusão solicitada',
+  nome: 'Nome', cargo: 'Cargo', papel: 'Papel', principal: 'Principal',
+  titulo: 'Título', obra: 'Obra', estagio: 'Estágio', valor_estimado: 'Valor',
+  callback_date: 'Próximo retorno', perda_motivo: 'Motivo da perda', observation: 'Observação',
+  seller_name: 'Vendedor', seller_id: 'Vendedor (ID)', contact_id: 'Contato',
+  produto: 'Produto', embalagem: 'Embalagem', qtd_kg: 'Qtd (kg)', preco_kg: 'Preço (R$/kg)',
+  ano: 'Ano', numero: 'Número', opportunity_id: 'Oportunidade (ID)',
+};
+
+function fmtAuditVal(v) {
+  if (v === null || v === undefined) return '<em style="color:var(--mt2)">(vazio)</em>';
+  if (typeof v === 'boolean') return v ? 'sim' : 'não';
+  const s = String(v);
+  if (s.length > 60) return escHtml(s.slice(0,60)) + '…';
+  return escHtml(s);
+}
+
+async function renderPfAlteracoes(c) {
+  const el = document.getElementById('pf-alteracoes');
+  if (!el) return;
+  el.innerHTML = '<div class="sl"><div class="sp"></div></div>';
+  try {
+    // Busca audit do company_id (inclui filhas via company_id que o trigger preenche)
+    const rows = await api('GET','audit_log', `company_id=eq.${c.id}&select=*&order=created_at.desc&limit=200`);
+    if (!rows || !rows.length) {
+      el.innerHTML = '<div class="pf-empty">Sem registros de alteração ainda. Cada criação, edição ou exclusão será registrada aqui automaticamente.</div>';
+      return;
+    }
+    el.innerHTML = rows.map(r => {
+      const tableLbl = AUDIT_TABLE_LBL[r.table_name] || r.table_name;
+      const actionLbl = AUDIT_ACTION_LBL[r.action] || r.action;
+      const who = r.user_name || '(sistema)';
+      let body = '';
+      if (r.action === 'UPDATE' && Array.isArray(r.changes) && r.changes.length) {
+        body = '<div class="al-changes">' + r.changes
+          .filter(ch => !AUDIT_SKIP_FIELDS.has(ch.field))
+          .map(ch => `<div><b>${escHtml(AUDIT_FIELD_LBL[ch.field] || ch.field)}:</b> <span class="al-from">${fmtAuditVal(ch.from)}</span> → <span class="al-to">${fmtAuditVal(ch.to)}</span></div>`)
+          .join('') + '</div>';
+      } else if (r.action === 'INSERT') {
+        const d = r.new_data || {};
+        const titulo = d.razao_social || d.titulo || d.nome || d.produto || '';
+        body = titulo ? `<div class="al-changes">"${escHtml(titulo)}"</div>` : '';
+      } else if (r.action === 'DELETE') {
+        const d = r.old_data || {};
+        const titulo = d.razao_social || d.titulo || d.nome || d.produto || '';
+        body = titulo ? `<div class="al-changes">"${escHtml(titulo)}"</div>` : '';
+      }
+      return `<div class="al-item">
+        <div class="al-dot al-${r.action}"></div>
+        <div class="al-main">
+          <div class="al-head"><b>${escHtml(who)}</b> ${actionLbl} ${tableLbl} — ${fDH(r.created_at)}</div>
+          ${body}
+        </div>
+      </div>`;
+    }).join('');
+  } catch(err) {
+    console.error('renderPfAlteracoes:', err);
     el.innerHTML = '<div class="pf-empty" style="color:var(--er)">Erro ao carregar histórico: '+escHtml(err.message||'')+'</div>';
   }
 }

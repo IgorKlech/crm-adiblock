@@ -336,6 +336,115 @@ CREATE POLICY "proposals_delete" ON public.proposals FOR DELETE TO authenticated
 
 
 -- -------------------------------------------------------------------------
+-- 7b) audit_log — log imutavel de alteracoes (Sprint 5.2)
+--     Trigger generico em companies/contacts/opportunities/opportunity_products
+--     captura INSERT/UPDATE/DELETE com snapshot before/after em jsonb.
+-- -------------------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS public.audit_log (
+  id          uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  table_name  text NOT NULL,
+  row_id      uuid,
+  action      text NOT NULL CHECK (action IN ('INSERT','UPDATE','DELETE')),
+  user_id     uuid REFERENCES public.profiles(id) ON DELETE SET NULL,
+  user_name   text,
+  user_role   text,
+  old_data    jsonb,
+  new_data    jsonb,
+  changes     jsonb,             -- diff calculado: lista de {field, from, to}
+  created_at  timestamptz NOT NULL DEFAULT now(),
+  -- Atalhos pra perguntas frequentes
+  company_id  uuid REFERENCES public.companies(id) ON DELETE SET NULL
+);
+
+CREATE INDEX IF NOT EXISTS idx_audit_log_company_id ON public.audit_log(company_id);
+CREATE INDEX IF NOT EXISTS idx_audit_log_table_row  ON public.audit_log(table_name, row_id);
+CREATE INDEX IF NOT EXISTS idx_audit_log_created_at ON public.audit_log(created_at DESC);
+
+ALTER TABLE public.audit_log ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "audit_select" ON public.audit_log;
+DROP POLICY IF EXISTS "audit_insert" ON public.audit_log;
+-- SELECT: todos veem. INSERT: trigger faz com SECURITY DEFINER. NO UPDATE/DELETE: log imutavel.
+CREATE POLICY "audit_select" ON public.audit_log FOR SELECT TO authenticated USING (true);
+CREATE POLICY "audit_insert" ON public.audit_log FOR INSERT TO authenticated WITH CHECK (true);
+
+-- Funcao trigger generica
+CREATE OR REPLACE FUNCTION public.log_audit_changes()
+RETURNS trigger LANGUAGE plpgsql SECURITY DEFINER AS $$
+DECLARE
+  v_user_id    uuid;
+  v_user_name  text;
+  v_user_role  text;
+  v_row_id     uuid;
+  v_company_id uuid;
+  v_old_jsonb  jsonb;
+  v_new_jsonb  jsonb;
+  v_changes    jsonb;
+  k            text;
+BEGIN
+  v_user_id := auth.uid();
+  SELECT name, role INTO v_user_name, v_user_role FROM public.profiles WHERE id = v_user_id;
+
+  IF TG_OP = 'DELETE' THEN
+    v_old_jsonb := to_jsonb(OLD);
+    v_row_id := (v_old_jsonb->>'id')::uuid;
+    v_company_id := COALESCE(
+      NULLIF(v_old_jsonb->>'company_id','')::uuid,
+      CASE WHEN TG_TABLE_NAME = 'companies' THEN v_row_id ELSE NULL END
+    );
+  ELSE
+    v_new_jsonb := to_jsonb(NEW);
+    v_row_id := (v_new_jsonb->>'id')::uuid;
+    v_company_id := COALESCE(
+      NULLIF(v_new_jsonb->>'company_id','')::uuid,
+      CASE WHEN TG_TABLE_NAME = 'companies' THEN v_row_id ELSE NULL END
+    );
+    IF TG_OP = 'UPDATE' THEN
+      v_old_jsonb := to_jsonb(OLD);
+      -- Calcula diff campo-a-campo (ignora updated_at/estagio_changed_at que mudam sozinhos)
+      v_changes := '[]'::jsonb;
+      FOR k IN SELECT jsonb_object_keys(v_new_jsonb) LOOP
+        IF k IN ('updated_at','estagio_changed_at','closed_at') THEN CONTINUE; END IF;
+        IF (v_new_jsonb->k) IS DISTINCT FROM (v_old_jsonb->k) THEN
+          v_changes := v_changes || jsonb_build_array(jsonb_build_object('field', k, 'from', v_old_jsonb->k, 'to', v_new_jsonb->k));
+        END IF;
+      END LOOP;
+      -- Se nada mudou (só timestamps), nao loga
+      IF jsonb_array_length(v_changes) = 0 THEN RETURN NEW; END IF;
+    END IF;
+  END IF;
+
+  INSERT INTO public.audit_log (table_name, row_id, action, user_id, user_name, user_role, old_data, new_data, changes, company_id)
+  VALUES (TG_TABLE_NAME, v_row_id, TG_OP, v_user_id, v_user_name, v_user_role, v_old_jsonb, v_new_jsonb, v_changes, v_company_id);
+
+  RETURN CASE WHEN TG_OP = 'DELETE' THEN OLD ELSE NEW END;
+END;
+$$;
+
+-- Aplica em todas as tabelas críticas
+DROP TRIGGER IF EXISTS tg_audit_companies            ON public.companies;
+DROP TRIGGER IF EXISTS tg_audit_contacts             ON public.contacts;
+DROP TRIGGER IF EXISTS tg_audit_opportunities        ON public.opportunities;
+DROP TRIGGER IF EXISTS tg_audit_opportunity_products ON public.opportunity_products;
+DROP TRIGGER IF EXISTS tg_audit_proposals            ON public.proposals;
+
+CREATE TRIGGER tg_audit_companies
+  AFTER INSERT OR UPDATE OR DELETE ON public.companies
+  FOR EACH ROW EXECUTE FUNCTION public.log_audit_changes();
+CREATE TRIGGER tg_audit_contacts
+  AFTER INSERT OR UPDATE OR DELETE ON public.contacts
+  FOR EACH ROW EXECUTE FUNCTION public.log_audit_changes();
+CREATE TRIGGER tg_audit_opportunities
+  AFTER INSERT OR UPDATE OR DELETE ON public.opportunities
+  FOR EACH ROW EXECUTE FUNCTION public.log_audit_changes();
+CREATE TRIGGER tg_audit_opportunity_products
+  AFTER INSERT OR UPDATE OR DELETE ON public.opportunity_products
+  FOR EACH ROW EXECUTE FUNCTION public.log_audit_changes();
+CREATE TRIGGER tg_audit_proposals
+  AFTER INSERT OR UPDATE OR DELETE ON public.proposals
+  FOR EACH ROW EXECUTE FUNCTION public.log_audit_changes();
+
+
+-- -------------------------------------------------------------------------
 -- 8) lgpd_requests — log de ações LGPD (agora liga a empresa)
 -- -------------------------------------------------------------------------
 CREATE TABLE IF NOT EXISTS public.lgpd_requests (

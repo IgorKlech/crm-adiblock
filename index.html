@@ -1125,7 +1125,12 @@ body.role-leitor .read-only-banner{display:block}
       </div>
 
       <div class="fs"><div class="fsl">Comercial</div>
-        <div class="fg"><label>Faturamento estimado (R$/ano)</label><input type="number" id="f-fat" placeholder="0,00" step="1000" min="0"></div>
+        <div class="fr">
+          <div class="fg"><label>Vendedor responsável <span style="font-weight:400;color:var(--mt);font-size:11px">— quem cuida desta empresa</span></label>
+            <select id="f-vendedor"><option value="">—</option></select>
+          </div>
+          <div class="fg"><label>Faturamento estimado (R$/ano)</label><input type="number" id="f-fat" placeholder="0,00" step="1000" min="0"></div>
+        </div>
         <div class="fg"><label>Observações</label><textarea id="fob" placeholder="Notas sobre a empresa, contexto da operação..."></textarea></div>
       </div>
 
@@ -1684,8 +1689,10 @@ async function fetchCl() {
     };
   });
 }
-// Helper: nome principal do vendedor "responsável" pela empresa (do owner da última opp aberta)
+// Helper: nome do vendedor "responsável" pela empresa.
+// Prioridade: 1) campo explícito vendedor_responsavel_nome, 2) opp aberta, 3) primeira opp
 function empresaVendedor(c) {
+  if (c.vendedor_responsavel_nome) return c.vendedor_responsavel_nome;
   const opps = c.oportunidades || [];
   const aberta = opps.find(o => o.estagio !== 'ganha' && o.estagio !== 'perdida');
   return (aberta && aberta.seller_name) || (opps[0]?.seller_name) || null;
@@ -2304,6 +2311,8 @@ function abrNovo() {
   document.getElementById('serr').textContent='';
   document.getElementById('fn').classList.remove('err');
   document.getElementById('fn-err').classList.remove('show');
+  // Vendedor responsável: default = usuário logado
+  popularSelectVendedorResp(ME?.id || '');
   // LGPD reset
   document.getElementById('f-lgpd-consent').checked = false;
   document.getElementById('f-lgpd-info').innerHTML = '<span style="color:var(--mt2)">Marque se a empresa autoriza armazenamento e contato.</span>';
@@ -2333,6 +2342,7 @@ function abrEdit(id) {
   document.getElementById('f-fat').value      = c.faturamento_estimado || '';
   document.getElementById('f-classif').value  = c.classificacao || '';
   document.getElementById('fob').value        = c.observacoes || '';
+  popularSelectVendedorResp(c.vendedor_responsavel_id || '');
   // LGPD
   document.getElementById('f-lgpd-consent').checked = !!c.lgpd_consent_at;
   const consInfo = document.getElementById('f-lgpd-info');
@@ -2378,6 +2388,14 @@ function ehDono(rec) { return rec && rec.created_by === ME?.id; }
 function podeEditarEmpresa(c) { return ehAdmin() || ehDono(c); }
 function podeExcluirEmpresa(c) { return ehAdmin() || ehDono(c); }
 
+// Popula o select de vendedor responsável no modal de empresa
+function popularSelectVendedorResp(selectedId) {
+  const sel = document.getElementById('f-vendedor');
+  if (!sel) return;
+  const opts = [{ id: '', name: '— (sem responsável)' }, ...(PF||[]).slice().sort((a,b)=>(a.name||'').localeCompare(b.name||''))];
+  sel.innerHTML = opts.map(p => `<option value="${escHtml(p.id||'')}"${p.id===selectedId?' selected':''}>${escHtml(p.name||p.email||'?')}</option>`).join('');
+}
+
 function aplicarRoleBody() {
   const r = myRole();
   document.body.classList.remove('role-admin','role-vendedor','role-leitor');
@@ -2389,7 +2407,7 @@ async function checkSchema() {
   // Lista de tabelas + colunas que o app precisa. Se o Supabase rejeita
   // o select, sabemos que falta rodar o supabase_setup.sql.
   const PROBES = [
-    ['companies',            'id,razao_social,nome_fantasia,cnpj,ie,email,telefone,website,industria,faturamento_estimado,endereco,cidade,uf,cep,observacoes,internal_notes,classificacao,lgpd_consent_at,lgpd_consent_by,lgpd_delete_requested_at,lgpd_delete_requested_by,created_at,updated_at'],
+    ['companies',            'id,razao_social,nome_fantasia,cnpj,ie,email,telefone,website,industria,faturamento_estimado,endereco,cidade,uf,cep,observacoes,internal_notes,classificacao,vendedor_responsavel_id,vendedor_responsavel_nome,lgpd_consent_at,lgpd_consent_by,lgpd_delete_requested_at,lgpd_delete_requested_by,created_at,updated_at'],
     ['companies_with_tier',  'id,razao_social,cnpj,tier,opps_total,opps_abertas,opps_ganhas_total,opps_ganhas_12m,valor_pipeline'],
     ['profiles',             'id,name,email,role,seller_status,telefone,office_nome,office_email,office_telefone'],
     // ↓ funções de Sprint 5.1 (not tabela — checadas via .rpc se quiser depois)
@@ -2568,6 +2586,12 @@ document.getElementById('clf').addEventListener('submit', async e => {
       faturamento_estimado: document.getElementById('f-fat').value ? parseFloat(document.getElementById('f-fat').value) : null,
       classificacao:        document.getElementById('f-classif').value || null,
       observacoes:          document.getElementById('fob').value.trim() || null,
+      // Vendedor responsável (lookup do nome via PF)
+      ...(() => {
+        const vid = document.getElementById('f-vendedor').value || null;
+        const vp = vid ? PF.find(p => p.id === vid) : null;
+        return { vendedor_responsavel_id: vid, vendedor_responsavel_nome: vp?.name || null };
+      })(),
       // LGPD: timestamp só quando passa de off→on
       ...(() => {
         const cur = document.getElementById('f-lgpd-consent').checked;
@@ -3596,6 +3620,7 @@ function renderPfResumo(c) {
     ['Inscrição Estadual', c.ie],
     ['Indústria', c.industria],
     ['Classificação', CLASSIF_LBL[c.classificacao] || null],
+    ['Vendedor responsável', c.vendedor_responsavel_nome || null],
     ['Email', c.email],
     ['Telefone', c.telefone],
     ['Website', c.website],

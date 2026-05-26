@@ -127,6 +127,13 @@ ALTER TABLE public.companies
 -- Valores aceitos: 'lead_novo','prospect','cliente_ativo','inativo','indicacao' (text livre por flexibilidade)
 CREATE INDEX IF NOT EXISTS idx_companies_classificacao ON public.companies(classificacao);
 
+-- Sprint 6 (campo pedido apos auditoria): vendedor responsavel pela empresa
+-- (independente das oportunidades — segue a empresa mesmo quando nao ha opp aberta)
+ALTER TABLE public.companies
+  ADD COLUMN IF NOT EXISTS vendedor_responsavel_id   uuid REFERENCES public.profiles(id) ON DELETE SET NULL,
+  ADD COLUMN IF NOT EXISTS vendedor_responsavel_nome text;  -- denormalizado pra display rapido sem join
+CREATE INDEX IF NOT EXISTS idx_companies_vendedor_responsavel_id ON public.companies(vendedor_responsavel_id);
+
 ALTER TABLE public.companies ENABLE ROW LEVEL SECURITY;
 -- Sprint 5.1: RLS granular por role
 DROP POLICY IF EXISTS "auth_all_companies"      ON public.companies;

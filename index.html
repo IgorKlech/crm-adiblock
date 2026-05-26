@@ -362,6 +362,11 @@ td strong{color:var(--tx);font-weight:600}
 .tim{font-size:12px;color:var(--mt);line-height:1.4}
 .tcl{background:none;border:none;cursor:pointer;color:var(--mt);font-size:14px;padding:0;flex-shrink:0;line-height:1;transition:color .1s}
 .tcl:hover{color:var(--er)}
+/* Sprint 6.3: botao Desfazer no toast */
+.tundo{background:transparent;border:1px solid var(--p);color:var(--p);font-size:11px;font-weight:700;padding:4px 10px;border-radius:6px;cursor:pointer;font-family:inherit;text-transform:uppercase;letter-spacing:.5px;flex-shrink:0;transition:all .12s}
+.tundo:hover{background:var(--p);color:#fff}
+.tundo-bar{height:2px;background:var(--p);margin:8px -14px -12px -12px;border-radius:0 0 var(--r) var(--r);transform-origin:left;animation:tBar 7s linear forwards}
+@keyframes tBar{from{transform:scaleX(1)}to{transform:scaleX(0)}}
 @keyframes tIn{from{opacity:0;transform:translateX(10px)}to{opacity:1;transform:none}}
 
 /* ── Comercial ── */
@@ -404,6 +409,11 @@ td strong{color:var(--tx);font-weight:600}
 .gs-name{font-size:13px;font-weight:600;color:var(--tx);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .gs-sub{font-size:12px;color:var(--mt);margin-top:1px}
 .gs-empty{padding:32px;text-align:center;color:var(--mt);font-size:13px}
+/* Sprint 6.3: cabecalho de grupo na busca + tag de tipo */
+.gs-group{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.7px;color:var(--mt);padding:10px 16px 4px;background:var(--bg);border-bottom:1px solid var(--bdr)}
+.gs-tag{display:inline-block;font-size:9px;font-weight:700;padding:1px 6px;border-radius:99px;text-transform:uppercase;letter-spacing:.4px;margin-left:6px;vertical-align:middle}
+.gs-tag-cont{background:var(--ok2);color:var(--ok)}
+.gs-tag-prop{background:var(--wr2);color:var(--wr)}
 .gs-footer{padding:10px 16px;display:flex;align-items:center;gap:16px;background:var(--bg);border-top:1px solid var(--bdr)}
 .gs-hint{font-size:11px;color:var(--mt);display:flex;align-items:center;gap:5px}
 .gs-key{background:var(--sur);border:1px solid var(--bdr);border-radius:3px;padding:1px 5px;font-size:10px;color:var(--tx2)}
@@ -613,6 +623,22 @@ td strong{color:var(--tx);font-weight:600}
 .pf-card-sub b{color:var(--tx);font-weight:500}
 .pf-card-actions{display:flex;gap:4px;flex-shrink:0}
 .pf-empty{text-align:center;padding:30px 20px;color:var(--mt);font-size:13px;border:1px dashed var(--bdr2);border-radius:var(--rs);background:var(--bg)}
+/* Sprint 6.3: proximo passo sugerido */
+.pp{display:flex;align-items:center;gap:8px;margin-top:8px;padding:7px 10px;border-radius:7px;font-size:12px;line-height:1.4;border-left:3px solid var(--p);background:var(--ps);color:var(--tx)}
+.pp.pp-high{border-left-color:var(--er);background:var(--er2)}
+.pp.pp-med{border-left-color:var(--wr);background:var(--wr2)}
+.pp.pp-done{border-left-color:var(--ok);background:var(--ok2);color:var(--tx2)}
+.pp-ico{font-size:14px;flex-shrink:0}
+.pp-txt{flex:1}
+.pp-txt b{font-weight:700}
+/* Sprint 6.3: empty state com chamada de acao */
+.es-ico{font-size:32px;margin-bottom:6px;opacity:.6;display:block}
+.es-tit{font-size:14px;font-weight:600;color:var(--tx);margin-bottom:4px}
+.es-msg{font-size:12px;color:var(--mt);line-height:1.5;max-width:340px;margin:0 auto 12px}
+.es-cta{display:inline-block;padding:7px 16px;background:var(--p);color:#fff;border-radius:7px;font-size:12px;font-weight:600;cursor:pointer;border:none;font-family:inherit;transition:background .15s}
+.es-cta:hover{background:var(--ph)}
+.es-link{color:var(--p);font-weight:600;cursor:pointer;text-decoration:none}
+.es-link:hover{text-decoration:underline}
 .pf-int-row{padding:10px 14px;border-bottom:1px solid var(--bdr);font-size:13px}
 .pf-int-row:last-child{border-bottom:none}
 .pf-int-meta{display:flex;justify-content:space-between;color:var(--mt);font-size:11px;margin-bottom:3px}
@@ -1616,7 +1642,7 @@ body.role-leitor .read-only-banner{display:block}
   <div id="gs-box">
     <div id="gs-input-wrap">
       <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2"><circle cx="8.5" cy="8.5" r="5.5"/><path d="M15 15l-3-3"/></svg>
-      <input id="gs-input" placeholder="Buscar cliente por nome, telefone ou vendedor..." autocomplete="off">
+      <input id="gs-input" placeholder="Buscar empresa, contato ou proposta (Nº/ano)..." autocomplete="off">
       <span id="gs-kbd">ESC para fechar</span>
     </div>
     <div id="gs-results"></div>
@@ -1704,7 +1730,7 @@ function apiDelete(table, qs) {
 
 // ── Estado ────────────────────────────────────────────────────────────────
 let ME = null, MEP = null;
-let CL = [], PF = [], PRODS = [], TASKS = [];
+let CL = [], PF = [], PRODS = [], TASKS = [], PROPOSTAS = [];
 let PID = null, EID = null;
 let SCOL = 'created_at', SDIR = 'desc', CCB = null;
 const VND = ['Igor','Nádia','Letícia','Gracielle'];
@@ -1817,6 +1843,35 @@ function toast(tit, msg, tipo) {
   setTimeout(() => t?.parentNode && t.remove(), tipo==='warning' ? 10000 : 5000);
 }
 
+// Sprint 6.3: agenda uma acao reversivel — mostra toast com Desfazer (7s) e
+// so executa a acao se nao for desfeita. Padrao tipo Gmail "Mensagem enviada — Desfazer".
+function deferComUndo(tit, msg, acaoFn, undoMsg) {
+  const c = document.getElementById('tc');
+  const t = document.createElement('div');
+  t.className = 'toast';
+  t.innerHTML = '<span style="font-size:15px;flex-shrink:0">✓</span>'
+    +'<div class="tib"><div class="tit">'+escHtml(tit)+'</div>'+(msg?'<div class="tim">'+escHtml(msg)+'</div>':'')+'</div>'
+    +'<button class="tundo" type="button">Desfazer</button>'
+    +'<div class="tundo-bar"></div>';
+  c.appendChild(t);
+
+  let cancelado = false;
+  const remover = () => { try{ t.remove(); }catch{} };
+  const fim = setTimeout(async () => {
+    if (cancelado) return;
+    remover();
+    try { await acaoFn(); }
+    catch(err) { toast('Erro ao executar', err.message||'', 'warning'); }
+  }, 7000);
+
+  t.querySelector('.tundo').addEventListener('click', () => {
+    cancelado = true;
+    clearTimeout(fim);
+    remover();
+    toast(undoMsg || 'Ação desfeita', '', 'info');
+  });
+}
+
 // ── Confirm ───────────────────────────────────────────────────────────────
 function conf(tit, msg, cb) {
   document.getElementById('cotit').textContent = tit;
@@ -1869,6 +1924,8 @@ const fetchPf = () => api('GET','profiles','select=id,name,role,email&order=name
 const fetchProds = () => api('GET','products','select=nome,embalagem,preco_materia_prima,preco_office,preco_pj&order=nome,embalagem');
 // Sprint 6.2: tarefas livres (nao atreladas a oportunidade)
 const fetchTasks = () => api('GET','tasks','select=*,company:companies(id,razao_social),seller:profiles(id,name)&order=due_at.asc');
+// Sprint 6.3: propostas pra busca global (cabecalho minimo, snapshot pesado nao precisa)
+const fetchPropostas = () => api('GET','proposals','select=id,ano,numero,company_id,opportunity_id,seller_id,snapshot,created_at&order=created_at.desc&limit=500');
 // Sprint 3: histórico via interactions (por oportunidade) — stub por enquanto
 const fetchHist = id => Promise.resolve([]); // será refeito no Sprint 3.3 ligado a oportunidades
 function saveCl(d, id) {
@@ -2079,7 +2136,13 @@ function renderCl() {
   if (el) el.textContent = lst.length===tot ? tot+' empresa(s)' : lst.length+' de '+tot;
   const tb = document.getElementById('ctb');
   if (!lst.length) {
-    tb.innerHTML = '<tr><td colspan="9"><div class="se"><h3>Nenhuma empresa encontrada</h3><p>Ajuste os filtros ou cadastre uma nova.</p></div></td></tr>';
+    const semCadastro = CL.length === 0;
+    tb.innerHTML = '<tr><td colspan="9"><div class="se" style="padding:50px 20px">'
+      + '<span class="es-ico">🏢</span>'
+      + '<div class="es-tit">'+(semCadastro?'Sem empresas cadastradas':'Nenhuma empresa encontrada')+'</div>'
+      + '<div class="es-msg">'+(semCadastro?'Cadastre sua primeira empresa pra começar a gerar oportunidades.':'Tente ajustar os filtros acima ou cadastrar uma nova.')+'</div>'
+      + (semCadastro ? '<button class="es-cta write-only" onclick="document.getElementById(\'ncbtn\').click()">+ Nova Empresa</button>' : '<button class="es-cta" onclick="document.querySelectorAll(\'.filtro-clear\').forEach(b=>b.click());document.getElementById(\'srch\').value=\'\';renderCl()">Limpar filtros</button>')
+      + '</div></td></tr>';
     return;
   }
   tb.innerHTML = lst.map(c => {
@@ -2280,19 +2343,20 @@ async function toggleTaskDone(id, done) {
   }
 }
 
-async function deletarTask() {
+function deletarTask() {
   if (!TASK_EID) return;
-  if (!confirm('Excluir esta tarefa?')) return;
-  try {
-    await api('DELETE','tasks',`id=eq.${TASK_EID}`);
+  const id = TASK_EID;
+  const t  = TASKS.find(x => x.id === id);
+  const tit = t?.titulo || 'tarefa';
+  // Esconde da UI imediatamente; deleta no DB so apos 7s se nao desfizer
+  TASKS = TASKS.filter(x => x.id !== id);
+  fechaTask();
+  renderToday(); updateBell();
+  deferComUndo('Tarefa excluída', tit, async () => {
+    await api('DELETE','tasks',`id=eq.${id}`);
     TASKS = await fetchTasks();
-    fechaTask();
-    renderToday();
-    updateBell();
-    toast('Tarefa excluída','','success');
-  } catch(err) {
-    toast('Erro ao excluir', err.message||'', 'warning');
-  }
+    renderToday(); updateBell();
+  }, 'Exclusão cancelada');
 }
 
 // ── Sprint 6.1+6.2: Tela "Hoje/Agenda" — Lista ou Calendario Mensal ───────
@@ -3079,7 +3143,7 @@ async function iniciar(user) {
   // Schema check em background: se faltar coluna/tabela, mostra banner amarelo
   checkSchema().then(mostrarBannerSchema).catch(err => console.error('checkSchema falhou:', err));
   // Dados em paralelo
-  const [rp,rc,rpr,rt] = await Promise.allSettled([fetchPf(),fetchCl(),fetchProds(),fetchTasks()]);
+  const [rp,rc,rpr,rt,rpp] = await Promise.allSettled([fetchPf(),fetchCl(),fetchProds(),fetchTasks(),fetchPropostas()]);
   if (rc.status==='fulfilled') {
     CL=rc.value;
     try{localStorage.setItem('crm_cl',JSON.stringify(CL));}catch{}
@@ -3089,6 +3153,7 @@ async function iniciar(user) {
   if (rp.status==='fulfilled'&&rp.value.length>0) PF=rp.value;
   if (rpr.status==='fulfilled'&&Array.isArray(rpr.value)) PRODS=rpr.value;
   if (rt.status==='fulfilled'&&Array.isArray(rt.value)) TASKS=rt.value;
+  if (rpp.status==='fulfilled'&&Array.isArray(rpp.value)) PROPOSTAS=rpp.value;
   updSug(); popularSelectVisoes(); renderCl();
   const n=CL.filter(c=>venc(c.callback_date)&&c.status!=='Comprou'&&c.status!=='Inativo').length;
   if (n>0) toast(n+' retorno(s) vencido(s)',n+' cliente(s) com data vencida.','warning');
@@ -4310,7 +4375,12 @@ function renderPfContatos(c) {
           <button class="btn bod sm" onclick="delContato('${ct.id}','${escHtml(ct.nome).replace(/'/g,"\\'")}')">✕</button>
         </div>
       </div>`).join('')
-    : '<div class="pf-empty">Nenhum contato cadastrado ainda. Adicione o(s) responsável(eis) na empresa.</div>';
+    : `<div class="pf-empty">
+        <span class="es-ico">👤</span>
+        <div class="es-tit">Sem contatos cadastrados</div>
+        <div class="es-msg">Adicione o(s) responsável(eis) da empresa para registrar com quem você fala.</div>
+        <button class="es-cta write-only" onclick="abrContato('${c.id}')">+ Adicionar Contato</button>
+      </div>`;
   document.getElementById('pf-contatos').innerHTML = head + body;
 }
 
@@ -4330,6 +4400,44 @@ const CLASSIF_LBL = {
 
 // Sprint 4.2: bulk de oportunidades no perfil da empresa
 let pfOppSelected = new Set();
+
+// Sprint 6.3: sugere o proximo passo de acao para a oportunidade baseado em estagio + datas
+function proximoPasso(o) {
+  if (o.estagio === 'ganha')   return { txt: 'Oportunidade ganha. Boa venda!', urg: 'done', ico: '🏆' };
+  if (o.estagio === 'perdida') return { txt: `Oportunidade perdida${o.perda_motivo?' — '+escHtml(o.perda_motivo):''}.`, urg: 'done', ico: '🔒' };
+
+  const cbMs = o.callback_date ? new Date(o.callback_date).getTime() : null;
+  const agora = Date.now();
+  const fimHoje = (() => { const d = new Date(); d.setHours(23,59,59,999); return d.getTime(); })();
+  const estagioMs = o.estagio_changed_at ? new Date(o.estagio_changed_at).getTime() : null;
+  const diasNoEstagio = estagioMs ? Math.floor((agora - estagioMs) / 86400000) : null;
+
+  // Atrasado vale acima de tudo
+  if (cbMs && cbMs < agora) {
+    return { txt: `Retorno <b>atrasado</b> (${fRel(o.callback_date)}). Ligue agora.`, urg: 'high', ico: '⚠' };
+  }
+  if (cbMs && cbMs <= fimHoje) {
+    return { txt: `Retorno hoje às <b>${fHora(o.callback_date)}</b>.`, urg: 'med', ico: '📞' };
+  }
+
+  switch (o.estagio) {
+    case 'lead':
+      if (!cbMs && (diasNoEstagio==null || diasNoEstagio < 2)) return { txt: 'Faça o primeiro contato e qualifique a oportunidade.', urg: 'low', ico: '👋' };
+      if (!cbMs) return { txt: `Lead há <b>${diasNoEstagio} dias</b> sem contato. Ligue ou agende um retorno.`, urg: 'high', ico: '⏰' };
+      return { txt: `Retorno agendado para <b>${fDataHora(o.callback_date)}</b>.`, urg: 'low', ico: '📅' };
+    case 'qualificado':
+      if (!cbMs) return { txt: 'Pronto pra <b>gerar e enviar a proposta</b> comercial.', urg: 'med', ico: '📝' };
+      return { txt: `Retorno agendado para <b>${fDataHora(o.callback_date)}</b>. Preparar proposta?`, urg: 'low', ico: '📅' };
+    case 'proposta_enviada':
+      if (diasNoEstagio != null && diasNoEstagio >= 5 && !cbMs) return { txt: `Proposta enviada há <b>${diasNoEstagio} dias</b> sem retorno. Faça follow-up.`, urg: 'high', ico: '📨' };
+      if (cbMs) return { txt: `Follow-up agendado para <b>${fDataHora(o.callback_date)}</b>.`, urg: 'low', ico: '📅' };
+      return { txt: 'Aguardando resposta do cliente. Agende um follow-up.', urg: 'med', ico: '⏳' };
+    case 'em_negociacao':
+      if (!cbMs) return { txt: 'Em negociação sem próximo passo definido. Agende um retorno.', urg: 'med', ico: '🤝' };
+      return { txt: `Negociando — próximo contato em <b>${fDataHora(o.callback_date)}</b>.`, urg: 'low', ico: '🤝' };
+  }
+  return { txt: 'Defina o próximo passo desta oportunidade.', urg: 'low', ico: 'ℹ' };
+}
 
 function renderPfOportunidades(c) {
   const lista = c.oportunidades || [];
@@ -4375,6 +4483,7 @@ function renderPfOportunidades(c) {
             ${o.valor_estimado!=null?`Valor: <b>${fMoeda(o.valor_estimado)}</b>`:''}
             ${o.callback_date?` · Retorno: <b>${fDataHora(o.callback_date)}</b>`:''}
           </div>
+          ${(() => { const p = proximoPasso(o); return `<div class="pp pp-${p.urg}"><span class="pp-ico">${p.ico}</span><span class="pp-txt"><b>Próximo passo:</b> ${p.txt}</span></div>`; })()}
           <div class="pf-opp-actions">
             <button class="btn bg sm" onclick="abrInteracao('${o.id}','${c.id}')">Registrar interação</button>
             <button class="btn bg sm" onclick="abrCotacaoFromOpp('${o.id}','${c.id}')">Gerar proposta</button>
@@ -4384,7 +4493,12 @@ function renderPfOportunidades(c) {
         </div>
       </div>`;
       }).join('')
-    : '<div class="pf-empty">Nenhuma oportunidade ainda. Crie uma pra começar a registrar produtos e gerar propostas.</div>';
+    : `<div class="pf-empty">
+        <span class="es-ico">🎯</span>
+        <div class="es-tit">Sem oportunidades em aberto</div>
+        <div class="es-msg">Crie uma oportunidade pra registrar produtos, agendar retornos e gerar propostas.</div>
+        <button class="es-cta write-only" onclick="abrOpp('${c.id}')">+ Criar Oportunidade</button>
+      </div>`;
   document.getElementById('pf-oportunidades').innerHTML = head + bulkBar + body;
 }
 
@@ -4620,18 +4734,25 @@ document.getElementById('cont-f').addEventListener('submit', async e => {
 });
 
 function delContato(id, nome) {
-  conf('Excluir contato', `Remover "${nome}"?`, async () => {
+  // Sprint 6.3: esconde otimistamente e deleta no DB apos janela de Desfazer (7s)
+  const cli = CL.find(c => c.id === pfClientId);
+  if (cli) cli.contatos = (cli.contatos||[]).filter(x => x.id !== id);
+  if (cli) renderPfContatos(cli);
+  deferComUndo('Contato removido', nome, async () => {
     try {
       await apiDelete('contacts', `id=eq.${id}`);
       CL = await fetchCl();
       const c = CL.find(x => x.id === pfClientId);
       if (c) renderPfContatos(c);
-      toast('Contato removido','','success');
     } catch(err) {
       console.error('delContato:', err);
-      toast('Erro', err.message||'', 'warning');
+      toast('Erro ao excluir contato', err.message||'', 'warning');
+      // restaura: recarrega CL real
+      CL = await fetchCl();
+      const c = CL.find(x => x.id === pfClientId);
+      if (c) renderPfContatos(c);
     }
-  });
+  }, 'Contato restaurado');
 }
 
 // ── CRUD de Oportunidade (Sprint 3.3) ──────────────────────────────────
@@ -5439,22 +5560,40 @@ function hideSearch() {
 }
 function renderSearch(q) {
   const el = document.getElementById('gs-results');
-  const term = q.toLowerCase();
-  const res = !term ? CL.slice(0, 8) : CL.filter(c => {
+  const term = (q||'').toLowerCase().trim();
+  gsIdx = -1;
+
+  // Empresas (default: ultimas 8 quando vazio)
+  const emps = !term ? CL.slice(0, 8) : CL.filter(c => {
     const hay = ((c.razao_social||'')+' '+(c.nome_fantasia||'')+' '+(c.cnpj||'')+' '+(c.telefone||'')+' '+(c.email||'')+' '+(empresaVendedor(c)||'')).toLowerCase();
     return hay.includes(term);
-  }).slice(0, 10);
-  gsIdx = -1;
-  if (!res.length) {
-    el.innerHTML = '<div class="gs-empty">Nenhuma empresa encontrada</div>';
+  }).slice(0, 8);
+
+  // Contatos (cada contato vive dentro de uma empresa via CL[].contatos)
+  const conts = !term ? [] : CL.flatMap(c => (c.contatos||[]).map(ct => ({...ct, _company: c}))).filter(ct => {
+    const hay = ((ct.nome||'')+' '+(ct.cargo||'')+' '+(ct.email||'')+' '+(ct.telefone||'')).toLowerCase();
+    return hay.includes(term);
+  }).slice(0, 6);
+
+  // Propostas: busca por numero/ano "12/2026" ou pelo titulo da opp no snapshot
+  const props = !term ? [] : PROPOSTAS.filter(p => {
+    const num = `${p.numero}/${p.ano}`;
+    const tit = p.snapshot?.oportunidade?.titulo || '';
+    const emp = p.snapshot?.cliente?.name || '';
+    return num.includes(term) || tit.toLowerCase().includes(term) || emp.toLowerCase().includes(term);
+  }).slice(0, 6);
+
+  if (!emps.length && !conts.length && !props.length) {
+    el.innerHTML = '<div class="gs-empty">Nenhum resultado para "' + escHtml(q) + '"</div>';
     return;
   }
-  el.innerHTML = res.map((c,i) => {
+
+  const linhaEmp = c => {
     const nome = c.razao_social || '';
     const vend = empresaVendedor(c) || '';
     const sub  = [c.cnpj, c.cidade && c.uf?c.cidade+'/'+c.uf:'', vend].filter(Boolean).join(' · ');
     const tier = c.tier || 'lead';
-    return `<div class="gs-item" data-id="${c.id}" onclick="gsOpen('${c.id}')">
+    return `<div class="gs-item" data-action="emp" data-id="${c.id}" onclick="gsOpen('emp','${c.id}')">
       <div class="gs-av" style="background:${cor(nome)}">${ini(nome)}</div>
       <div class="gs-info">
         <div class="gs-name">${escHtml(nome)}</div>
@@ -5462,11 +5601,47 @@ function renderSearch(q) {
       </div>
       <span class="tier-badge tier-${tier}">${tier}</span>
     </div>`;
-  }).join('');
+  };
+
+  const linhaCont = ct => `<div class="gs-item" data-action="emp" data-id="${ct._company.id}" onclick="gsOpen('emp','${ct._company.id}')">
+    <div class="gs-av" style="background:${cor(ct.nome)}">${ini(ct.nome)}</div>
+    <div class="gs-info">
+      <div class="gs-name">${escHtml(ct.nome)} <span class="gs-tag gs-tag-cont">Contato</span></div>
+      <div class="gs-sub">${escHtml([ct.cargo, ct._company.razao_social, ct.email||ct.telefone].filter(Boolean).join(' · '))}</div>
+    </div>
+  </div>`;
+
+  const linhaProp = p => {
+    const empNome = p.snapshot?.cliente?.name || (CL.find(c=>c.id===p.company_id)?.razao_social) || '—';
+    const tit = p.snapshot?.oportunidade?.titulo || '';
+    const dt = new Date(p.created_at).toLocaleDateString('pt-BR');
+    return `<div class="gs-item" data-action="prop" data-id="${p.id}" onclick="gsOpen('prop','${p.id}')">
+      <div class="gs-av" style="background:var(--wr)">${p.numero}</div>
+      <div class="gs-info">
+        <div class="gs-name">Proposta ${p.numero}/${p.ano} <span class="gs-tag gs-tag-prop">Proposta</span></div>
+        <div class="gs-sub">${escHtml(empNome)}${tit?' · '+escHtml(tit):''} · ${dt}</div>
+      </div>
+    </div>`;
+  };
+
+  let html = '';
+  if (emps.length)  html += `<div class="gs-group">Empresas (${emps.length})</div>`  + emps.map(linhaEmp).join('');
+  if (conts.length) html += `<div class="gs-group">Contatos (${conts.length})</div>` + conts.map(linhaCont).join('');
+  if (props.length) html += `<div class="gs-group">Propostas (${props.length})</div>`+ props.map(linhaProp).join('');
+  el.innerHTML = html;
 }
-function gsOpen(id) {
+function gsOpen(tipo, id) {
   hideSearch();
-  abrPerfil(id);
+  if (tipo === 'prop') {
+    const p = PROPOSTAS.find(x => x.id === id);
+    if (!p) { toast('Proposta nao encontrada','','warning'); return; }
+    renderCotacao(p);
+    const page = document.getElementById('cot-page');
+    page.classList.add('op'); page.scrollTop = 0;
+    document.body.style.overflow = 'hidden';
+  } else {
+    abrPerfil(id);
+  }
 }
 function gsMove(dir) {
   const items = document.querySelectorAll('.gs-item');
@@ -5496,6 +5671,7 @@ function startAutoRefresh() {
       CL = fresh;
       try { localStorage.setItem('crm_cl', JSON.stringify(CL)); } catch {}
       try { TASKS = await fetchTasks(); } catch(e) { /* ignora se tabela ainda nao migrada */ }
+      try { PROPOSTAS = await fetchPropostas(); } catch(e) {}
       renderCl();
       updateBell();
       if (document.getElementById('td-view')?.classList.contains('ac')) renderToday();

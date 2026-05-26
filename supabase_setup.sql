@@ -822,6 +822,57 @@ CREATE INDEX IF NOT EXISTS idx_opportunities_callback_at
 
 
 -- -------------------------------------------------------------------------
+-- Sprint 6.2: tarefas livres (nao atreladas a oportunidade)
+-- Ex: "ligar pro fornecedor X", "revisar tabela de precos"
+-- -------------------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS public.tasks (
+  id          uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  seller_id   uuid REFERENCES public.profiles(id) ON DELETE CASCADE,
+  company_id  uuid REFERENCES public.companies(id) ON DELETE SET NULL,
+  titulo      text NOT NULL,
+  descricao   text,
+  due_at      timestamptz NOT NULL,
+  done        boolean NOT NULL DEFAULT false,
+  done_at     timestamptz,
+  created_at  timestamptz NOT NULL DEFAULT now(),
+  updated_at  timestamptz NOT NULL DEFAULT now()
+);
+
+CREATE INDEX IF NOT EXISTS idx_tasks_seller_due ON public.tasks(seller_id, due_at) WHERE NOT done;
+CREATE INDEX IF NOT EXISTS idx_tasks_company   ON public.tasks(company_id) WHERE company_id IS NOT NULL;
+
+ALTER TABLE public.tasks ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "tasks_select"      ON public.tasks;
+DROP POLICY IF EXISTS "tasks_insert"      ON public.tasks;
+DROP POLICY IF EXISTS "tasks_update_own"  ON public.tasks;
+DROP POLICY IF EXISTS "tasks_delete_own"  ON public.tasks;
+CREATE POLICY "tasks_select" ON public.tasks FOR SELECT TO authenticated USING (true);
+CREATE POLICY "tasks_insert" ON public.tasks FOR INSERT TO authenticated
+  WITH CHECK (NOT public.is_leitor() AND (seller_id = auth.uid() OR public.is_admin()));
+CREATE POLICY "tasks_update_own" ON public.tasks FOR UPDATE TO authenticated
+  USING (public.is_admin() OR seller_id = auth.uid())
+  WITH CHECK (public.is_admin() OR seller_id = auth.uid());
+CREATE POLICY "tasks_delete_own" ON public.tasks FOR DELETE TO authenticated
+  USING (public.is_admin() OR seller_id = auth.uid());
+
+CREATE OR REPLACE FUNCTION public.tasks_set_updated()
+RETURNS trigger LANGUAGE plpgsql AS $$
+BEGIN
+  NEW.updated_at = now();
+  IF NEW.done IS DISTINCT FROM OLD.done THEN
+    NEW.done_at = CASE WHEN NEW.done THEN now() ELSE NULL END;
+  END IF;
+  RETURN NEW;
+END $$;
+
+DROP TRIGGER IF EXISTS tg_tasks_updated ON public.tasks;
+CREATE TRIGGER tg_tasks_updated BEFORE UPDATE ON public.tasks
+  FOR EACH ROW EXECUTE FUNCTION public.tasks_set_updated();
+
+DO $$ BEGIN ALTER PUBLICATION supabase_realtime ADD TABLE public.tasks; EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+
+
+-- -------------------------------------------------------------------------
 -- 12) Recarrega o schema do PostgREST
 -- -------------------------------------------------------------------------
 NOTIFY pgrst, 'reload schema';

@@ -285,6 +285,44 @@ td strong{color:var(--tx);font-weight:600}
 .td-est{display:inline-block;font-size:10px;font-weight:600;padding:1px 7px;border-radius:99px;background:var(--bg);color:var(--mt);text-transform:uppercase;letter-spacing:.3px}
 .td-filtro-wrap{display:flex;align-items:center;gap:7px;font-size:13px;color:var(--tx2);cursor:pointer;user-select:none}
 .td-filtro-wrap input{accent-color:var(--p);cursor:pointer}
+/* Sprint 6.2: switcher Lista | Mes */
+.td-switch{display:inline-flex;background:var(--bg);border:1px solid var(--bdr);border-radius:8px;padding:2px;gap:2px}
+.td-sw{background:transparent;border:none;color:var(--mt);font-size:12px;font-weight:600;padding:6px 14px;border-radius:6px;cursor:pointer;font-family:inherit;transition:all .15s}
+.td-sw:hover{color:var(--tx)}
+.td-sw.ac{background:var(--sur);color:var(--tx);box-shadow:var(--sh)}
+/* Sprint 6.2: linha de tarefa (diferencia de callback) */
+.td-row.td-task{border-left:3px solid var(--ok);padding-left:11px}
+.td-row.td-task.done{opacity:.5}
+.td-row.td-task.done .td-emp{text-decoration:line-through}
+.td-task-check{width:20px;height:20px;flex-shrink:0;accent-color:var(--ok);cursor:pointer}
+.td-task-edit{font-size:11px;color:var(--p);cursor:pointer;font-weight:600;margin-left:auto;padding:4px 8px;border-radius:6px;background:transparent;border:none;font-family:inherit}
+.td-task-edit:hover{background:var(--bg)}
+.td-tipo{display:inline-block;font-size:9px;font-weight:700;padding:2px 6px;border-radius:99px;background:var(--ok);color:#fff;text-transform:uppercase;letter-spacing:.5px;margin-right:6px}
+.td-tipo.cb{background:var(--p)}
+/* Sprint 6.2: calendar grid */
+.cal-wrap{background:var(--sur);border:1px solid var(--bdr);border-radius:var(--rl);padding:16px;box-shadow:var(--sh)}
+.cal-nav{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;gap:10px}
+.cal-nav h3{font-size:16px;font-weight:600;color:var(--tx);text-transform:capitalize}
+.cal-nav-btns{display:flex;gap:6px}
+.cal-nav-btn{background:var(--bg);border:1px solid var(--bdr);color:var(--tx);width:30px;height:30px;border-radius:7px;cursor:pointer;font-size:14px;font-family:inherit;font-weight:600;display:flex;align-items:center;justify-content:center;transition:all .15s}
+.cal-nav-btn:hover{background:var(--bdr)}
+.cal-nav-today{padding:0 12px;width:auto;font-size:12px}
+.cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:2px;background:var(--bdr);border:1px solid var(--bdr);border-radius:8px;overflow:hidden}
+.cal-dow{background:var(--bg);text-align:center;font-size:11px;font-weight:700;color:var(--mt);text-transform:uppercase;padding:8px 0;letter-spacing:.5px}
+.cal-cell{background:var(--sur);min-height:88px;padding:6px;display:flex;flex-direction:column;gap:3px;cursor:pointer;transition:background .12s;position:relative}
+.cal-cell:hover{background:var(--bg)}
+.cal-cell.cal-other{background:var(--bg);opacity:.45}
+.cal-cell.cal-today{background:var(--ps)}
+.cal-cell.cal-today .cal-day{color:var(--p);font-weight:700}
+.cal-day{font-size:12px;font-weight:600;color:var(--tx)}
+.cal-ev{font-size:10px;padding:2px 5px;border-radius:4px;background:var(--p);color:#fff;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;line-height:1.4;cursor:pointer}
+.cal-ev.ev-task{background:var(--ok)}
+.cal-ev.ev-late{background:var(--er)}
+.cal-ev.ev-done{opacity:.45;text-decoration:line-through}
+.cal-ev-more{font-size:10px;color:var(--mt);font-weight:600;padding:1px 5px}
+/* Painel do dia clicado no calendario */
+.cal-day-pop{margin-top:16px;background:var(--bg);border:1px solid var(--bdr);border-radius:var(--rl);padding:14px}
+.cal-day-pop h4{font-size:13px;font-weight:600;color:var(--tx);margin-bottom:10px;text-transform:capitalize}
 /* Sprint 6.1: sininho de notificacoes */
 .bell-wrap{position:relative;width:34px;height:34px;border-radius:8px;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:16px;transition:all .15s;background:transparent;border:1px solid rgba(255,255,255,.15);margin-right:6px}
 .bell-wrap:hover{background:rgba(255,255,255,.08)}
@@ -886,14 +924,20 @@ body.role-leitor .read-only-banner{display:block}
   </nav>
 
   <div id="mc">
-    <!-- HOJE (Sprint 6.1) -->
+    <!-- HOJE / AGENDA (Sprint 6.1 + 6.2) -->
     <div id="td-view" class="vw ac">
       <div class="ph">
         <div><h2 id="td-saud">Hoje</h2><span class="ps" id="td-data">—</span></div>
-        <div class="pa">
+        <div class="pa" style="gap:14px;flex-wrap:wrap">
+          <div class="td-switch">
+            <button class="td-sw ac" data-view="lista" onclick="setTodayView('lista')">Lista</button>
+            <button class="td-sw" data-view="mes" onclick="setTodayView('mes')">Mês</button>
+          </div>
           <label class="td-filtro-wrap">
             <input type="checkbox" id="td-meus" checked> <span>Só os meus</span>
           </label>
+          <button class="btn bg sm write-only" onclick="abrTaskNova()">+ Nova Tarefa</button>
+          <button class="btn bg sm" onclick="exportarICS()" title="Baixa um arquivo .ics pra importar no Google Calendar/Outlook">📥 Exportar .ics</button>
         </div>
       </div>
       <div id="td-body" class="td-body">
@@ -1509,6 +1553,28 @@ body.role-leitor .read-only-banner{display:block}
   </div>
 </div>
 
+<!-- MODAL TAREFA (Sprint 6.2) -->
+<div class="mo" id="task-m">
+  <div class="md" style="max-width:540px">
+    <div class="mh"><h3 id="task-m-titulo">Nova Tarefa</h3><button class="mx" onclick="fechaTask()">✕</button></div>
+    <form id="task-f">
+      <div class="fg"><label>Título</label><input type="text" id="task-tit" placeholder="Ex: Ligar pro fornecedor X" required></div>
+      <div class="fr">
+        <div class="fg"><label>Prazo</label><input type="datetime-local" id="task-due" required></div>
+        <div class="fg"><label>Empresa (opcional)</label>
+          <select id="task-emp"><option value="">— Sem empresa —</option></select>
+        </div>
+      </div>
+      <div class="fg"><label>Descrição (opcional)</label><textarea id="task-desc" rows="3" placeholder="Detalhes..."></textarea></div>
+      <div class="ma">
+        <button type="button" class="btn bg" id="task-del-btn" onclick="deletarTask()" style="display:none;margin-right:auto;color:var(--er);border-color:var(--er)">Excluir</button>
+        <button type="button" class="btn bg" onclick="fechaTask()">Cancelar</button>
+        <button type="submit" class="btn bp" id="task-sub">Salvar</button>
+      </div>
+    </form>
+  </div>
+</div>
+
 <!-- MODAL IMPORTAR CSV — Sprint 4.5 reescrito para empresas -->
 <div class="mo" id="im">
   <div class="md" style="max-width:780px">
@@ -1638,7 +1704,7 @@ function apiDelete(table, qs) {
 
 // ── Estado ────────────────────────────────────────────────────────────────
 let ME = null, MEP = null;
-let CL = [], PF = [], PRODS = [];
+let CL = [], PF = [], PRODS = [], TASKS = [];
 let PID = null, EID = null;
 let SCOL = 'created_at', SDIR = 'desc', CCB = null;
 const VND = ['Igor','Nádia','Letícia','Gracielle'];
@@ -1801,6 +1867,8 @@ function empresaVendedor(c) {
 function empresaPipeline(c) { return c.valor_pipeline || 0; }
 const fetchPf = () => api('GET','profiles','select=id,name,role,email&order=name');
 const fetchProds = () => api('GET','products','select=nome,embalagem,preco_materia_prima,preco_office,preco_pj&order=nome,embalagem');
+// Sprint 6.2: tarefas livres (nao atreladas a oportunidade)
+const fetchTasks = () => api('GET','tasks','select=*,company:companies(id,razao_social),seller:profiles(id,name)&order=due_at.asc');
 // Sprint 3: histórico via interactions (por oportunidade) — stub por enquanto
 const fetchHist = id => Promise.resolve([]); // será refeito no Sprint 3.3 ligado a oportunidades
 function saveCl(d, id) {
@@ -2126,7 +2194,165 @@ document.addEventListener('click', (e) => {
   if (w && !w.contains(e.target)) fecharBell();
 });
 
-// ── Sprint 6.1: Tela "Hoje" — agenda do dia + atrasados + proximos 3 dias ──
+// ── Sprint 6.2: CRUD de Tarefas livres ────────────────────────────────────
+let TASK_EID = null;
+
+function popularTaskEmpresas() {
+  const sel = document.getElementById('task-emp');
+  if (!sel) return;
+  const cur = sel.value;
+  sel.innerHTML = '<option value="">— Sem empresa —</option>' +
+    CL.map(c => `<option value="${c.id}">${escHtml(c.razao_social)}</option>`).join('');
+  sel.value = cur || '';
+}
+
+function abrTaskNova(preDate) {
+  TASK_EID = null;
+  document.getElementById('task-m-titulo').textContent = 'Nova Tarefa';
+  document.getElementById('task-del-btn').style.display = 'none';
+  document.getElementById('task-tit').value = '';
+  document.getElementById('task-desc').value = '';
+  document.getElementById('task-emp').value = '';
+  // default: hoje 17:00 (ou data sugerida 09:00)
+  const d = preDate ? new Date(preDate) : new Date();
+  if (!preDate) d.setHours(17,0,0,0); else d.setHours(9,0,0,0);
+  document.getElementById('task-due').value = dtToInput(d.toISOString());
+  popularTaskEmpresas();
+  document.getElementById('task-m').classList.add('op');
+  setTimeout(()=>document.getElementById('task-tit').focus(), 100);
+}
+
+function abrTaskEdit(id) {
+  const t = TASKS.find(x => x.id === id);
+  if (!t) return;
+  TASK_EID = id;
+  document.getElementById('task-m-titulo').textContent = 'Editar Tarefa';
+  document.getElementById('task-del-btn').style.display = (t.seller_id === ME?.id || ME?.role === 'admin') ? '' : 'none';
+  document.getElementById('task-tit').value = t.titulo || '';
+  document.getElementById('task-desc').value = t.descricao || '';
+  popularTaskEmpresas();
+  document.getElementById('task-emp').value = t.company_id || '';
+  document.getElementById('task-due').value = dtToInput(t.due_at);
+  document.getElementById('task-m').classList.add('op');
+}
+
+function fechaTask() {
+  document.getElementById('task-m').classList.remove('op');
+  TASK_EID = null;
+}
+
+document.getElementById('task-f').addEventListener('submit', async e => {
+  e.preventDefault();
+  const btn = document.getElementById('task-sub');
+  btn.disabled = true; btn.textContent = 'Salvando...';
+  const payload = {
+    titulo:     document.getElementById('task-tit').value.trim(),
+    descricao:  document.getElementById('task-desc').value.trim() || null,
+    due_at:     inputToISO(document.getElementById('task-due').value),
+    company_id: document.getElementById('task-emp').value || null,
+  };
+  try {
+    if (TASK_EID) {
+      await api('PATCH','tasks',`id=eq.${TASK_EID}`, payload);
+    } else {
+      await api('POST','tasks',null, { ...payload, seller_id: ME.id });
+    }
+    TASKS = await fetchTasks();
+    fechaTask();
+    renderToday();
+    updateBell();
+    toast(TASK_EID ? 'Tarefa atualizada' : 'Tarefa criada', '', 'success');
+  } catch(err) {
+    toast('Erro ao salvar tarefa', err.message||'', 'warning');
+  } finally {
+    btn.disabled = false; btn.textContent = 'Salvar';
+  }
+});
+
+async function toggleTaskDone(id, done) {
+  try {
+    await api('PATCH','tasks',`id=eq.${id}`, { done });
+    TASKS = await fetchTasks();
+    renderToday();
+    updateBell();
+  } catch(err) {
+    toast('Erro ao atualizar tarefa', err.message||'', 'warning');
+  }
+}
+
+async function deletarTask() {
+  if (!TASK_EID) return;
+  if (!confirm('Excluir esta tarefa?')) return;
+  try {
+    await api('DELETE','tasks',`id=eq.${TASK_EID}`);
+    TASKS = await fetchTasks();
+    fechaTask();
+    renderToday();
+    updateBell();
+    toast('Tarefa excluída','','success');
+  } catch(err) {
+    toast('Erro ao excluir', err.message||'', 'warning');
+  }
+}
+
+// ── Sprint 6.1+6.2: Tela "Hoje/Agenda" — Lista ou Calendario Mensal ───────
+let TD_VIEW = 'lista';
+let CAL_REF = null; // 1o dia do mes que esta sendo exibido no calendario
+
+function setTodayView(v) {
+  TD_VIEW = v;
+  document.querySelectorAll('.td-sw').forEach(b => b.classList.toggle('ac', b.dataset.view === v));
+  renderToday();
+}
+
+// Unifica callbacks de oportunidades + tarefas livres num formato comum,
+// ja filtrado pelo "so meus" se aplicavel.
+function eventosAgenda() {
+  const soMeus = document.getElementById('td-meus')?.checked;
+  const meuId = ME?.id;
+  const meuNome = MEP?.name;
+  const mineSeller = o => !soMeus || (meuId && o.seller_id === meuId) || (meuNome && o.seller_name === meuNome);
+
+  const opps = todasOpps()
+    .filter(o => o.estagio !== 'ganha' && o.estagio !== 'perdida')
+    .filter(o => o.callback_date)
+    .filter(mineSeller)
+    .map(o => ({
+      tipo:        'cb',
+      id:          'o:'+o.id,
+      raw_id:      o.id,
+      at:          new Date(o.callback_date).getTime(),
+      atISO:       o.callback_date,
+      titulo:      o.titulo || '—',
+      empresa:     o.company_nome || '—',
+      company_id:  o.company_id,
+      seller_name: o.seller_name,
+      estagio:     o.estagio,
+      obra:        o.obra,
+      valor:       o.valor_estimado,
+      done:        false,
+    }));
+
+  const tks = (TASKS||[])
+    .filter(t => !soMeus || (meuId && t.seller_id === meuId))
+    .map(t => ({
+      tipo:        'task',
+      id:          't:'+t.id,
+      raw_id:      t.id,
+      at:          new Date(t.due_at).getTime(),
+      atISO:       t.due_at,
+      titulo:      t.titulo,
+      descricao:   t.descricao,
+      empresa:     t.company?.razao_social || null,
+      company_id:  t.company_id,
+      seller_name: t.seller?.name,
+      seller_id:   t.seller_id,
+      done:        !!t.done,
+    }));
+
+  return [...opps, ...tks];
+}
+
 function renderToday() {
   const saud = document.getElementById('td-saud');
   const dataEl = document.getElementById('td-data');
@@ -2141,44 +2367,53 @@ function renderToday() {
   saud.textContent = `${cum}${eu?', '+eu:''}!`;
   dataEl.textContent = agora.toLocaleDateString('pt-BR', { weekday:'long', day:'2-digit', month:'long', year:'numeric' });
 
-  const soMeus = document.getElementById('td-meus')?.checked;
-  const meuId = ME?.id;
-  const meuNome = MEP?.name;
+  if (TD_VIEW === 'mes') renderCalendarioMes(body);
+  else renderListaHoje(body);
+}
 
-  const opps = todasOpps()
-    .filter(o => o.estagio !== 'ganha' && o.estagio !== 'perdida')
-    .filter(o => o.callback_date)
-    .filter(o => !soMeus || (meuId && o.seller_id === meuId) || (meuNome && o.seller_name === meuNome));
-
-  const agoraMs = agora.getTime();
+function renderListaHoje(body) {
+  const evs = eventosAgenda();
+  const agoraMs = Date.now();
   const fimHoje = new Date(); fimHoje.setHours(23,59,59,999);
   const fimHojeMs = fimHoje.getTime();
   const fim3d = new Date(fimHojeMs + 3*86400000).getTime();
 
-  const cbMs = o => new Date(o.callback_date).getTime();
+  const atrasados = evs.filter(e => !e.done && e.at < agoraMs).sort((a,b)=>b.at-a.at);
+  const hoje      = evs.filter(e => !e.done && e.at >= agoraMs && e.at <= fimHojeMs).sort((a,b)=>a.at-b.at);
+  const proximos  = evs.filter(e => !e.done && e.at > fimHojeMs && e.at <= fim3d).sort((a,b)=>a.at-b.at);
 
-  const atrasados = opps.filter(o => cbMs(o) < agoraMs).sort((a,b)=>cbMs(b)-cbMs(a));
-  const hoje      = opps.filter(o => cbMs(o) >= agoraMs && cbMs(o) <= fimHojeMs).sort((a,b)=>cbMs(a)-cbMs(b));
-  const proximos  = opps.filter(o => cbMs(o) > fimHojeMs && cbMs(o) <= fim3d).sort((a,b)=>cbMs(a)-cbMs(b));
-
-  const linha = (o, late=false) => {
-    const dt = new Date(o.callback_date);
+  const linha = (e, late=false) => {
+    const dt = new Date(e.at);
     const horaTxt = dt.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
     const diaTxt = dt.toLocaleDateString('pt-BR',{day:'2-digit',month:'2-digit'});
-    const mostraDia = late || (cbMs(o) > fimHojeMs);
-    return `<div class="td-row" onclick="abrPerfil('${o.company_id}')">
-      <div class="td-time ${late?'td-late-time':''}">
-        ${horaTxt}
-        <small>${mostraDia?diaTxt:'hoje'}</small>
-      </div>
+    const mostraDia = late || (e.at > fimHojeMs);
+    if (e.tipo === 'task') {
+      return `<div class="td-row td-task ${e.done?'done':''}">
+        <input type="checkbox" class="td-task-check" ${e.done?'checked':''} onclick="event.stopPropagation();toggleTaskDone('${e.raw_id}',this.checked)" title="Marcar como concluida">
+        <div class="td-time ${late?'td-late-time':''}">${horaTxt}<small>${mostraDia?diaTxt:'hoje'}</small></div>
+        <div class="td-info" onclick="abrTaskEdit('${e.raw_id}')" style="cursor:pointer">
+          <div class="td-emp"><span class="td-tipo">Tarefa</span>${escHtml(e.titulo)}</div>
+          ${e.empresa?`<div class="td-tit">${escHtml(e.empresa)}</div>`:''}
+          <div class="td-meta">
+            <span>${escHtml(e.seller_name||'—')}</span>
+            ${e.descricao?`<span>${escHtml(e.descricao.slice(0,60))}${e.descricao.length>60?'...':''}</span>`:''}
+            ${late?`<span style="color:var(--er);font-weight:600">${fRel(e.atISO)}</span>`:''}
+          </div>
+        </div>
+        <button class="td-task-edit" onclick="event.stopPropagation();abrTaskEdit('${e.raw_id}')">Editar</button>
+      </div>`;
+    }
+    // callback de oportunidade
+    return `<div class="td-row" onclick="abrPerfil('${e.company_id}')">
+      <div class="td-time ${late?'td-late-time':''}">${horaTxt}<small>${mostraDia?diaTxt:'hoje'}</small></div>
       <div class="td-info">
-        <div class="td-emp">${escHtml(o.company_nome||'—')} <span class="td-est">${ESTAGIO_LBL?.[o.estagio]||o.estagio}</span></div>
-        <div class="td-tit">${escHtml(o.titulo||'—')}</div>
+        <div class="td-emp"><span class="td-tipo cb">Retorno</span>${escHtml(e.empresa)} <span class="td-est">${ESTAGIO_LBL?.[e.estagio]||e.estagio}</span></div>
+        <div class="td-tit">${escHtml(e.titulo)}</div>
         <div class="td-meta">
-          <span>${escHtml(o.seller_name||'Sem vendedor')}</span>
-          ${o.obra?`<span>Obra: ${escHtml(o.obra)}</span>`:''}
-          ${o.valor_estimado!=null?`<span>${fMoeda(o.valor_estimado)}</span>`:''}
-          ${late?`<span style="color:var(--er);font-weight:600">${fRel(o.callback_date)}</span>`:''}
+          <span>${escHtml(e.seller_name||'Sem vendedor')}</span>
+          ${e.obra?`<span>Obra: ${escHtml(e.obra)}</span>`:''}
+          ${e.valor!=null?`<span>${fMoeda(e.valor)}</span>`:''}
+          ${late?`<span style="color:var(--er);font-weight:600">${fRel(e.atISO)}</span>`:''}
         </div>
       </div>
     </div>`;
@@ -2189,13 +2424,153 @@ function renderToday() {
       <div class="td-sec-h">
         <h3>${titulo} <span class="td-badge ${badgeCls}">${lista.length}</span></h3>
       </div>
-      ${lista.length ? lista.map(o=>linha(o, badgeCls==='td-late')).join('') : `<div class="td-empty">${vazia}</div>`}
+      ${lista.length ? lista.map(e=>linha(e, badgeCls==='td-late')).join('') : `<div class="td-empty">${vazia}</div>`}
     </div>`;
 
   body.innerHTML =
     sec('⚠ Atrasados', atrasados, 'td-late', 'Nenhum retorno atrasado. ') +
     sec('Hoje', hoje, 'td-now', 'Nenhum retorno agendado pra hoje.') +
     sec('Próximos 3 dias', proximos, 'td-soon', 'Agenda livre nos próximos 3 dias.');
+}
+
+function renderCalendarioMes(body) {
+  if (!CAL_REF) {
+    CAL_REF = new Date();
+    CAL_REF.setDate(1); CAL_REF.setHours(0,0,0,0);
+  }
+  const ano = CAL_REF.getFullYear();
+  const mes = CAL_REF.getMonth();
+  const primDia = new Date(ano, mes, 1);
+  const ultDia  = new Date(ano, mes+1, 0);
+  // Comeca no domingo da semana do dia 1
+  const inicio = new Date(primDia);
+  inicio.setDate(inicio.getDate() - inicio.getDay());
+  // Termina no sabado da semana do ultimo dia
+  const fim = new Date(ultDia);
+  fim.setDate(fim.getDate() + (6 - fim.getDay()));
+
+  // Agrupa eventos por dia YYYY-MM-DD
+  const evs = eventosAgenda();
+  const porDia = new Map();
+  evs.forEach(e => {
+    const d = new Date(e.at);
+    const k = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+    if (!porDia.has(k)) porDia.set(k, []);
+    porDia.get(k).push(e);
+  });
+
+  const hojeKey = (()=>{ const t=new Date(); return `${t.getFullYear()}-${String(t.getMonth()+1).padStart(2,'0')}-${String(t.getDate()).padStart(2,'0')}`;})();
+  const agoraMs = Date.now();
+
+  const dows = ['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'];
+  let html = `<div class="cal-wrap">
+    <div class="cal-nav">
+      <h3>${primDia.toLocaleDateString('pt-BR',{month:'long',year:'numeric'})}</h3>
+      <div class="cal-nav-btns">
+        <button class="cal-nav-btn" onclick="calNav(-1)" title="Mês anterior">‹</button>
+        <button class="cal-nav-btn cal-nav-today" onclick="calNav(0)" title="Hoje">Hoje</button>
+        <button class="cal-nav-btn" onclick="calNav(1)" title="Próximo mês">›</button>
+      </div>
+    </div>
+    <div class="cal-grid">
+      ${dows.map(d=>`<div class="cal-dow">${d}</div>`).join('')}`;
+
+  const cur = new Date(inicio);
+  while (cur <= fim) {
+    const k = `${cur.getFullYear()}-${String(cur.getMonth()+1).padStart(2,'0')}-${String(cur.getDate()).padStart(2,'0')}`;
+    const outroMes = cur.getMonth() !== mes;
+    const eHoje = k === hojeKey;
+    const eventosDia = (porDia.get(k) || []).sort((a,b)=>a.at-b.at);
+    const top3 = eventosDia.slice(0,3);
+    const extra = eventosDia.length - top3.length;
+    const evHtml = top3.map(e => {
+      const cls = e.done ? 'ev-done' : (e.tipo==='task' ? 'ev-task' : (e.at < agoraMs ? 'ev-late' : ''));
+      const tipoCls = e.tipo === 'task' ? 'ev-task' : '';
+      const t = new Date(e.at).toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
+      const click = e.tipo==='task' ? `abrTaskEdit('${e.raw_id}')` : `abrPerfil('${e.company_id}')`;
+      return `<div class="cal-ev ${cls||tipoCls}" onclick="event.stopPropagation();${click}" title="${escHtml(e.empresa||e.titulo)}">${t} ${escHtml(e.tipo==='task'?e.titulo:(e.empresa||e.titulo))}</div>`;
+    }).join('');
+    const moreLink = extra > 0 ? `<div class="cal-ev-more">+${extra}</div>` : '';
+    const cellCls = ['cal-cell', outroMes?'cal-other':'', eHoje?'cal-today':''].filter(Boolean).join(' ');
+    html += `<div class="${cellCls}" onclick="abrTaskNova('${cur.toISOString()}')" title="Clique pra criar tarefa">
+      <div class="cal-day">${cur.getDate()}</div>
+      ${evHtml}${moreLink}
+    </div>`;
+    cur.setDate(cur.getDate()+1);
+  }
+
+  html += `</div></div>`;
+  body.innerHTML = html;
+}
+
+function calNav(dir) {
+  if (!CAL_REF) { CAL_REF = new Date(); CAL_REF.setDate(1); CAL_REF.setHours(0,0,0,0); }
+  if (dir === 0) {
+    CAL_REF = new Date(); CAL_REF.setDate(1); CAL_REF.setHours(0,0,0,0);
+  } else {
+    CAL_REF.setMonth(CAL_REF.getMonth() + dir);
+  }
+  renderToday();
+}
+
+// ── Sprint 6.2: Export .ics (Google Calendar / Outlook / Apple Calendar) ──
+function exportarICS() {
+  const evs = eventosAgenda().filter(e => !e.done);
+  if (!evs.length) {
+    toast('Nada pra exportar', 'Sem retornos nem tarefas pendentes', 'warning');
+    return;
+  }
+  // ICS exige UTC no formato YYYYMMDDTHHMMSSZ
+  const toICS = ts => {
+    const d = new Date(ts);
+    const pad = n => String(n).padStart(2,'0');
+    return `${d.getUTCFullYear()}${pad(d.getUTCMonth()+1)}${pad(d.getUTCDate())}T${pad(d.getUTCHours())}${pad(d.getUTCMinutes())}${pad(d.getUTCSeconds())}Z`;
+  };
+  // Escapa caracteres especiais segundo RFC 5545
+  const esc = s => String(s||'').replace(/\\/g,'\\\\').replace(/;/g,'\\;').replace(/,/g,'\\,').replace(/\n/g,'\\n');
+
+  const now = toICS(Date.now());
+  const ev = evs.map(e => {
+    const start = e.at;
+    const end   = start + 30*60*1000; // 30 min default
+    const titulo = e.tipo === 'task'
+      ? `[Tarefa] ${e.titulo}`
+      : `[Retorno] ${e.empresa} — ${e.titulo}`;
+    const desc = e.tipo === 'task'
+      ? (e.descricao || '') + (e.empresa ? `\\nEmpresa: ${e.empresa}` : '')
+      : `Oportunidade: ${e.titulo}\\nVendedor: ${e.seller_name||'—'}${e.obra?`\\nObra: ${e.obra}`:''}`;
+    return `BEGIN:VEVENT
+UID:${e.id}@adiblock-crm
+DTSTAMP:${now}
+DTSTART:${toICS(start)}
+DTEND:${toICS(end)}
+SUMMARY:${esc(titulo)}
+DESCRIPTION:${esc(desc)}
+${e.empresa ? 'LOCATION:'+esc(e.empresa) : ''}
+END:VEVENT`;
+  }).join('\n');
+
+  const ics = `BEGIN:VCALENDAR
+VERSION:2.0
+PRODID:-//Adiblock//CRM Comercial//PT-BR
+CALSCALE:GREGORIAN
+METHOD:PUBLISH
+X-WR-CALNAME:Agenda Adiblock${MEP?.name?' — '+MEP.name:''}
+X-WR-TIMEZONE:America/Sao_Paulo
+${ev}
+END:VCALENDAR`;
+
+  const blob = new Blob([ics], { type: 'text/calendar;charset=utf-8' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  const stamp = new Date().toISOString().slice(0,10);
+  a.download = `agenda-adiblock-${stamp}.ics`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+  toast('Agenda exportada', `${evs.length} evento(s) no .ics`, 'success');
 }
 
 async function renderDb() {
@@ -2704,7 +3079,7 @@ async function iniciar(user) {
   // Schema check em background: se faltar coluna/tabela, mostra banner amarelo
   checkSchema().then(mostrarBannerSchema).catch(err => console.error('checkSchema falhou:', err));
   // Dados em paralelo
-  const [rp,rc,rpr] = await Promise.allSettled([fetchPf(),fetchCl(),fetchProds()]);
+  const [rp,rc,rpr,rt] = await Promise.allSettled([fetchPf(),fetchCl(),fetchProds(),fetchTasks()]);
   if (rc.status==='fulfilled') {
     CL=rc.value;
     try{localStorage.setItem('crm_cl',JSON.stringify(CL));}catch{}
@@ -2713,6 +3088,7 @@ async function iniciar(user) {
   }
   if (rp.status==='fulfilled'&&rp.value.length>0) PF=rp.value;
   if (rpr.status==='fulfilled'&&Array.isArray(rpr.value)) PRODS=rpr.value;
+  if (rt.status==='fulfilled'&&Array.isArray(rt.value)) TASKS=rt.value;
   updSug(); popularSelectVisoes(); renderCl();
   const n=CL.filter(c=>venc(c.callback_date)&&c.status!=='Comprou'&&c.status!=='Inativo').length;
   if (n>0) toast(n+' retorno(s) vencido(s)',n+' cliente(s) com data vencida.','warning');
@@ -5119,6 +5495,7 @@ function startAutoRefresh() {
       const fresh = await fetchCl();
       CL = fresh;
       try { localStorage.setItem('crm_cl', JSON.stringify(CL)); } catch {}
+      try { TASKS = await fetchTasks(); } catch(e) { /* ignora se tabela ainda nao migrada */ }
       renderCl();
       updateBell();
       if (document.getElementById('td-view')?.classList.contains('ac')) renderToday();
@@ -5149,6 +5526,7 @@ function scheduleRealtimeRefresh() {
     try {
       CL = await fetchCl();
       try { localStorage.setItem('crm_cl', JSON.stringify(CL)); } catch {}
+      try { TASKS = await fetchTasks(); } catch(e) { /* ignora se tabela ainda nao migrada */ }
       renderCl();
       updateBell();
       const dbView = document.getElementById('db-view');
@@ -5171,6 +5549,7 @@ function startRealtime() {
       .on('postgres_changes', { event: '*', schema: 'public', table: 'opportunities' },        scheduleRealtimeRefresh)
       .on('postgres_changes', { event: '*', schema: 'public', table: 'opportunity_products' }, scheduleRealtimeRefresh)
       .on('postgres_changes', { event: '*', schema: 'public', table: 'interactions' },         scheduleRealtimeRefresh)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'tasks' },                scheduleRealtimeRefresh)
       .subscribe(status => {
         if (status === 'SUBSCRIBED') console.info('Realtime conectado');
         else if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT') console.warn('Realtime status:', status);

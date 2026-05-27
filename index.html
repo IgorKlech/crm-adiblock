@@ -810,17 +810,36 @@ body.role-leitor .read-only-banner{display:block}
 .cot-page-break{page-break-after:always}
 @media print{.cot-page-break{page-break-after:always}}
 
+/* Sprint 6.4: Pedido de Producao (para a fabrica - sem valores) */
+#prod-page{display:none;position:fixed;inset:0;background:var(--bg);z-index:296;overflow-y:auto}
+#prod-page.op{display:block}
+.prod-info-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px 32px;font-size:12px;margin-bottom:16px}
+.prod-info-grid div{display:flex;gap:8px;align-items:baseline;border-bottom:1px dashed var(--bdr);padding-bottom:4px}
+.prod-info-grid div span{color:var(--mt);font-weight:600;min-width:88px}
+.prod-info-grid div b{color:var(--tx);font-weight:600}
+.prod-solic{background:var(--bg);border:1px solid var(--bdr);border-radius:8px;padding:10px 14px;margin-bottom:14px;display:flex;align-items:center;gap:10px;font-size:13px}
+.prod-solic span{color:var(--mt);font-weight:600}
+.prod-solic b{color:var(--tx);font-size:14px;font-weight:700}
+.prod-tab{width:100%;border-collapse:collapse;font-size:12.5px;margin-top:4px;table-layout:fixed}
+.prod-tab th{background:var(--ps);color:var(--p);text-align:left;padding:8px 8px;font-weight:600;font-size:10px;text-transform:uppercase;letter-spacing:.04em;border-bottom:1.5px solid var(--p);word-wrap:break-word}
+.prod-tab td{padding:14px 8px;border-bottom:1px solid var(--bdr2);word-wrap:break-word;vertical-align:top;min-height:32px}
+.prod-tab .num{text-align:right;font-variant-numeric:tabular-nums}
+.prod-tab tr.prod-empty td{height:34px}
+.prod-obs-box{margin-top:18px;border:1.5px solid var(--bdr2);border-radius:8px;padding:14px 16px;font-size:12.5px;line-height:1.6;color:var(--tx);background:#fff}
+.prod-obs-box b{color:var(--mt);font-weight:700;text-transform:uppercase;font-size:10px;letter-spacing:.04em;display:block;margin-bottom:6px}
+
 /* ── @media print ── */
 @media print{
   /* Esconde TUDO por padrão (app principal, login, painéis, modais, banners) */
   body > *{display:none!important}
-  /* Mostra apenas a página que está sendo impressa (cot-page ou rel-page) */
+  /* Mostra apenas a página que está sendo impressa (cot-page, rel-page ou prod-page) */
   body > #cot-page.op,
-  body > #rel-page.op{display:block!important;position:static!important;overflow:visible!important;background:#fff!important;z-index:auto!important}
+  body > #rel-page.op,
+  body > #prod-page.op{display:block!important;position:static!important;overflow:visible!important;background:#fff!important;z-index:auto!important}
   /* Esconde topbars das páginas impressas (só conteúdo) */
-  .rel-topbar,.cot-topbar{display:none!important}
+  .rel-topbar,.cot-topbar,.prod-topbar{display:none!important}
   body{background:#fff!important}
-  .rel-card,.rel-table,.rel-section,.cot-sect,.cot-tab tr{break-inside:avoid}
+  .rel-card,.rel-table,.rel-section,.cot-sect,.cot-tab tr,.prod-tab tr{break-inside:avoid}
   .cot-body{border:none!important;margin:0!important;padding:0!important;max-width:100%!important}
   @page{margin:2cm}
 }
@@ -1402,10 +1421,42 @@ body.role-leitor .read-only-banner{display:block}
       <span style="font-size:15px;font-weight:600;color:var(--tx)">Proposta Comercial</span>
     </div>
     <div style="display:flex;gap:8px">
+      <button class="btn bg sm" onclick="abrirModalPedidoProducao()" title="Gera versao sem valores pra mandar pra fabrica">📋 Pedido de Produção</button>
       <button class="btn bg sm" onclick="window.print()">🖨 Imprimir / PDF</button>
     </div>
   </div>
   <div id="cot-body"></div>
+</div>
+
+<!-- Sprint 6.4: Pedido de Producao (sem valores, pra fabrica + NF) -->
+<div id="prod-page">
+  <div class="rel-topbar cot-topbar prod-topbar">
+    <div style="display:flex;align-items:center;gap:12px">
+      <button class="pf-back" onclick="fecharProducao()">← Voltar para Proposta</button>
+      <span style="font-size:15px;font-weight:600;color:var(--tx)">Pedido de Produção</span>
+    </div>
+    <div style="display:flex;gap:8px">
+      <button class="btn bg sm" onclick="window.print()">🖨 Imprimir / PDF</button>
+    </div>
+  </div>
+  <div id="prod-body"></div>
+</div>
+
+<!-- Modal: solicita 'Quem solicitou' e observacoes da producao -->
+<div class="mo" id="prod-req-m" style="z-index:310">
+  <div class="md" style="max-width:480px">
+    <div class="mh"><h3>Gerar Pedido de Produção</h3><button class="mx" onclick="document.getElementById('prod-req-m').classList.remove('op')">✕</button></div>
+    <form id="prod-req-f">
+      <div class="fg"><label>Quem solicitou (interno) <span style="color:var(--mt);font-weight:400;font-size:11px">— ex: ANA, vendedor de office</span></label>
+        <input type="text" id="prod-req-solic" placeholder="Nome da pessoa" required></div>
+      <div class="fg"><label>Observações para a produção <span style="color:var(--mt);font-weight:400;font-size:11px">— opcional</span></label>
+        <textarea id="prod-req-obs" rows="3" placeholder="Instruções de embalagem, rotulagem, prazo etc."></textarea></div>
+      <div class="ma">
+        <button type="button" class="btn bg" onclick="document.getElementById('prod-req-m').classList.remove('op')">Cancelar</button>
+        <button type="submit" class="btn bp">Gerar pedido</button>
+      </div>
+    </form>
+  </div>
 </div>
 
 <!-- PÁGINA DE PERFIL DO CLIENTE -->
@@ -3614,6 +3665,115 @@ function fecharCotacao() {
   document.body.style.overflow = '';
 }
 
+// ── Sprint 6.4: Pedido de Producao (para fabrica, sem valores) ────────────
+let PROP_ATUAL = null;
+
+function abrirModalPedidoProducao() {
+  if (!PROP_ATUAL) { toast('Sem proposta carregada','','warning'); return; }
+  // Default do solicitante: nome do contato responsavel da proposta
+  const solicDefault = PROP_ATUAL.snapshot?.cliente?.contato_outros?.split('(')[0]?.trim() || '';
+  document.getElementById('prod-req-solic').value = solicDefault;
+  document.getElementById('prod-req-obs').value = '';
+  document.getElementById('prod-req-m').classList.add('op');
+  setTimeout(() => document.getElementById('prod-req-solic').focus(), 80);
+}
+
+document.getElementById('prod-req-f').addEventListener('submit', e => {
+  e.preventDefault();
+  const solic = document.getElementById('prod-req-solic').value.trim();
+  const obs   = document.getElementById('prod-req-obs').value.trim();
+  if (!solic) return;
+  document.getElementById('prod-req-m').classList.remove('op');
+  renderPedidoProducao(PROP_ATUAL, solic, obs);
+  document.getElementById('prod-page').classList.add('op');
+  document.getElementById('prod-page').scrollTop = 0;
+  document.body.style.overflow = 'hidden';
+});
+
+function fecharProducao() {
+  document.getElementById('prod-page').classList.remove('op');
+  // Volta pra cot-page (que continua atras com a proposta original)
+  // body overflow ja esta hidden por causa da cot-page
+}
+
+function renderPedidoProducao(prop, solicitante, obsProd) {
+  const snap = prop.snapshot || {};
+  const c    = snap.cliente || {};
+  const prods= snap.produtos || [];
+
+  const dataStr = new Date(prop.created_at || Date.now()).toLocaleDateString('pt-BR');
+  const propLabel = numProposta(prop);
+  const enderecoFull = [c.endereco, c.cidade && c.uf ? c.cidade+'/'+c.uf : (c.cidade||c.uf||''), c.cep ? 'CEP '+c.cep : null].filter(Boolean).join(' — ');
+
+  // Linhas de produtos (sem valores monetarios)
+  const rowsHtml = prods.map(p => {
+    const q = p.qtd_kg != null ? Number(p.qtd_kg).toLocaleString('pt-BR') : '—';
+    return `<tr>
+      <td class="num">${p.item||''}</td>
+      <td><b>${escHtml(p.produto)}</b>${p.embalagem?` <span style="color:var(--mt)">(${escHtml(p.embalagem)})</span>`:''}</td>
+      <td class="num">${q}</td>
+      <td>${escHtml(p.classificacao_risco||'—')}</td>
+    </tr>`;
+  }).join('');
+
+  // Linhas em branco pra preencher a mao se imprimir (mantem visual do modelo antigo)
+  const blanks = Math.max(0, 6 - prods.length);
+  const blankRows = Array.from({length: blanks}).map(() => `<tr class="prod-empty"><td></td><td></td><td></td><td></td></tr>`).join('');
+
+  document.getElementById('prod-body').innerHTML = `<div class="cot-body">
+    <div class="cot-header">
+      <div class="cot-logo-wrap">
+        <img src="logo.png" alt="Adiblock">
+        <div>
+          <div class="cot-title">Adiblock — Aditivos para Concretos</div>
+          <div class="cot-h1">Pedido de Produção</div>
+        </div>
+      </div>
+      <div class="cot-meta">
+        <div>Pedido: <b>${escHtml(propLabel)}</b></div>
+        <div>Data: <b>${dataStr}</b></div>
+      </div>
+    </div>
+
+    <div class="prod-info-grid">
+      <div><span>Cliente:</span> <b>${escHtml(c.name||'—')}</b></div>
+      <div><span>CNPJ/CPF:</span> <b>${escHtml(c.cnpj||'—')}</b></div>
+      <div><span>Cidade/UF:</span> <b>${escHtml(c.cidade && c.uf ? c.cidade+'/'+c.uf : '—')}</b></div>
+      <div><span>I.E.:</span> <b>${escHtml(c.ie||'—')}</b></div>
+      <div style="grid-column:1/-1"><span>Endereço:</span> <b>${escHtml(enderecoFull||'—')}</b></div>
+      <div><span>Telefone:</span> <b>${escHtml(c.phone||'—')}</b></div>
+      <div><span>Email:</span> <b>${escHtml(c.email||'—')}</b></div>
+      ${c.obra?`<div style="grid-column:1/-1"><span>Obra:</span> <b>${escHtml(c.obra)}</b></div>`:''}
+    </div>
+
+    <div class="prod-solic">
+      <span>Solicitação:</span> <b>${escHtml(solicitante)}</b>
+    </div>
+
+    <table class="prod-tab">
+      <colgroup>
+        <col style="width:50px">
+        <col style="width:auto">
+        <col style="width:130px">
+        <col style="width:180px">
+      </colgroup>
+      <thead><tr>
+        <th class="num">Item</th>
+        <th>Produto (embalagem)</th>
+        <th class="num">Quantidade<br><span style="font-weight:400;text-transform:none;font-size:9px;color:var(--mt)">(kg / litro)</span></th>
+        <th>Classificação de risco</th>
+      </tr></thead>
+      <tbody>${rowsHtml||''}${blankRows}</tbody>
+    </table>
+
+    ${obsProd ? `<div class="prod-obs-box"><b>Observações</b>${escHtml(obsProd)}</div>` : ''}
+
+    <div class="cot-footer">
+      ADIBLOCK FABRICAÇÃO COMERCIALIZAÇÃO E REPRESENTAÇÃO DE PRODUTOS QUÍMICOS LTDA &middot; CNPJ ${escHtml(ADIBLOCK_INFO?.cnpj||'')}
+    </div>
+  </div>`;
+}
+
 // ── Minhas Configurações (perfil do vendedor) ─────────────────────────────
 // ── Pipeline Kanban (Sprint 4.4) ────────────────────────────────────────
 const KB_ESTAGIOS = ['lead','qualificado','proposta_enviada','em_negociacao','ganha'];
@@ -3912,6 +4072,7 @@ document.getElementById('cfgf').addEventListener('submit', async e => {
 });
 
 function renderCotacao(prop) {
+  PROP_ATUAL = prop; // Sprint 6.4: guarda pra o botao Pedido de Producao
   const snap = prop.snapshot || {};
   const c    = snap.cliente || {};
   const consultor = snap.consultor || {};

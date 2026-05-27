@@ -623,6 +623,20 @@ td strong{color:var(--tx);font-weight:600}
 .pf-card-sub b{color:var(--tx);font-weight:500}
 .pf-card-actions{display:flex;gap:4px;flex-shrink:0}
 .pf-empty{text-align:center;padding:30px 20px;color:var(--mt);font-size:13px;border:1px dashed var(--bdr2);border-radius:var(--rs);background:var(--bg)}
+/* Sprint 6.5: lista de propostas */
+.pr-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:14px}
+.pr-card{background:var(--sur);border:1px solid var(--bdr);border-radius:var(--rl);padding:16px;cursor:pointer;transition:all .15s;box-shadow:var(--sh);display:flex;flex-direction:column;gap:8px}
+.pr-card:hover{border-color:var(--p);box-shadow:var(--shm);transform:translateY(-1px)}
+.pr-card-top{display:flex;justify-content:space-between;align-items:flex-start;gap:8px}
+.pr-num{font-size:11px;font-weight:700;color:var(--p);background:var(--ps);padding:3px 9px;border-radius:99px;letter-spacing:.5px}
+.pr-st{display:inline-block;font-size:10px;font-weight:700;padding:2px 8px;border-radius:99px;text-transform:uppercase;letter-spacing:.5px}
+.pr-st.em_andamento{background:var(--wr2);color:var(--wr)}
+.pr-st.pedido{background:var(--ok2);color:var(--ok)}
+.pr-st.cancelada{background:var(--er2);color:var(--er)}
+.pr-emp{font-size:14px;font-weight:600;color:var(--tx);line-height:1.3}
+.pr-tit{font-size:12px;color:var(--tx2);line-height:1.4}
+.pr-meta{display:flex;justify-content:space-between;font-size:11px;color:var(--mt);padding-top:8px;border-top:1px solid var(--bdr);margin-top:4px}
+.pr-val{font-weight:700;color:var(--tx);font-size:13px}
 /* Sprint 6.3: proximo passo sugerido */
 .pp{display:flex;align-items:center;gap:8px;margin-top:8px;padding:7px 10px;border-radius:7px;font-size:12px;line-height:1.4;border-left:3px solid var(--p);background:var(--ps);color:var(--tx)}
 .pp.pp-high{border-left-color:var(--er);background:var(--er2)}
@@ -928,6 +942,10 @@ body.role-leitor .read-only-banner{display:block}
           <svg width="14" height="14" viewBox="0 0 20 20" fill="currentColor"><path d="M3 4a1 1 0 011-1h3a1 1 0 011 1v12a1 1 0 01-1 1H4a1 1 0 01-1-1V4zM9 4a1 1 0 011-1h3a1 1 0 011 1v6a1 1 0 01-1 1h-3a1 1 0 01-1-1V4zM15 4a1 1 0 011-1h1a1 1 0 011 1v3a1 1 0 01-1 1h-1a1 1 0 01-1-1V4z"/></svg>
           Pipeline
         </button>
+        <button class="tb" data-tab="pr">
+          <svg width="14" height="14" viewBox="0 0 20 20" fill="currentColor"><path d="M9 2a1 1 0 00-1 1v1H6a2 2 0 00-2 2v11a2 2 0 002 2h8a2 2 0 002-2V6a2 2 0 00-2-2h-2V3a1 1 0 00-1-1H9zm0 2h2v1H9V4zM6 7h8v9H6V7zm2 2v1h4V9H8zm0 3v1h4v-1H8z"/></svg>
+          Propostas
+        </button>
         <button class="tb" data-tab="db">
           <svg width="14" height="14" viewBox="0 0 20 20" fill="currentColor"><path d="M2 11a1 1 0 011-1h2a1 1 0 011 1v5a1 1 0 01-1 1H3a1 1 0 01-1-1v-5zM8 7a1 1 0 011-1h2a1 1 0 011 1v9a1 1 0 01-1 1H9a1 1 0 01-1-1V7zM14 4a1 1 0 011-1h2a1 1 0 011 1v12a1 1 0 01-1 1h-2a1 1 0 01-1-1V4z"/></svg>
           Dashboard
@@ -1073,6 +1091,25 @@ body.role-leitor .read-only-banner{display:block}
         </div>
       </div>
       <div id="kb-board"></div>
+    </div>
+
+    <!-- PROPOSTAS (Sprint 6.5) -->
+    <div id="pr-view" class="vw">
+      <div class="ph">
+        <div><h2>Propostas</h2><span class="ps" id="pr-stats">—</span></div>
+        <div class="pa" style="gap:14px;flex-wrap:wrap">
+          <div class="td-switch" id="pr-tabs">
+            <button class="td-sw ac" data-st="em_andamento" onclick="setPrStatus('em_andamento')">Em andamento</button>
+            <button class="td-sw" data-st="pedido" onclick="setPrStatus('pedido')">Pedidos</button>
+            <button class="td-sw" data-st="cancelada" onclick="setPrStatus('cancelada')">Canceladas</button>
+          </div>
+          <label class="td-filtro-wrap">
+            <input type="checkbox" id="pr-meus" checked> <span>Só os meus</span>
+          </label>
+          <button class="btn bg sm" onclick="renderPropostas()">↺ Atualizar</button>
+        </div>
+      </div>
+      <div id="pr-body" style="padding:0 24px 30px"></div>
     </div>
 
     <!-- DASHBOARD -->
@@ -1421,9 +1458,13 @@ body.role-leitor .read-only-banner{display:block}
   <div class="rel-topbar cot-topbar">
     <div style="display:flex;align-items:center;gap:12px">
       <button class="pf-back" onclick="fecharCotacao()">← Voltar</button>
-      <span style="font-size:15px;font-weight:600;color:var(--tx)">Proposta Comercial</span>
+      <span style="font-size:15px;font-weight:600;color:var(--tx)" id="cot-titulo">Proposta Comercial</span>
+      <span id="cot-status-badge" class="pr-st" style="display:none"></span>
     </div>
-    <div style="display:flex;gap:8px">
+    <div style="display:flex;gap:8px" id="cot-acoes">
+      <button class="btn bp sm" id="cot-finalizar-btn" onclick="finalizarComoPedido()" title="Marca esta proposta como Pedido aceito" style="display:none">✓ Marcar como Pedido</button>
+      <button class="btn bg sm" id="cot-cancelar-btn" onclick="cancelarProposta()" title="Cancela esta proposta" style="display:none">🚫 Cancelar</button>
+      <button class="btn bg sm" id="cot-reabrir-btn" onclick="reabrirProposta()" title="Volta para Em andamento" style="display:none">↶ Reabrir</button>
       <button class="btn bg sm" onclick="abrirModalPedidoProducao()" title="Gera versao sem valores pra mandar pra fabrica">📋 Pedido de Produção</button>
       <button class="btn bg sm" onclick="window.print()">🖨 Imprimir / PDF</button>
     </div>
@@ -1978,8 +2019,8 @@ const fetchPf = () => api('GET','profiles','select=id,name,role,email&order=name
 const fetchProds = () => api('GET','products','select=nome,embalagem,preco_materia_prima,preco_office,preco_pj&order=nome,embalagem');
 // Sprint 6.2: tarefas livres (nao atreladas a oportunidade)
 const fetchTasks = () => api('GET','tasks','select=*,company:companies(id,razao_social),seller:profiles(id,name)&order=due_at.asc');
-// Sprint 6.3: propostas pra busca global (cabecalho minimo, snapshot pesado nao precisa)
-const fetchPropostas = () => api('GET','proposals','select=id,ano,numero,company_id,opportunity_id,seller_id,snapshot,created_at&order=created_at.desc&limit=500');
+// Sprint 6.3: propostas pra busca global. 6.5: inclui status.
+const fetchPropostas = () => api('GET','proposals','select=id,ano,numero,company_id,opportunity_id,seller_id,snapshot,status,status_changed_at,created_at&order=created_at.desc&limit=500');
 // Sprint 3: histórico via interactions (por oportunidade) — stub por enquanto
 const fetchHist = id => Promise.resolve([]); // será refeito no Sprint 3.3 ligado a oportunidades
 function saveCl(d, id) {
@@ -3281,7 +3322,11 @@ document.querySelectorAll('.tb').forEach(b => b.addEventListener('click',()=>{
   if (b.dataset.tab==='db') renderDb();
   if (b.dataset.tab==='eq') renderEquipe();
   if (b.dataset.tab==='kb') renderKanban();
+  if (b.dataset.tab==='pr') renderPropostas();
 }));
+
+// Sprint 6.5: filtro "so meus" da aba Propostas
+document.getElementById('pr-meus')?.addEventListener('change', renderPropostas);
 
 // Sprint 6.1: filtro "so meus" na tela Hoje
 document.getElementById('td-meus')?.addEventListener('change', renderToday);
@@ -3814,6 +3859,156 @@ function renderPedidoProducao(prop, solicitante, obsProd) {
 // ── Pipeline Kanban (Sprint 4.4) ────────────────────────────────────────
 const KB_ESTAGIOS = ['lead','qualificado','proposta_enviada','em_negociacao','ganha'];
 
+// ── Sprint 6.5: Lista de Propostas (Em andamento / Pedidos / Canceladas) ─
+let PR_STATUS = 'em_andamento';
+
+function setPrStatus(s) {
+  PR_STATUS = s;
+  document.querySelectorAll('#pr-tabs .td-sw').forEach(b => b.classList.toggle('ac', b.dataset.st === s));
+  renderPropostas();
+}
+
+function totalProposta(p) {
+  const prods = p.snapshot?.produtos || [];
+  let tot = 0;
+  prods.forEach(it => {
+    const q = Number(it.qtd_kg)||0;
+    const pr = Number(it.preco_kg)||0;
+    const ipi = Number(it.ipi)||0;
+    const sub = q*pr;
+    tot += sub + sub*(ipi/100);
+  });
+  const frete = Number(p.snapshot?.condicoes?.frete_valor)||0;
+  return tot + frete;
+}
+
+function renderPropostas() {
+  const body = document.getElementById('pr-body');
+  const stats = document.getElementById('pr-stats');
+  if (!body) return;
+
+  const soMeus = document.getElementById('pr-meus')?.checked;
+  const meuId = ME?.id;
+
+  const all = (PROPOSTAS||[]).filter(p => (p.status||'em_andamento') === PR_STATUS);
+  const lst = soMeus && meuId ? all.filter(p => p.seller_id === meuId) : all;
+
+  const totVal = lst.reduce((s,p)=>s+totalProposta(p),0);
+  stats.textContent = `${lst.length} proposta(s)${totVal>0?' · '+fMoeda(totVal):''}`;
+
+  if (!lst.length) {
+    const vazio = {
+      em_andamento: { ico:'📝', tit:'Sem propostas em andamento', msg:'Gere uma proposta a partir de uma oportunidade pra ela aparecer aqui.' },
+      pedido:       { ico:'📦', tit:'Sem pedidos finalizados ainda', msg:'Ao marcar uma proposta como "Pedido", ela aparece aqui pra acompanhamento.' },
+      cancelada:    { ico:'🚫', tit:'Sem propostas canceladas', msg:'Propostas canceladas aparecem aqui.' },
+    }[PR_STATUS];
+    body.innerHTML = `<div class="pf-empty" style="margin-top:14px">
+      <span class="es-ico">${vazio.ico}</span>
+      <div class="es-tit">${vazio.tit}</div>
+      <div class="es-msg">${vazio.msg}</div>
+    </div>`;
+    return;
+  }
+
+  body.innerHTML = `<div class="pr-grid">${lst.map(p => {
+    const empNome = p.snapshot?.cliente?.name || (CL.find(c=>c.id===p.company_id)?.razao_social) || '—';
+    const tit = p.snapshot?.oportunidade?.titulo || '';
+    const vend = p.snapshot?.consultor?.nome || '';
+    const dt = new Date(p.created_at).toLocaleDateString('pt-BR');
+    const stLbl = { em_andamento:'Em andamento', pedido:'Pedido', cancelada:'Cancelada' }[p.status||'em_andamento'];
+    const total = totalProposta(p);
+    return `<div class="pr-card" onclick="abrPropostaPorId('${p.id}')">
+      <div class="pr-card-top">
+        <span class="pr-num">Nº ${numProposta(p)}</span>
+        <span class="pr-st ${p.status||'em_andamento'}">${stLbl}</span>
+      </div>
+      <div class="pr-emp">${escHtml(empNome)}</div>
+      ${tit?`<div class="pr-tit">${escHtml(tit)}</div>`:''}
+      <div class="pr-meta">
+        <span>${escHtml(vend)} · ${dt}</span>
+        ${total>0?`<span class="pr-val">${fMoeda(total)}</span>`:''}
+      </div>
+    </div>`;
+  }).join('')}</div>`;
+}
+
+function abrPropostaPorId(id) {
+  const p = (PROPOSTAS||[]).find(x => x.id === id);
+  if (!p) { toast('Proposta nao encontrada','','warning'); return; }
+  renderCotacao(p);
+  const page = document.getElementById('cot-page');
+  page.classList.add('op'); page.scrollTop = 0;
+  document.body.style.overflow = 'hidden';
+}
+
+// Sprint 6.5: ajusta badge de status e botoes no topo da cot-page
+function atualizarTopoCotacao() {
+  const p = PROP_ATUAL;
+  if (!p) return;
+  const st = p.status || 'em_andamento';
+  const badge = document.getElementById('cot-status-badge');
+  const lbl = { em_andamento:'Em andamento', pedido:'Pedido', cancelada:'Cancelada' }[st];
+  badge.textContent = lbl;
+  badge.className = 'pr-st ' + st;
+  badge.style.display = '';
+  // Botoes condicionais
+  document.getElementById('cot-finalizar-btn').style.display = st === 'em_andamento' ? '' : 'none';
+  document.getElementById('cot-cancelar-btn').style.display  = st === 'em_andamento' ? '' : 'none';
+  document.getElementById('cot-reabrir-btn').style.display   = (st === 'pedido' || st === 'cancelada') ? '' : 'none';
+}
+
+async function mudarStatusProposta(novoStatus, msgSucesso) {
+  if (!PROP_ATUAL) return;
+  try {
+    await api('PATCH','proposals',`id=eq.${PROP_ATUAL.id}`, {
+      status: novoStatus,
+      status_changed_at: new Date().toISOString(),
+      status_changed_by: ME.id,
+    });
+    PROP_ATUAL.status = novoStatus;
+    PROP_ATUAL.status_changed_at = new Date().toISOString();
+    // Atualiza cache local
+    const idx = PROPOSTAS.findIndex(x => x.id === PROP_ATUAL.id);
+    if (idx >= 0) PROPOSTAS[idx] = { ...PROPOSTAS[idx], ...PROP_ATUAL };
+    atualizarTopoCotacao();
+    toast(msgSucesso, 'Nº ' + numProposta(PROP_ATUAL), 'success');
+    // Re-renderiza a aba Propostas se estiver aberta
+    if (document.getElementById('pr-view')?.classList.contains('ac')) renderPropostas();
+  } catch(err) {
+    toast('Erro ao atualizar proposta', err.message||'', 'warning');
+  }
+}
+
+async function finalizarComoPedido() {
+  if (!PROP_ATUAL) return;
+  await mudarStatusProposta('pedido', 'Proposta finalizada como Pedido');
+  // Oferece marcar a oportunidade vinculada como ganha
+  const oppId = PROP_ATUAL.opportunity_id;
+  if (!oppId) return;
+  const opp = todasOpps().find(o => o.id === oppId);
+  if (!opp || opp.estagio === 'ganha') return;
+  if (confirm(`Marcar tambem a oportunidade "${opp.titulo}" como GANHA?`)) {
+    try {
+      await api('PATCH','opportunities',`id=eq.${oppId}`, { estagio: 'ganha' });
+      CL = await fetchCl();
+      toast('Oportunidade marcada como Ganha','','success');
+    } catch(err) {
+      toast('Erro ao atualizar oportunidade', err.message||'', 'warning');
+    }
+  }
+}
+
+function cancelarProposta() {
+  if (!PROP_ATUAL) return;
+  if (!confirm('Cancelar esta proposta? Ela vai pra aba "Canceladas" e pode ser reaberta depois.')) return;
+  mudarStatusProposta('cancelada', 'Proposta cancelada');
+}
+
+function reabrirProposta() {
+  if (!PROP_ATUAL) return;
+  mudarStatusProposta('em_andamento', 'Proposta reaberta');
+}
+
 function renderKanban() {
   const board = document.getElementById('kb-board');
   if (!board) return;
@@ -4109,6 +4304,7 @@ document.getElementById('cfgf').addEventListener('submit', async e => {
 
 function renderCotacao(prop) {
   PROP_ATUAL = prop; // Sprint 6.4: guarda pra o botao Pedido de Producao
+  try { atualizarTopoCotacao(); } catch {} // Sprint 6.5: atualiza badge + botoes
   const snap = prop.snapshot || {};
   const c    = snap.cliente || {};
   const consultor = snap.consultor || {};
@@ -5902,12 +6098,15 @@ function scheduleRealtimeRefresh() {
       CL = await fetchCl();
       try { localStorage.setItem('crm_cl', JSON.stringify(CL)); } catch {}
       try { TASKS = await fetchTasks(); } catch(e) { /* ignora se tabela ainda nao migrada */ }
+      try { PROPOSTAS = await fetchPropostas(); } catch(e) {}
       renderCl();
       updateBell();
       const dbView = document.getElementById('db-view');
       if (dbView && dbView.classList.contains('ac')) renderDb();
       const tdView = document.getElementById('td-view');
       if (tdView && tdView.classList.contains('ac')) renderToday();
+      const prView = document.getElementById('pr-view');
+      if (prView && prView.classList.contains('ac')) renderPropostas();
       realtimeLastUpdate = new Date();
       const ind = document.getElementById('upd-ind');
       if (ind) ind.title = 'Atualizado em tempo real às ' + realtimeLastUpdate.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit',second:'2-digit'});
@@ -5925,6 +6124,7 @@ function startRealtime() {
       .on('postgres_changes', { event: '*', schema: 'public', table: 'opportunity_products' }, scheduleRealtimeRefresh)
       .on('postgres_changes', { event: '*', schema: 'public', table: 'interactions' },         scheduleRealtimeRefresh)
       .on('postgres_changes', { event: '*', schema: 'public', table: 'tasks' },                scheduleRealtimeRefresh)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'proposals' },            scheduleRealtimeRefresh)
       .subscribe(status => {
         if (status === 'SUBSCRIBED') console.info('Realtime conectado');
         else if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT') console.warn('Realtime status:', status);
@@ -6129,6 +6329,7 @@ document.addEventListener('keydown', e => {
   if (e.key === 't' || e.key === 'T') { e.preventDefault(); document.querySelector('.tb[data-tab="td"]')?.click(); }
   if (e.key === 'd' || e.key === 'D') { e.preventDefault(); document.querySelector('.tb[data-tab="db"]')?.click(); }
   if (e.key === 'c' || e.key === 'C') { e.preventDefault(); document.querySelector('.tb[data-tab="cl"]')?.click(); }
+  if (e.key === 'p' || e.key === 'P') { e.preventDefault(); document.querySelector('.tb[data-tab="pr"]')?.click(); }
 });
 </script>
 

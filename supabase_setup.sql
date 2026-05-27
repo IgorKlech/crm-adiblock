@@ -887,6 +887,26 @@ DO $$ BEGIN ALTER PUBLICATION supabase_realtime ADD TABLE public.tasks; EXCEPTIO
 
 
 -- -------------------------------------------------------------------------
+-- Sprint 6.5: status da proposta (em_andamento / pedido / cancelada)
+-- Permite filtrar propostas em andamento vs finalizadas como pedido.
+-- -------------------------------------------------------------------------
+ALTER TABLE public.proposals
+  ADD COLUMN IF NOT EXISTS status text NOT NULL DEFAULT 'em_andamento'
+  CHECK (status IN ('em_andamento','pedido','cancelada')),
+  ADD COLUMN IF NOT EXISTS status_changed_at timestamptz,
+  ADD COLUMN IF NOT EXISTS status_changed_by uuid REFERENCES public.profiles(id) ON DELETE SET NULL;
+
+CREATE INDEX IF NOT EXISTS idx_proposals_status ON public.proposals(status);
+
+-- Permite UPDATE do status (RLS antigo so deixava DELETE pra admin)
+DROP POLICY IF EXISTS "proposals_update_status" ON public.proposals;
+CREATE POLICY "proposals_update_status" ON public.proposals
+  FOR UPDATE TO authenticated
+  USING (NOT public.is_leitor() AND (public.is_admin() OR seller_id = auth.uid()))
+  WITH CHECK (NOT public.is_leitor() AND (public.is_admin() OR seller_id = auth.uid()));
+
+
+-- -------------------------------------------------------------------------
 -- 12) Recarrega o schema do PostgREST
 -- -------------------------------------------------------------------------
 NOTIFY pgrst, 'reload schema';

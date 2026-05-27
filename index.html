@@ -836,6 +836,9 @@ body.role-leitor .read-only-banner{display:block}
   body > #cot-page.op,
   body > #rel-page.op,
   body > #prod-page.op{display:block!important;position:static!important;overflow:visible!important;background:#fff!important;z-index:auto!important}
+  /* Sprint 6.4 fix: quando Pedido de Producao esta aberto, esconde a Proposta
+     que continua com .op por baixo. Sem isso, impressao leva os dois juntos. */
+  body:has(#prod-page.op) > #cot-page.op{display:none!important}
   /* Esconde topbars das páginas impressas (só conteúdo) */
   .rel-topbar,.cot-topbar,.prod-topbar{display:none!important}
   body{background:#fff!important}
@@ -3685,6 +3688,8 @@ document.getElementById('prod-req-f').addEventListener('submit', e => {
   if (!solic) return;
   document.getElementById('prod-req-m').classList.remove('op');
   renderPedidoProducao(PROP_ATUAL, solic, obs);
+  // Esconde a cot-page por baixo (senao a impressao leva as duas paginas juntas)
+  document.getElementById('cot-page').classList.remove('op');
   document.getElementById('prod-page').classList.add('op');
   document.getElementById('prod-page').scrollTop = 0;
   document.body.style.overflow = 'hidden';
@@ -3692,8 +3697,17 @@ document.getElementById('prod-req-f').addEventListener('submit', e => {
 
 function fecharProducao() {
   document.getElementById('prod-page').classList.remove('op');
-  // Volta pra cot-page (que continua atras com a proposta original)
-  // body overflow ja esta hidden por causa da cot-page
+  // Volta a mostrar a proposta original por baixo
+  document.getElementById('cot-page').classList.add('op');
+}
+
+// Sprint 6.4: extrai peso/volume por embalagem do nome (ex: "Bombona 20"→20,
+// "Saco 25"→25, "Balde 18"→18). Retorna null se nao houver numero claro
+// (Tambor, CNT, Conjunto — variam).
+function pesoDaEmbalagem(emb) {
+  if (!emb) return null;
+  const m = String(emb).match(/(\d+(?:[.,]\d+)?)/);
+  return m ? parseFloat(m[1].replace(',','.')) : null;
 }
 
 function renderPedidoProducao(prop, solicitante, obsProd) {
@@ -3703,22 +3717,31 @@ function renderPedidoProducao(prop, solicitante, obsProd) {
 
   const dataStr = new Date(prop.created_at || Date.now()).toLocaleDateString('pt-BR');
   const propLabel = numProposta(prop);
-  const enderecoFull = [c.endereco, c.cidade && c.uf ? c.cidade+'/'+c.uf : (c.cidade||c.uf||''), c.cep ? 'CEP '+c.cep : null].filter(Boolean).join(' — ');
 
-  // Linhas de produtos (sem valores monetarios)
-  const rowsHtml = prods.map(p => {
-    const q = p.qtd_kg != null ? Number(p.qtd_kg).toLocaleString('pt-BR') : '—';
+  // Calcula totais e linhas (so o que a fabrica precisa)
+  let pesoTotalGeral = 0;
+  let qtdEmbTotal = 0;
+  const rowsHtml = prods.map((p, i) => {
+    const pesoTotal = p.qtd_kg != null ? Number(p.qtd_kg) : 0;
+    pesoTotalGeral += pesoTotal;
+    const pesoPorEmb = pesoDaEmbalagem(p.embalagem);
+    const qtdEmb = pesoPorEmb && pesoTotal ? (pesoTotal / pesoPorEmb) : null;
+    if (qtdEmb) qtdEmbTotal += qtdEmb;
+    // Mostra inteiro se for inteiro; caso contrario uma casa decimal
+    const qtdEmbTxt = qtdEmb == null ? '—' : (Number.isInteger(qtdEmb) ? qtdEmb : qtdEmb.toFixed(1));
     return `<tr>
-      <td class="num">${p.item||''}</td>
-      <td><b>${escHtml(p.produto)}</b>${p.embalagem?` <span style="color:var(--mt)">(${escHtml(p.embalagem)})</span>`:''}</td>
-      <td class="num">${q}</td>
-      <td>${escHtml(p.classificacao_risco||'—')}</td>
+      <td class="num">${i+1}</td>
+      <td><b>${escHtml(p.produto||'—')}</b></td>
+      <td>${escHtml(p.embalagem||'—')}</td>
+      <td class="num">${qtdEmbTxt}</td>
+      <td class="num">${pesoPorEmb!=null ? pesoPorEmb.toLocaleString('pt-BR') : '—'}</td>
+      <td class="num">${pesoTotal.toLocaleString('pt-BR')}</td>
     </tr>`;
   }).join('');
 
-  // Linhas em branco pra preencher a mao se imprimir (mantem visual do modelo antigo)
-  const blanks = Math.max(0, 6 - prods.length);
-  const blankRows = Array.from({length: blanks}).map(() => `<tr class="prod-empty"><td></td><td></td><td></td><td></td></tr>`).join('');
+  // Linhas em branco pra preencher a mao se imprimir
+  const blanks = Math.max(0, 5 - prods.length);
+  const blankRows = Array.from({length: blanks}).map(() => `<tr class="prod-empty"><td></td><td></td><td></td><td></td><td></td><td></td></tr>`).join('');
 
   document.getElementById('prod-body').innerHTML = `<div class="cot-body">
     <div class="cot-header">
@@ -3735,35 +3758,35 @@ function renderPedidoProducao(prop, solicitante, obsProd) {
       </div>
     </div>
 
-    <div class="prod-info-grid">
-      <div><span>Cliente:</span> <b>${escHtml(c.name||'—')}</b></div>
-      <div><span>CNPJ/CPF:</span> <b>${escHtml(c.cnpj||'—')}</b></div>
-      <div><span>Cidade/UF:</span> <b>${escHtml(c.cidade && c.uf ? c.cidade+'/'+c.uf : '—')}</b></div>
-      <div><span>I.E.:</span> <b>${escHtml(c.ie||'—')}</b></div>
-      <div style="grid-column:1/-1"><span>Endereço:</span> <b>${escHtml(enderecoFull||'—')}</b></div>
-      <div><span>Telefone:</span> <b>${escHtml(c.phone||'—')}</b></div>
-      <div><span>Email:</span> <b>${escHtml(c.email||'—')}</b></div>
-      ${c.obra?`<div style="grid-column:1/-1"><span>Obra:</span> <b>${escHtml(c.obra)}</b></div>`:''}
-    </div>
-
-    <div class="prod-solic">
-      <span>Solicitação:</span> <b>${escHtml(solicitante)}</b>
+    <div class="prod-solic" style="margin-bottom:18px">
+      <span>Cliente:</span> <b>${escHtml(c.name||'—')}</b>
+      <span style="margin-left:auto">Solicitação:</span> <b>${escHtml(solicitante)}</b>
     </div>
 
     <table class="prod-tab">
       <colgroup>
-        <col style="width:50px">
+        <col style="width:36px">
         <col style="width:auto">
-        <col style="width:130px">
-        <col style="width:180px">
+        <col style="width:120px">
+        <col style="width:80px">
+        <col style="width:90px">
+        <col style="width:90px">
       </colgroup>
       <thead><tr>
         <th class="num">Item</th>
-        <th>Produto (embalagem)</th>
-        <th class="num">Quantidade<br><span style="font-weight:400;text-transform:none;font-size:9px;color:var(--mt)">(kg / litro)</span></th>
-        <th>Classificação de risco</th>
+        <th>Produto</th>
+        <th>Embalagem</th>
+        <th class="num">Qtd<br><span style="font-weight:400;text-transform:none;font-size:9px;color:var(--mt)">embalagens</span></th>
+        <th class="num">Peso por<br><span style="font-weight:400;text-transform:none;font-size:9px;color:var(--mt)">embalagem (kg)</span></th>
+        <th class="num">Peso total<br><span style="font-weight:400;text-transform:none;font-size:9px;color:var(--mt)">(kg)</span></th>
       </tr></thead>
       <tbody>${rowsHtml||''}${blankRows}</tbody>
+      ${pesoTotalGeral > 0 ? `<tfoot><tr>
+        <td colspan="3" style="text-align:right;font-weight:700;color:var(--mt);text-transform:uppercase;font-size:10px;padding:10px 8px;background:var(--bg);border-top:2px solid var(--p)">Totais</td>
+        <td class="num" style="font-weight:700;font-size:13px;color:var(--p);padding:10px 8px;background:var(--bg);border-top:2px solid var(--p)">${Number.isInteger(qtdEmbTotal) ? qtdEmbTotal : qtdEmbTotal.toFixed(1)}</td>
+        <td style="background:var(--bg);border-top:2px solid var(--p)"></td>
+        <td class="num" style="font-weight:700;font-size:13px;color:var(--p);padding:10px 8px;background:var(--bg);border-top:2px solid var(--p)">${pesoTotalGeral.toLocaleString('pt-BR')}</td>
+      </tr></tfoot>` : ''}
     </table>
 
     ${obsProd ? `<div class="prod-obs-box"><b>Observações</b>${escHtml(obsProd)}</div>` : ''}

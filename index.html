@@ -3701,13 +3701,26 @@ function fecharProducao() {
   document.getElementById('cot-page').classList.add('op');
 }
 
-// Sprint 6.4: extrai peso/volume por embalagem do nome (ex: "Bombona 20"→20,
-// "Saco 25"→25, "Balde 18"→18). Retorna null se nao houver numero claro
-// (Tambor, CNT, Conjunto — variam).
+// Sprint 6.4: extrai peso/volume por embalagem.
+// 1o: regex pega numero no nome ("Bombona 20" -> 20, "Saco 25" -> 25)
+// 2o: tabela de defaults pra nomes padrao do setor quimico sem numero
+const PESO_EMBALAGEM_DEFAULT = {
+  'tambor':  200,   // tambor padrao de 200L
+  'cnt':     1000,  // container/IBC, padrao 1000L
+  // 'conjunto' fica fora porque varia muito (kit de componentes)
+};
 function pesoDaEmbalagem(emb) {
   if (!emb) return null;
-  const m = String(emb).match(/(\d+(?:[.,]\d+)?)/);
-  return m ? parseFloat(m[1].replace(',','.')) : null;
+  const s = String(emb).trim();
+  // 1) Tem numero explicito? "Bombona 20", "Saco 25", "Balde 18"
+  const m = s.match(/(\d+(?:[.,]\d+)?)/);
+  if (m) return parseFloat(m[1].replace(',','.'));
+  // 2) Default por nome (Tambor, CNT)
+  const k = s.toLowerCase();
+  for (const key of Object.keys(PESO_EMBALAGEM_DEFAULT)) {
+    if (k.includes(key)) return PESO_EMBALAGEM_DEFAULT[key];
+  }
+  return null;
 }
 
 function renderPedidoProducao(prop, solicitante, obsProd) {

@@ -245,6 +245,21 @@ td strong{color:var(--tx);font-weight:600}
 .sg5{display:grid;grid-template-columns:repeat(5,1fr);gap:14px;margin-bottom:20px}
 @media(max-width:1100px){.sg5{grid-template-columns:repeat(3,1fr)}}
 .sk{background:var(--sur);border-radius:var(--r);padding:18px 20px;box-shadow:var(--sh);border:1px solid var(--bdr);display:flex;align-items:flex-start;gap:14px;border-left:3px solid var(--bdr2)}
+/* Sprint 6.6: card clicavel (drill-down) */
+.sk-click{cursor:pointer;transition:transform .12s,box-shadow .12s,border-color .12s}
+.sk-click:hover{transform:translateY(-2px);box-shadow:var(--shm);border-color:var(--p)}
+.sk-click:active{transform:translateY(0)}
+/* Modal de detalhamento do dashboard */
+.drill-list{display:flex;flex-direction:column;gap:1px;max-height:60vh;overflow-y:auto;margin:-4px -4px 0}
+.drill-row{display:flex;align-items:center;gap:12px;padding:11px 8px;border-bottom:1px solid var(--bdr);cursor:pointer;transition:background .12s;border-radius:6px}
+.drill-row:hover{background:var(--bg)}
+.drill-av{width:34px;height:34px;border-radius:50%;color:#fff;font-size:13px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.drill-bd{flex:1;min-width:0}
+.drill-nm{font-size:13px;font-weight:600;color:var(--tx);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.drill-sub{font-size:11.5px;color:var(--mt);margin-top:1px}
+.drill-rt{font-size:12px;font-weight:700;color:var(--tx);text-align:right;white-space:nowrap}
+.drill-rt small{display:block;font-weight:500;color:var(--mt);font-size:10px}
+.drill-empty{text-align:center;color:var(--mt);font-size:13px;padding:30px}
 .sk.ss{border-left-color:var(--ok)}.sk.sw2{border-left-color:var(--wr)}.sk.sd{border-left-color:var(--er)}.sk-pipe{border-left-color:var(--p)}
 .sic{width:36px;height:36px;border-radius:var(--rs);display:flex;align-items:center;justify-content:center;flex-shrink:0;background:var(--bg)}
 .sic svg{width:18px;height:18px}
@@ -1120,11 +1135,11 @@ body.role-leitor .read-only-banner{display:block}
         <button class="btn bg sm" onclick="abrRelatorio()">📊 Relatório Semanal</button>
       </div>
       <div class="sg5">
-        <div class="sk"><div class="sic sb2"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg></div><div><div class="sv" id="d1">-</div><div class="sl2">Total de Clientes</div></div></div>
-        <div class="sk ss"><div class="sic sg2"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg></div><div><div class="sv" id="d2">-</div><div class="sl2">Compraram</div><div class="sprg"><div class="sprf sg" id="d2b" style="width:0%"></div></div></div></div>
-        <div class="sk sw2"><div class="sic sy"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></div><div><div class="sv" id="d3">-</div><div class="sl2">Pendentes</div><div class="sprg"><div class="sprf sy" id="d3b" style="width:0%"></div></div></div></div>
-        <div class="sk sd"><div class="sic sr"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg></div><div><div class="sv" id="d4">-</div><div class="sl2">Retornos Vencidos</div></div></div>
-        <div class="sk sk-pipe"><div class="sic" style="color:var(--ac)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/></svg></div><div><div class="sv" id="d5" style="font-size:18px;margin-top:4px">-</div><div class="sl2">Valor do Pipeline</div></div></div>
+        <div class="sk sk-click" onclick="drillDashboard('total')" title="Ver todas as empresas"><div class="sic sb2"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg></div><div><div class="sv" id="d1">-</div><div class="sl2">Total de Clientes</div></div></div>
+        <div class="sk ss sk-click" onclick="drillDashboard('compraram')" title="Ver quem comprou"><div class="sic sg2"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg></div><div><div class="sv" id="d2">-</div><div class="sl2">Compraram</div><div class="sprg"><div class="sprf sg" id="d2b" style="width:0%"></div></div></div></div>
+        <div class="sk sw2 sk-click" onclick="drillDashboard('pendentes')" title="Ver leads pendentes"><div class="sic sy"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></div><div><div class="sv" id="d3">-</div><div class="sl2">Pendentes</div><div class="sprg"><div class="sprf sy" id="d3b" style="width:0%"></div></div></div></div>
+        <div class="sk sd sk-click" onclick="drillDashboard('vencidos')" title="Ver retornos vencidos"><div class="sic sr"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg></div><div><div class="sv" id="d4">-</div><div class="sl2">Retornos Vencidos</div></div></div>
+        <div class="sk sk-pipe sk-click" onclick="drillDashboard('pipeline')" title="Ver oportunidades em aberto"><div class="sic" style="color:var(--ac)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/></svg></div><div><div class="sv" id="d5" style="font-size:18px;margin-top:4px">-</div><div class="sl2">Valor do Pipeline</div></div></div>
       </div>
       <!-- Alertas de Inatividade -->
       <div id="inact-wrap" style="display:none" class="inact-wrap">
@@ -1671,6 +1686,14 @@ body.role-leitor .read-only-banner{display:block}
         <button type="submit" class="btn bp">Registrar</button>
       </div>
     </form>
+  </div>
+</div>
+
+<!-- MODAL DRILL-DOWN DO DASHBOARD (Sprint 6.6) -->
+<div class="mo" id="drill-m" style="z-index:300">
+  <div class="md" style="max-width:560px">
+    <div class="mh"><h3 id="drill-titulo">Detalhes</h3><button class="mx" onclick="document.getElementById('drill-m').classList.remove('op')">✕</button></div>
+    <div id="drill-body"></div>
   </div>
 </div>
 
@@ -2296,6 +2319,83 @@ function todasOpps() {
   })));
 }
 
+// ── Sprint 6.6: Drill-down dos cards do Dashboard ─────────────────────────
+function drillDashboard(tipo) {
+  const opps = todasOpps();
+  const abertas = opps.filter(o => o.estagio !== 'ganha' && o.estagio !== 'perdida');
+  const agora = Date.now();
+
+  let titulo = '', rows = '';
+
+  // Helper: linha de empresa
+  const rowEmpresa = (c, subtxt, rightHtml='') => {
+    const nome = c.razao_social || '—';
+    return `<div class="drill-row" onclick="document.getElementById('drill-m').classList.remove('op');abrPerfil('${c.id}')">
+      <div class="drill-av" style="background:${cor(nome)}">${ini(nome)}</div>
+      <div class="drill-bd">
+        <div class="drill-nm">${escHtml(nome)}</div>
+        <div class="drill-sub">${subtxt}</div>
+      </div>
+      ${rightHtml}
+    </div>`;
+  };
+  // Helper: linha de oportunidade
+  const rowOpp = (o, rightHtml='') => `<div class="drill-row" onclick="document.getElementById('drill-m').classList.remove('op');abrPerfil('${o.company_id}')">
+    <div class="drill-av" style="background:${cor(o.company_nome||'')}">${ini(o.company_nome||'?')}</div>
+    <div class="drill-bd">
+      <div class="drill-nm">${escHtml(o.company_nome||'—')}</div>
+      <div class="drill-sub">${escHtml(o.titulo||'—')} · ${ESTAGIO_LBL[o.estagio]||o.estagio}</div>
+    </div>
+    ${rightHtml}
+  </div>`;
+
+  if (tipo === 'total') {
+    titulo = `Todas as empresas (${CL.length})`;
+    const ord = [...CL].sort((a,b)=>(a.razao_social||'').localeCompare(b.razao_social||''));
+    rows = ord.map(c => rowEmpresa(c, [c.cidade && c.uf?c.cidade+'/'+c.uf:'', empresaVendedor(c)||''].filter(Boolean).join(' · ') || 'Sem dados',
+      `<span class="tier-badge tier-${c.tier||'lead'}">${c.tier||'lead'}</span>`)).join('');
+  }
+  else if (tipo === 'compraram') {
+    const lst = CL.filter(c => c.tier === 'cliente' || c.tier === 'conta');
+    titulo = `Compraram — clientes e contas (${lst.length})`;
+    const ord = [...lst].sort((a,b)=>(a.razao_social||'').localeCompare(b.razao_social||''));
+    rows = ord.map(c => {
+      const ganhasC = (c.oportunidades||[]).filter(o => o.estagio === 'ganha').length;
+      return rowEmpresa(c, [c.cidade && c.uf?c.cidade+'/'+c.uf:'', empresaVendedor(c)||''].filter(Boolean).join(' · ') || '—',
+        `<div class="drill-rt">${ganhasC}<small>ganhas</small></div>`);
+    }).join('');
+  }
+  else if (tipo === 'pendentes') {
+    const lst = CL.filter(c => (c.tier||'lead') === 'lead');
+    titulo = `Pendentes — leads (${lst.length})`;
+    const ord = [...lst].sort((a,b)=>(a.razao_social||'').localeCompare(b.razao_social||''));
+    rows = ord.map(c => {
+      const ab = (c.oportunidades||[]).filter(o => o.estagio !== 'ganha' && o.estagio !== 'perdida').length;
+      return rowEmpresa(c, [c.cidade && c.uf?c.cidade+'/'+c.uf:'', empresaVendedor(c)||''].filter(Boolean).join(' · ') || '—',
+        `<div class="drill-rt">${ab}<small>abertas</small></div>`);
+    }).join('');
+  }
+  else if (tipo === 'vencidos') {
+    const lst = abertas.filter(o => o.callback_date && new Date(o.callback_date).getTime() < agora)
+      .sort((a,b)=>new Date(a.callback_date)-new Date(b.callback_date));
+    titulo = `Retornos vencidos (${lst.length})`;
+    rows = lst.map(o => rowOpp(o, `<div class="drill-rt" style="color:var(--er)">${fData(o.callback_date)}<small>${fRel(o.callback_date)}</small></div>`)).join('');
+  }
+  else if (tipo === 'pipeline') {
+    const lst = [...abertas].filter(o => Number(o.valor_estimado)>0)
+      .sort((a,b)=>(Number(b.valor_estimado)||0)-(Number(a.valor_estimado)||0));
+    const tot = lst.reduce((s,o)=>s+(Number(o.valor_estimado)||0),0);
+    titulo = `Pipeline em aberto — ${fMoeda(tot)} (${lst.length})`;
+    rows = lst.map(o => rowOpp(o, `<div class="drill-rt">${fMoeda(o.valor_estimado)}<small>${o.seller_name||''}</small></div>`)).join('');
+  }
+
+  document.getElementById('drill-titulo').textContent = titulo;
+  document.getElementById('drill-body').innerHTML = rows
+    ? `<div class="drill-list">${rows}</div>`
+    : '<div class="drill-empty">Nada pra mostrar aqui.</div>';
+  document.getElementById('drill-m').classList.add('op');
+}
+
 // ── Sprint 6.1: Sininho de notificacoes (atrasados + hoje) ────────────────
 function updateBell() {
   const cntEl = document.getElementById('bell-cnt');
@@ -2768,7 +2868,9 @@ async function renderDb() {
     const sg = document.querySelector('#db-view .sg5');
     if (sg) {
       fcCard = document.createElement('div');
-      fcCard.className = 'sk sk-pipe';
+      fcCard.className = 'sk sk-pipe sk-click';
+      fcCard.title = 'Ver oportunidades em aberto';
+      fcCard.onclick = () => drillDashboard('pipeline');
       fcCard.innerHTML = `<div class="sic" style="color:#10b981"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 3v18h18"/><path d="M18.7 8L13 13.5l-4-4L3 16"/></svg></div><div><div class="sv" id="d-forecast-v" style="font-size:18px;margin-top:4px">-</div><div class="sl2">Forecast Ponderado</div></div>`;
       fcCard.id = 'd-forecast';
       sg.appendChild(fcCard);

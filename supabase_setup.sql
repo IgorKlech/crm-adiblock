@@ -887,6 +887,70 @@ DO $$ BEGIN ALTER PUBLICATION supabase_realtime ADD TABLE public.tasks; EXCEPTIO
 
 
 -- -------------------------------------------------------------------------
+-- Sprint 6.7: numeracao de pedidos independente das propostas
+-- Proposta tem seu proprio numero sequencial (ja existia).
+-- Pedido ganha numero separado, atribuido ao "Marcar como Pedido".
+-- Seed: ultimo pedido emitido foi 335-26, entao proximo sera 336-26.
+-- -------------------------------------------------------------------------
+
+-- Tabela de contadores por ano (1 linha por ano, atomica via UPDATE)
+CREATE TABLE IF NOT EXISTS public.pedido_sequences (
+  ano    int PRIMARY KEY,
+  ultimo int NOT NULL DEFAULT 0
+);
+
+-- Seed: garante que o proximo pedido de 2026 sera 336
+INSERT INTO public.pedido_sequences (ano, ultimo)
+  VALUES (2026, 335)
+  ON CONFLICT (ano) DO UPDATE
+    SET ultimo = GREATEST(pedido_sequences.ultimo, EXCLUDED.ultimo);
+
+-- Colunas na tabela proposals
+ALTER TABLE public.proposals
+  ADD COLUMN IF NOT EXISTS pedido_numero int,
+  ADD COLUMN IF NOT EXISTS pedido_ano    int;
+
+CREATE INDEX IF NOT EXISTS idx_proposals_pedido ON public.proposals(pedido_ano, pedido_numero)
+  WHERE pedido_numero IS NOT NULL;
+
+-- RLS: pedido_sequences e lida pelo trigger (SECURITY DEFINER) — vendedor nao acessa diretamente
+ALTER TABLE public.pedido_sequences ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "pedido_seq_admin" ON public.pedido_sequences;
+CREATE POLICY "pedido_seq_admin" ON public.pedido_sequences
+  FOR ALL TO authenticated USING (public.is_admin()) WITH CHECK (public.is_admin());
+
+-- Trigger: atribui pedido_numero quando status muda para 'pedido'
+CREATE OR REPLACE FUNCTION public.atribui_numero_pedido()
+RETURNS trigger LANGUAGE plpgsql SECURITY DEFINER AS $$
+DECLARE
+  v_ano int;
+  v_num int;
+BEGIN
+  IF NEW.status = 'pedido'
+     AND (OLD.status IS DISTINCT FROM 'pedido')
+     AND NEW.pedido_numero IS NULL
+  THEN
+    v_ano := EXTRACT(YEAR FROM now())::int;
+    -- Incrementa atomicamente e pega o novo valor
+    INSERT INTO public.pedido_sequences (ano, ultimo)
+      VALUES (v_ano, 1)
+      ON CONFLICT (ano) DO UPDATE
+        SET ultimo = pedido_sequences.ultimo + 1
+      RETURNING ultimo INTO v_num;
+    NEW.pedido_numero := v_num;
+    NEW.pedido_ano    := v_ano;
+  END IF;
+  RETURN NEW;
+END;
+$$;
+
+DROP TRIGGER IF EXISTS tg_atribui_numero_pedido ON public.proposals;
+CREATE TRIGGER tg_atribui_numero_pedido
+  BEFORE UPDATE ON public.proposals
+  FOR EACH ROW EXECUTE FUNCTION public.atribui_numero_pedido();
+
+
+-- -------------------------------------------------------------------------
 -- Sprint 6.5: status da proposta (em_andamento / pedido / cancelada)
 -- Permite filtrar propostas em andamento vs finalizadas como pedido.
 -- -------------------------------------------------------------------------

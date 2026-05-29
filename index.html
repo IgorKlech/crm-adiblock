@@ -2042,8 +2042,8 @@ const fetchPf = () => api('GET','profiles','select=id,name,role,email&order=name
 const fetchProds = () => api('GET','products','select=nome,embalagem,preco_materia_prima,preco_office,preco_pj&order=nome,embalagem');
 // Sprint 6.2: tarefas livres (nao atreladas a oportunidade)
 const fetchTasks = () => api('GET','tasks','select=*,company:companies(id,razao_social),seller:profiles(id,name)&order=due_at.asc');
-// Sprint 6.3: propostas pra busca global. 6.5: inclui status.
-const fetchPropostas = () => api('GET','proposals','select=id,ano,numero,company_id,opportunity_id,seller_id,snapshot,status,status_changed_at,created_at&order=created_at.desc&limit=500');
+// Sprint 6.3: propostas pra busca global. 6.5: status. 6.7: pedido_numero/pedido_ano.
+const fetchPropostas = () => api('GET','proposals','select=id,ano,numero,pedido_numero,pedido_ano,company_id,opportunity_id,seller_id,snapshot,status,status_changed_at,created_at&order=created_at.desc&limit=500');
 // Sprint 3: histórico via interactions (por oportunidade) — stub por enquanto
 const fetchHist = id => Promise.resolve([]); // será refeito no Sprint 3.3 ligado a oportunidades
 function saveCl(d, id) {
@@ -3687,6 +3687,12 @@ let GC_CLIENT_ID = null;
 function numProposta(p) {
   return String(p.numero).padStart(4, '0') + '-' + String(p.ano).slice(-2);
 }
+// Sprint 6.7: numero de PEDIDO — independente da proposta
+// Formato identico: 0336-26. Retorna null se ainda nao e pedido.
+function numPedido(p) {
+  if (!p?.pedido_numero) return null;
+  return String(p.pedido_numero).padStart(4, '0') + '-' + String(p.pedido_ano).slice(-2);
+}
 
 // Abre o modal de preparação da cotação (escolhe IPI, risco, condições)
 function abrCotacao(id) {
@@ -3876,7 +3882,9 @@ function renderPedidoProducao(prop, solicitante, obsProd) {
   const prods= snap.produtos || [];
 
   const dataStr = new Date(prop.created_at || Date.now()).toLocaleDateString('pt-BR');
-  const propLabel = numProposta(prop);
+  // Sprint 6.7: Pedido de Producao usa o numero de PEDIDO se disponivel,
+  // senao cai no numero da proposta (compatibilidade com propostas antigas)
+  const propLabel = numPedido(prop) || numProposta(prop);
 
   // Calcula totais e linhas (so o que a fabrica precisa)
   let pesoTotalGeral = 0;
@@ -4019,9 +4027,13 @@ function renderPropostas() {
     const dt = new Date(p.created_at).toLocaleDateString('pt-BR');
     const stLbl = { em_andamento:'Em andamento', pedido:'Pedido', cancelada:'Cancelada' }[p.status||'em_andamento'];
     const total = totalProposta(p);
+    const pedNum = numPedido(p);
     return `<div class="pr-card" onclick="abrPropostaPorId('${p.id}')">
       <div class="pr-card-top">
-        <span class="pr-num">Nº ${numProposta(p)}</span>
+        <div style="display:flex;flex-direction:column;gap:3px">
+          <span class="pr-num">Proposta ${numProposta(p)}</span>
+          ${pedNum ? `<span class="pr-num" style="background:var(--ok2);color:var(--ok)">Pedido ${pedNum}</span>` : ''}
+        </div>
         <span class="pr-st ${p.status||'em_andamento'}">${stLbl}</span>
       </div>
       <div class="pr-emp">${escHtml(empNome)}</div>
@@ -4049,8 +4061,10 @@ function atualizarTopoCotacao() {
   if (!p) return;
   const st = p.status || 'em_andamento';
   const badge = document.getElementById('cot-status-badge');
+  // Mostra "Pedido 0336-26" quando ja tem numero de pedido, senao so o label
+  const pedNum = numPedido(p);
   const lbl = { em_andamento:'Em andamento', pedido:'Pedido', cancelada:'Cancelada' }[st];
-  badge.textContent = lbl;
+  badge.textContent = st === 'pedido' && pedNum ? `Pedido ${pedNum}` : lbl;
   badge.className = 'pr-st ' + st;
   badge.style.display = '';
   // Botoes condicionais
@@ -4067,13 +4081,20 @@ async function mudarStatusProposta(novoStatus, msgSucesso) {
       status_changed_at: new Date().toISOString(),
       status_changed_by: ME.id,
     });
-    PROP_ATUAL.status = novoStatus;
-    PROP_ATUAL.status_changed_at = new Date().toISOString();
-    // Atualiza cache local
-    const idx = PROPOSTAS.findIndex(x => x.id === PROP_ATUAL.id);
-    if (idx >= 0) PROPOSTAS[idx] = { ...PROPOSTAS[idx], ...PROP_ATUAL };
+    // Re-busca a proposta pra pegar o pedido_numero atribuido pelo trigger
+    const fresh = await api('GET','proposals',
+      `id=eq.${PROP_ATUAL.id}&select=id,ano,numero,pedido_numero,pedido_ano,status,status_changed_at,snapshot,company_id,opportunity_id,seller_id,created_at`);
+    const updated = Array.isArray(fresh) ? fresh[0] : fresh;
+    if (updated) {
+      PROP_ATUAL = { ...PROP_ATUAL, ...updated };
+      const idx = PROPOSTAS.findIndex(x => x.id === PROP_ATUAL.id);
+      if (idx >= 0) PROPOSTAS[idx] = PROP_ATUAL;
+    } else {
+      PROP_ATUAL.status = novoStatus;
+    }
     atualizarTopoCotacao();
-    toast(msgSucesso, 'Nº ' + numProposta(PROP_ATUAL), 'success');
+    const numLabel = numPedido(PROP_ATUAL) || numProposta(PROP_ATUAL);
+    toast(msgSucesso, 'Nº ' + numLabel, 'success');
     // Re-renderiza a aba Propostas se estiver aberta
     if (document.getElementById('pr-view')?.classList.contains('ac')) renderPropostas();
   } catch(err) {

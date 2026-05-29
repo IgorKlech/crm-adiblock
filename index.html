@@ -1480,6 +1480,7 @@ body.role-leitor .read-only-banner{display:block}
       <button class="btn bp sm" id="cot-finalizar-btn" onclick="finalizarComoPedido()" title="Marca esta proposta como Pedido aceito" style="display:none">✓ Marcar como Pedido</button>
       <button class="btn bg sm" id="cot-cancelar-btn" onclick="cancelarProposta()" title="Cancela esta proposta" style="display:none">🚫 Cancelar</button>
       <button class="btn bg sm" id="cot-reabrir-btn" onclick="reabrirProposta()" title="Volta para Em andamento" style="display:none">↶ Reabrir</button>
+      <button class="btn bd sm admin-only" id="cot-excluir-btn" onclick="excluirProposta()" title="Excluir proposta definitivamente (só admin)" style="display:none">🗑 Excluir</button>
       <button class="btn bg sm" onclick="abrirModalPedidoProducao()" title="Gera versao sem valores pra mandar pra fabrica">📋 Pedido de Produção</button>
       <button class="btn bg sm" onclick="window.print()">🖨 Imprimir / PDF</button>
     </div>
@@ -4040,7 +4041,10 @@ function renderPropostas() {
       ${tit?`<div class="pr-tit">${escHtml(tit)}</div>`:''}
       <div class="pr-meta">
         <span>${escHtml(vend)} · ${dt}</span>
-        ${total>0?`<span class="pr-val">${fMoeda(total)}</span>`:''}
+        <div style="display:flex;align-items:center;gap:8px">
+          ${total>0?`<span class="pr-val">${fMoeda(total)}</span>`:''}
+          ${MEP?.role==='admin'?`<button class="btn bd sm" style="padding:3px 8px;font-size:11px" title="Excluir proposta" onclick="event.stopPropagation();excluirPropostaById('${p.id}','${escHtml(empNome).replace(/'/g,"\\'")}')">🗑</button>`:''}
+        </div>
       </div>
     </div>`;
   }).join('')}</div>`;
@@ -4071,6 +4075,9 @@ function atualizarTopoCotacao() {
   document.getElementById('cot-finalizar-btn').style.display = st === 'em_andamento' ? '' : 'none';
   document.getElementById('cot-cancelar-btn').style.display  = st === 'em_andamento' ? '' : 'none';
   document.getElementById('cot-reabrir-btn').style.display   = (st === 'pedido' || st === 'cancelada') ? '' : 'none';
+  // Excluir: so admin ve, em qualquer status
+  const exclBtn = document.getElementById('cot-excluir-btn');
+  if (exclBtn) exclBtn.style.display = (MEP?.role === 'admin') ? '' : 'none';
 }
 
 async function mudarStatusProposta(novoStatus, msgSucesso) {
@@ -4130,6 +4137,29 @@ function cancelarProposta() {
 function reabrirProposta() {
   if (!PROP_ATUAL) return;
   mudarStatusProposta('em_andamento', 'Proposta reaberta');
+}
+
+// Sprint 6.7: excluir proposta (definitivo — só admin)
+function excluirProposta() {
+  if (!PROP_ATUAL) return;
+  excluirPropostaById(PROP_ATUAL.id, PROP_ATUAL.snapshot?.cliente?.name || numProposta(PROP_ATUAL));
+}
+
+function excluirPropostaById(id, label) {
+  const p = PROPOSTAS.find(x => x.id === id);
+  if (!p) { toast('Proposta não encontrada','','warning'); return; }
+  const num = numPedido(p) ? `Pedido ${numPedido(p)}` : `Proposta ${numProposta(p)}`;
+
+  // Remove imediatamente do cache e da UI
+  PROPOSTAS = PROPOSTAS.filter(x => x.id !== id);
+  if (PROP_ATUAL?.id === id) fecharCotacao();
+  if (document.getElementById('pr-view')?.classList.contains('ac')) renderPropostas();
+
+  deferComUndo(`${num} excluída`, escHtml(label||''), async () => {
+    await api('DELETE', 'proposals', `id=eq.${id}`);
+    PROPOSTAS = await fetchPropostas();
+    if (document.getElementById('pr-view')?.classList.contains('ac')) renderPropostas();
+  }, `${num} restaurada`);
 }
 
 function renderKanban() {

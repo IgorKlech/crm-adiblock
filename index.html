@@ -648,6 +648,7 @@ td strong{color:var(--tx);font-weight:600}
 .pr-st.em_andamento{background:var(--wr2);color:var(--wr)}
 .pr-st.pedido{background:var(--ok2);color:var(--ok)}
 .pr-st.cancelada{background:var(--er2);color:var(--er)}
+.pr-st.expedido{background:var(--ps);color:var(--p)}
 .pr-emp{font-size:14px;font-weight:600;color:var(--tx);line-height:1.3}
 .pr-tit{font-size:12px;color:var(--tx2);line-height:1.4}
 .pr-meta{display:flex;justify-content:space-between;font-size:11px;color:var(--mt);padding-top:8px;border-top:1px solid var(--bdr);margin-top:4px}
@@ -1116,6 +1117,7 @@ body.role-leitor .read-only-banner{display:block}
           <div class="td-switch" id="pr-tabs">
             <button class="td-sw ac" data-st="em_andamento" onclick="setPrStatus('em_andamento')">Em andamento</button>
             <button class="td-sw" data-st="pedido" onclick="setPrStatus('pedido')">Pedidos</button>
+            <button class="td-sw" data-st="expedido" onclick="setPrStatus('expedido')">Expedidos</button>
             <button class="td-sw" data-st="cancelada" onclick="setPrStatus('cancelada')">Canceladas</button>
           </div>
           <label class="td-filtro-wrap">
@@ -1478,6 +1480,7 @@ body.role-leitor .read-only-banner{display:block}
     </div>
     <div style="display:flex;gap:8px" id="cot-acoes">
       <button class="btn bp sm" id="cot-finalizar-btn" onclick="finalizarComoPedido()" title="Marca esta proposta como Pedido aceito" style="display:none">✓ Marcar como Pedido</button>
+      <button class="btn bg sm" id="cot-expedir-btn" onclick="expedicaoProposta()" title="Marca como expedido — pedido entregue" style="display:none">🚚 Marcar como Expedido</button>
       <button class="btn bg sm" id="cot-cancelar-btn" onclick="cancelarProposta()" title="Cancela esta proposta" style="display:none">🚫 Cancelar</button>
       <button class="btn bg sm" id="cot-reabrir-btn" onclick="reabrirProposta()" title="Volta para Em andamento" style="display:none">↶ Reabrir</button>
       <button class="btn bd sm admin-only" id="cot-excluir-btn" onclick="excluirProposta()" title="Excluir proposta definitivamente (só admin)" style="display:none">🗑 Excluir</button>
@@ -4017,6 +4020,7 @@ function renderPropostas() {
     const vazio = {
       em_andamento: { ico:'📝', tit:'Sem propostas em andamento', msg:'Gere uma proposta a partir de uma oportunidade pra ela aparecer aqui.' },
       pedido:       { ico:'📦', tit:'Sem pedidos finalizados ainda', msg:'Ao marcar uma proposta como "Pedido", ela aparece aqui pra acompanhamento.' },
+      expedido:     { ico:'🚚', tit:'Nenhum pedido expedido ainda', msg:'Ao marcar um pedido como "Expedido", ele sai da fila de produção e aparece aqui.' },
       cancelada:    { ico:'🚫', tit:'Sem propostas canceladas', msg:'Propostas canceladas aparecem aqui.' },
     }[PR_STATUS];
     body.innerHTML = `<div class="pf-empty" style="margin-top:14px">
@@ -4032,7 +4036,7 @@ function renderPropostas() {
     const tit = p.snapshot?.oportunidade?.titulo || '';
     const vend = p.snapshot?.consultor?.nome || '';
     const dt = new Date(p.created_at).toLocaleDateString('pt-BR');
-    const stLbl = { em_andamento:'Em andamento', pedido:'Pedido', cancelada:'Cancelada' }[p.status||'em_andamento'];
+    const stLbl = { em_andamento:'Em andamento', pedido:'Pedido', expedido:'Expedido', cancelada:'Cancelada' }[p.status||'em_andamento'];
     const total = totalProposta(p);
     const pedNum = numPedido(p);
     return `<div class="pr-card" onclick="abrPropostaPorId('${p.id}')">
@@ -4073,15 +4077,17 @@ function atualizarTopoCotacao() {
   const badge = document.getElementById('cot-status-badge');
   // Mostra "Pedido 0336-26" quando ja tem numero de pedido, senao so o label
   const pedNum = numPedido(p);
-  const lbl = { em_andamento:'Em andamento', pedido:'Pedido', cancelada:'Cancelada' }[st];
-  badge.textContent = st === 'pedido' && pedNum ? `Pedido ${pedNum}` : lbl;
+  const lblMap = { em_andamento:'Em andamento', pedido:'Pedido', expedido:'Expedido', cancelada:'Cancelada' };
+  const lbl = lblMap[st] || st;
+  badge.textContent = st === 'pedido' && pedNum ? `Pedido ${pedNum}` : (st === 'expedido' && pedNum ? `Expedido ${pedNum}` : lbl);
   badge.className = 'pr-st ' + st;
   badge.style.display = '';
   // Botoes de acao: todos os vendedores veem (qualquer proposta), leitor nao ve
   const podeAcionar = MEP?.role !== 'leitor';
   document.getElementById('cot-finalizar-btn').style.display = (podeAcionar && st === 'em_andamento') ? '' : 'none';
-  document.getElementById('cot-cancelar-btn').style.display  = (podeAcionar && st === 'em_andamento') ? '' : 'none';
-  document.getElementById('cot-reabrir-btn').style.display   = (podeAcionar && (st === 'pedido' || st === 'cancelada')) ? '' : 'none';
+  document.getElementById('cot-expedir-btn').style.display   = (podeAcionar && st === 'pedido') ? '' : 'none';
+  document.getElementById('cot-cancelar-btn').style.display  = (podeAcionar && (st === 'em_andamento' || st === 'pedido')) ? '' : 'none';
+  document.getElementById('cot-reabrir-btn').style.display   = (podeAcionar && (st === 'expedido' || st === 'cancelada')) ? '' : 'none';
   // Excluir: so admin ve, em qualquer status
   const exclBtn = document.getElementById('cot-excluir-btn');
   if (exclBtn) exclBtn.style.display = (MEP?.role === 'admin') ? '' : 'none';
@@ -4133,6 +4139,11 @@ async function finalizarComoPedido() {
       toast('Erro ao atualizar oportunidade', err.message||'', 'warning');
     }
   }
+}
+
+function expedicaoProposta() {
+  if (!PROP_ATUAL) return;
+  mudarStatusProposta('expedido', 'Pedido marcado como Expedido');
 }
 
 function cancelarProposta() {

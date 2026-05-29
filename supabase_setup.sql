@@ -956,7 +956,7 @@ CREATE TRIGGER tg_atribui_numero_pedido
 -- -------------------------------------------------------------------------
 ALTER TABLE public.proposals
   ADD COLUMN IF NOT EXISTS status text NOT NULL DEFAULT 'em_andamento'
-  CHECK (status IN ('em_andamento','pedido','cancelada')),
+  CHECK (status IN ('em_andamento','pedido','expedido','cancelada')),
   ADD COLUMN IF NOT EXISTS status_changed_at timestamptz,
   ADD COLUMN IF NOT EXISTS status_changed_by uuid REFERENCES public.profiles(id) ON DELETE SET NULL;
 

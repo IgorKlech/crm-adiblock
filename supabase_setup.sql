@@ -962,12 +962,14 @@ ALTER TABLE public.proposals
 
 CREATE INDEX IF NOT EXISTS idx_proposals_status ON public.proposals(status);
 
--- Permite UPDATE do status (RLS antigo so deixava DELETE pra admin)
+-- Qualquer vendedor (nao leitor) pode atualizar status de qualquer proposta:
+-- marcar como pedido, cancelar, reabrir. Util para quem esta na fabrica
+-- ou no office e precisa acatar pedidos de outros vendedores.
 DROP POLICY IF EXISTS "proposals_update_status" ON public.proposals;
 CREATE POLICY "proposals_update_status" ON public.proposals
   FOR UPDATE TO authenticated
-  USING (NOT public.is_leitor() AND (public.is_admin() OR seller_id = auth.uid()))
-  WITH CHECK (NOT public.is_leitor() AND (public.is_admin() OR seller_id = auth.uid()));
+  USING (NOT public.is_leitor())
+  WITH CHECK (NOT public.is_leitor());
 
 
 -- -------------------------------------------------------------------------

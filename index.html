@@ -4071,10 +4071,11 @@ function atualizarTopoCotacao() {
   badge.textContent = st === 'pedido' && pedNum ? `Pedido ${pedNum}` : lbl;
   badge.className = 'pr-st ' + st;
   badge.style.display = '';
-  // Botoes condicionais
-  document.getElementById('cot-finalizar-btn').style.display = st === 'em_andamento' ? '' : 'none';
-  document.getElementById('cot-cancelar-btn').style.display  = st === 'em_andamento' ? '' : 'none';
-  document.getElementById('cot-reabrir-btn').style.display   = (st === 'pedido' || st === 'cancelada') ? '' : 'none';
+  // Botoes de acao: todos os vendedores veem (qualquer proposta), leitor nao ve
+  const podeAcionar = MEP?.role !== 'leitor';
+  document.getElementById('cot-finalizar-btn').style.display = (podeAcionar && st === 'em_andamento') ? '' : 'none';
+  document.getElementById('cot-cancelar-btn').style.display  = (podeAcionar && st === 'em_andamento') ? '' : 'none';
+  document.getElementById('cot-reabrir-btn').style.display   = (podeAcionar && (st === 'pedido' || st === 'cancelada')) ? '' : 'none';
   // Excluir: so admin ve, em qualquer status
   const exclBtn = document.getElementById('cot-excluir-btn');
   if (exclBtn) exclBtn.style.display = (MEP?.role === 'admin') ? '' : 'none';

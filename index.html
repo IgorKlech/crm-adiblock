@@ -3927,9 +3927,15 @@ function renderPedidoProducao(prop, solicitante, obsProd) {
       </div>
     </div>
 
-    <div class="prod-solic" style="margin-bottom:18px">
-      <span>Cliente:</span> <b>${escHtml(c.name||'—')}</b>
-      <span style="margin-left:auto">Solicitação:</span> <b>${escHtml(solicitante)}</b>
+    <div style="background:var(--bg);border:1px solid var(--bdr);border-radius:8px;padding:12px 16px;margin-bottom:18px;display:grid;grid-template-columns:1fr 1fr;gap:6px 24px;font-size:12.5px">
+      <div style="grid-column:1/-1;display:flex;justify-content:space-between;align-items:baseline;padding-bottom:8px;border-bottom:1px solid var(--bdr);margin-bottom:4px">
+        <div><span style="color:var(--mt);font-weight:600;margin-right:8px">Cliente:</span><b style="font-size:14px">${escHtml(c.name||'—')}</b></div>
+        <div><span style="color:var(--mt);font-weight:600;margin-right:8px">Solicitação:</span><b>${escHtml(solicitante)}</b></div>
+      </div>
+      ${c.endereco||c.cidade||c.uf ? `<div style="grid-column:1/-1"><span style="color:var(--mt);font-weight:600;margin-right:8px">Endereço:</span>${escHtml([c.endereco, c.cidade&&c.uf?c.cidade+'/'+c.uf:(c.cidade||c.uf||''), c.cep?'CEP '+c.cep:''].filter(Boolean).join(' — '))}</div>` : ''}
+      ${c.cnpj ? `<div><span style="color:var(--mt);font-weight:600;margin-right:8px">CNPJ:</span>${escHtml(c.cnpj)}</div>` : ''}
+      ${c.phone ? `<div><span style="color:var(--mt);font-weight:600;margin-right:8px">Telefone:</span>${escHtml(c.phone)}</div>` : ''}
+      ${c.obra ? `<div style="grid-column:1/-1"><span style="color:var(--mt);font-weight:600;margin-right:8px">Obra:</span><b>${escHtml(c.obra)}</b></div>` : ''}
     </div>
 
     <table class="prod-tab">

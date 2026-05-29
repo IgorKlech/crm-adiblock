@@ -890,7 +890,7 @@ DO $$ BEGIN ALTER PUBLICATION supabase_realtime ADD TABLE public.tasks; EXCEPTIO
 -- Sprint 6.7: numeracao de pedidos independente das propostas
 -- Proposta tem seu proprio numero sequencial (ja existia).
 -- Pedido ganha numero separado, atribuido ao "Marcar como Pedido".
--- Seed: ultimo pedido emitido foi 335-26, entao proximo sera 336-26.
+-- Seed: ultimo pedido emitido foi 338-26, entao proximo sera 0339-26.
 -- -------------------------------------------------------------------------
 
 -- Tabela de contadores por ano (1 linha por ano, atomica via UPDATE)
@@ -899,9 +899,9 @@ CREATE TABLE IF NOT EXISTS public.pedido_sequences (
   ultimo int NOT NULL DEFAULT 0
 );
 
--- Seed: garante que o proximo pedido de 2026 sera 336
+-- Seed: garante que o proximo pedido de 2026 sera 0339-26
 INSERT INTO public.pedido_sequences (ano, ultimo)
-  VALUES (2026, 335)
+  VALUES (2026, 338)
   ON CONFLICT (ano) DO UPDATE
     SET ultimo = GREATEST(pedido_sequences.ultimo, EXCLUDED.ultimo);
 

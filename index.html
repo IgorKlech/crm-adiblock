@@ -4476,6 +4476,7 @@ function renderCotacao(prop) {
   const dataStr  = dataProp.toLocaleDateString('pt-BR');
   const validade = new Date(dataProp.getTime() + (cond.validade_dias||30) * 86400000).toLocaleDateString('pt-BR');
   const propLabel = numProposta(prop);
+  const pedLabel  = numPedido(prop); // Sprint 6.7: numero do pedido (so existe apos "Marcar como Pedido")
 
   let totalGeral = 0;
   const rowsHtml = prods.map(p => {
@@ -4511,7 +4512,8 @@ function renderCotacao(prop) {
         </div>
       </div>
       <div class="cot-meta">
-        <div>Pedido: <b>${escHtml(propLabel)}</b></div>
+        <div>Proposta: <b>${escHtml(propLabel)}</b></div>
+        ${pedLabel ? `<div>Pedido: <b style="color:var(--ok)">${escHtml(pedLabel)}</b></div>` : ''}
         <div>Data: <b>${dataStr}</b></div>
         <div>Validade: <b>${validade}</b></div>
       </div>

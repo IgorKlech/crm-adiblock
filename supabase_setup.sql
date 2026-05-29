@@ -962,6 +962,11 @@ ALTER TABLE public.proposals
 
 CREATE INDEX IF NOT EXISTS idx_proposals_status ON public.proposals(status);
 
+-- Sprint 6.8: campos de expedicao (NF + transportadora)
+ALTER TABLE public.proposals
+  ADD COLUMN IF NOT EXISTS nf_numero      text,
+  ADD COLUMN IF NOT EXISTS transportadora text;
+
 -- Qualquer vendedor (nao leitor) pode atualizar status de qualquer proposta:
 -- marcar como pedido, cancelar, reabrir. Util para quem esta na fabrica
 -- ou no office e precisa acatar pedidos de outros vendedores.

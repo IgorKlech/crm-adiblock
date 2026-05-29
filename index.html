@@ -1522,6 +1522,30 @@ body.role-leitor .read-only-banner{display:block}
   </div>
 </div>
 
+<!-- MODAL EXPEDICAO (Sprint 6.8) -->
+<div class="mo" id="expedicao-m" style="z-index:310">
+  <div class="md" style="max-width:460px">
+    <div class="mh">
+      <h3>Registrar Expedição</h3>
+      <button class="mx" onclick="document.getElementById('expedicao-m').classList.remove('op')">✕</button>
+    </div>
+    <form id="expedicao-f">
+      <div class="fg">
+        <label>Número da Nota Fiscal <span style="color:var(--er)">*</span></label>
+        <input type="text" id="exp-nf" placeholder="Ex: 001234" required>
+      </div>
+      <div class="fg">
+        <label>Transportadora <span style="color:var(--mt);font-weight:400;font-size:11px">— opcional</span></label>
+        <input type="text" id="exp-transp" placeholder="Ex: Jadlog, Correios, retirada...">
+      </div>
+      <div class="ma">
+        <button type="button" class="btn bg" onclick="document.getElementById('expedicao-m').classList.remove('op')">Cancelar</button>
+        <button type="submit" class="btn bp" id="exp-sub">🚚 Confirmar Expedição</button>
+      </div>
+    </form>
+  </div>
+</div>
+
 <!-- PÁGINA DE PERFIL DO CLIENTE -->
 <div id="pfpage">
   <div class="pf-topbar">
@@ -2046,8 +2070,8 @@ const fetchPf = () => api('GET','profiles','select=id,name,role,email&order=name
 const fetchProds = () => api('GET','products','select=nome,embalagem,preco_materia_prima,preco_office,preco_pj&order=nome,embalagem');
 // Sprint 6.2: tarefas livres (nao atreladas a oportunidade)
 const fetchTasks = () => api('GET','tasks','select=*,company:companies(id,razao_social),seller:profiles(id,name)&order=due_at.asc');
-// Sprint 6.3: propostas pra busca global. 6.5: status. 6.7: pedido_numero/pedido_ano.
-const fetchPropostas = () => api('GET','proposals','select=id,ano,numero,pedido_numero,pedido_ano,company_id,opportunity_id,seller_id,snapshot,status,status_changed_at,created_at&order=created_at.desc&limit=500');
+// Sprint 6.3: propostas pra busca global. 6.5: status. 6.7: pedido_numero/pedido_ano. 6.8: nf_numero/transportadora.
+const fetchPropostas = () => api('GET','proposals','select=id,ano,numero,pedido_numero,pedido_ano,company_id,opportunity_id,seller_id,snapshot,status,status_changed_at,nf_numero,transportadora,created_at&order=created_at.desc&limit=500');
 // Sprint 3: histórico via interactions (por oportunidade) — stub por enquanto
 const fetchHist = id => Promise.resolve([]); // será refeito no Sprint 3.3 ligado a oportunidades
 function saveCl(d, id) {
@@ -4049,6 +4073,7 @@ function renderPropostas() {
       </div>
       <div class="pr-emp">${escHtml(empNome)}</div>
       ${tit?`<div class="pr-tit">${escHtml(tit)}</div>`:''}
+      ${p.nf_numero?`<div class="pr-tit" style="color:var(--p);font-weight:600">NF ${escHtml(p.nf_numero)}${p.transportadora?' · '+escHtml(p.transportadora):''}</div>`:''}
       <div class="pr-meta">
         <span>${escHtml(vend)} · ${dt}</span>
         <div style="display:flex;align-items:center;gap:8px">
@@ -4141,10 +4166,49 @@ async function finalizarComoPedido() {
   }
 }
 
+// Sprint 6.8: abre modal pedindo NF + transportadora antes de marcar como expedido
 function expedicaoProposta() {
   if (!PROP_ATUAL) return;
-  mudarStatusProposta('expedido', 'Pedido marcado como Expedido');
+  document.getElementById('exp-nf').value = PROP_ATUAL.nf_numero || '';
+  document.getElementById('exp-transp').value = PROP_ATUAL.transportadora || '';
+  document.getElementById('expedicao-m').classList.add('op');
+  setTimeout(() => document.getElementById('exp-nf').focus(), 80);
 }
+
+document.getElementById('expedicao-f').addEventListener('submit', async e => {
+  e.preventDefault();
+  const nf     = document.getElementById('exp-nf').value.trim();
+  const transp = document.getElementById('exp-transp').value.trim();
+  if (!nf) return;
+  const btn = document.getElementById('exp-sub');
+  btn.disabled = true; btn.textContent = 'Salvando...';
+  document.getElementById('expedicao-m').classList.remove('op');
+  try {
+    await api('PATCH','proposals',`id=eq.${PROP_ATUAL.id}`, {
+      status:           'expedido',
+      nf_numero:        nf,
+      transportadora:   transp || null,
+      status_changed_at: new Date().toISOString(),
+      status_changed_by: ME.id,
+    });
+    // Re-busca pra sincronizar estado local
+    const fresh = await api('GET','proposals',
+      `id=eq.${PROP_ATUAL.id}&select=id,ano,numero,pedido_numero,pedido_ano,status,status_changed_at,nf_numero,transportadora,snapshot,company_id,opportunity_id,seller_id,created_at`);
+    const updated = Array.isArray(fresh) ? fresh[0] : fresh;
+    if (updated) {
+      PROP_ATUAL = { ...PROP_ATUAL, ...updated };
+      const idx = PROPOSTAS.findIndex(x => x.id === PROP_ATUAL.id);
+      if (idx >= 0) PROPOSTAS[idx] = PROP_ATUAL;
+    }
+    atualizarTopoCotacao();
+    toast('Expedição registrada', `NF ${nf}${transp?' · '+transp:''}`, 'success');
+    if (document.getElementById('pr-view')?.classList.contains('ac')) renderPropostas();
+  } catch(err) {
+    toast('Erro ao registrar expedição', err.message||'', 'warning');
+  } finally {
+    btn.disabled = false; btn.textContent = '🚚 Confirmar Expedição';
+  }
+});
 
 function cancelarProposta() {
   if (!PROP_ATUAL) return;

@@ -2070,8 +2070,18 @@ const fetchPf = () => api('GET','profiles','select=id,name,role,email&order=name
 const fetchProds = () => api('GET','products','select=nome,embalagem,preco_materia_prima,preco_office,preco_pj&order=nome,embalagem');
 // Sprint 6.2: tarefas livres (nao atreladas a oportunidade)
 const fetchTasks = () => api('GET','tasks','select=*,company:companies(id,razao_social),seller:profiles(id,name)&order=due_at.asc');
-// Sprint 6.3: propostas pra busca global. 6.5: status. 6.7: pedido_numero/pedido_ano. 6.8: nf_numero/transportadora.
-const fetchPropostas = () => api('GET','proposals','select=id,ano,numero,pedido_numero,pedido_ano,company_id,opportunity_id,seller_id,snapshot,status,status_changed_at,nf_numero,transportadora,created_at&order=created_at.desc&limit=500');
+// Sprint 6.3+6.5+6.7+6.8. Tenta com todas as colunas; se falhar (colunas ainda nao migradas),
+// cai no select basico pra nao deixar a aba em branco.
+async function fetchPropostas() {
+  try {
+    return await api('GET','proposals',
+      'select=id,ano,numero,pedido_numero,pedido_ano,company_id,opportunity_id,seller_id,snapshot,status,status_changed_at,nf_numero,transportadora,created_at&order=created_at.desc&limit=500');
+  } catch(e) {
+    console.warn('fetchPropostas: colunas novas indisponiveis, usando select basico', e.message);
+    return await api('GET','proposals',
+      'select=id,ano,numero,company_id,opportunity_id,seller_id,snapshot,status,created_at&order=created_at.desc&limit=500');
+  }
+}
 // Sprint 3: histórico via interactions (por oportunidade) — stub por enquanto
 const fetchHist = id => Promise.resolve([]); // será refeito no Sprint 3.3 ligado a oportunidades
 function saveCl(d, id) {

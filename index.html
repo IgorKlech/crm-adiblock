@@ -1135,6 +1135,7 @@ body.role-leitor .read-only-banner{display:block}
         <div><h2>Dashboard</h2><span class="ps">Visão geral do comercial</span></div>
         <button class="btn bg sm" id="dref">↺ Atualizar</button>
         <button class="btn bg sm" onclick="abrRelatorio()">📊 Relatório Semanal</button>
+        <button class="btn bg sm admin-only" onclick="baixarBackup()" title="Baixa um arquivo com todos os dados (empresas, contatos, oportunidades, propostas, tarefas) — guarde no seu computador">💾 Baixar Backup</button>
       </div>
       <div class="sg5">
         <div class="sk sk-click" onclick="drillDashboard('total')" title="Ver todas as empresas"><div class="sic sb2"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg></div><div><div class="sv" id="d1">-</div><div class="sl2">Total de Clientes</div></div></div>
@@ -2811,6 +2812,54 @@ function calNav(dir) {
 }
 
 // ── Sprint 6.2: Export .ics (Google Calendar / Outlook / Apple Calendar) ──
+// Sprint 6.9: backup manual completo (plano Free do Supabase nao tem backup
+// restauravel). Baixa um JSON com tudo pro usuario guardar no PC.
+async function baixarBackup() {
+  toast('Gerando backup...', 'Buscando todos os dados', 'info');
+  try {
+    // Busca direto do banco (dados frescos e completos, sem depender do cache local)
+    const [companies, contacts, opportunities, opp_products, interactions, proposals, tasks, profiles] =
+      await Promise.all([
+        api('GET','companies','select=*'),
+        api('GET','contacts','select=*'),
+        api('GET','opportunities','select=*'),
+        api('GET','opportunity_products','select=*'),
+        api('GET','interactions','select=*'),
+        api('GET','proposals','select=*'),
+        api('GET','tasks','select=*').catch(()=>[]),
+        api('GET','profiles','select=id,name,email,role'),
+      ]);
+
+    const backup = {
+      _meta: {
+        sistema: 'CRM Adiblock',
+        gerado_em: new Date().toISOString(),
+        gerado_por: MEP?.name || ME?.email || '?',
+        totais: {
+          empresas: companies.length, contatos: contacts.length,
+          oportunidades: opportunities.length, propostas: proposals.length,
+          tarefas: tasks.length,
+        },
+      },
+      companies, contacts, opportunities, opportunity_products: opp_products,
+      interactions, proposals, tasks, profiles,
+    };
+
+    const blob = new Blob([JSON.stringify(backup, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    const stamp = new Date().toISOString().slice(0,16).replace('T','_').replace(':','h');
+    a.download = `backup-adiblock-${stamp}.json`;
+    document.body.appendChild(a); a.click(); document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+
+    toast('Backup baixado!', `${companies.length} empresas, ${proposals.length} propostas. Guarde o arquivo.`, 'success');
+  } catch(err) {
+    toast('Erro ao gerar backup', err.message||'', 'warning');
+  }
+}
+
 function exportarICS() {
   const evs = eventosAgenda().filter(e => !e.done);
   if (!evs.length) {

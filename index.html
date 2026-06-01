@@ -4776,57 +4776,69 @@ function renderCotacao(prop) {
 
 async function gerarRelatorio() {
   const corpo = document.getElementById('rel-body');
-  // Sprint 3: relatório semanal dependia do modelo antigo (status, loss_reason, call_history).
-  // Vai voltar adaptado às oportunidades / estágios numa próxima fase.
-  corpo.innerHTML = '<div class="deprecated-msg" style="margin:24px">Relatório semanal será refeito a partir dos dados de oportunidades e interações (próxima fase do Sprint 3).</div>';
-  return;
+  corpo.innerHTML = '<div class="se" style="padding:50px;text-align:center"><div class="sp" style="margin:0 auto 12px"></div><p>Gerando relatório...</p></div>';
   try {
-    const agora   = new Date();
+    const agora        = new Date();
     const inicioSemana = new Date(Date.now() - 7 * 86400000);
-    const fmtPer  = d => d.toLocaleDateString('pt-BR',{day:'2-digit',month:'2-digit',year:'numeric'});
-    const iniStr  = inicioSemana.toISOString();
+    const iniMs        = inicioSemana.getTime();
+    const iniStr       = inicioSemana.toISOString();
+    const fmtPer       = d => d.toLocaleDateString('pt-BR',{day:'2-digit',month:'2-digit',year:'numeric'});
+    const naSemana     = ts => ts && new Date(ts).getTime() >= iniMs;
 
-    // Dados da semana
-    const [histSemana, novosClientes] = await Promise.allSettled([
-      api('GET','call_history',`datetime=gte.${iniStr}&select=*,seller:profiles(name)`),
-      api('GET','clients',`created_at=gte.${iniStr}&select=id,name,status,seller_name,seller:profiles(name)`)
+    // ── Base de dados (em memoria) ──
+    const opps      = todasOpps();
+    const abertas   = opps.filter(o => o.estagio !== 'ganha' && o.estagio !== 'perdida');
+    const ganhas    = opps.filter(o => o.estagio === 'ganha');
+
+    // ── Busca sob demanda (filtrada por data — leve, so quando gera o relatorio) ──
+    // interacoes e created_at de oportunidades nao vem no fetchCl pra nao pesar.
+    const [interResp, oppsNovasResp] = await Promise.allSettled([
+      api('GET','interactions',`datetime=gte.${iniStr}&select=id,datetime,result,seller_id,seller:profiles(name)`),
+      api('GET','opportunities',`created_at=gte.${iniStr}&select=id`),
     ]);
+    const interSemana = interResp.status==='fulfilled' && Array.isArray(interResp.value) ? interResp.value : [];
+    const novasOpps   = oppsNovasResp.status==='fulfilled' && Array.isArray(oppsNovasResp.value) ? oppsNovasResp.value.length : 0;
 
-    const hist  = histSemana.status==='fulfilled' ? histSemana.value : [];
-    const novos = novosClientes.status==='fulfilled' ? novosClientes.value : [];
+    // ── Metricas da semana ──
+    const novasEmpresas = CL.filter(c => naSemana(c.created_at)).length;
+    const ganhasSemana  = ganhas.filter(o => naSemana(o.closed_at));
+    const propsSemana   = (PROPOSTAS||[]).filter(p => naSemana(p.created_at));
+    const pedidosSemana = (PROPOSTAS||[]).filter(p => (p.status==='pedido'||p.status==='expedido') && naSemana(p.status_changed_at));
+    const valorGanhoSem = ganhasSemana.reduce((s,o)=>s+(Number(o.valor_estimado)||0),0);
 
-    // Métricas
-    const totalBase    = CL.length;
-    const novosCont    = novos.length;
-    const contatosSem  = hist.length;
-    const conversoesSem = hist.filter(h=>h.result==='Comprou').length;
-    const ativos       = CL.filter(c=>['Pendente','Em contato'].includes(c.status)).length;
-    const vencidos     = CL.filter(c=>venc(c.callback_date)&&c.status!=='Comprou'&&c.status!=='Inativo').length;
-    const taxaConv     = totalBase > 0 ? Math.round(CL.filter(c=>c.status==='Comprou').length/totalBase*100) : 0;
+    // ── Metricas gerais ──
+    const totalEmpresas = CL.length;
+    const pipelineTot   = abertas.reduce((s,o)=>s+(Number(o.valor_estimado)||0),0);
+    const agoraMs       = Date.now();
+    const vencidos      = abertas.filter(o => o.callback_date && new Date(o.callback_date).getTime() < agoraMs).length;
+    const totalFechadas = ganhas.length + opps.filter(o=>o.estagio==='perdida').length;
+    const taxaConv      = totalFechadas > 0 ? Math.round(ganhas.length/totalFechadas*100) : 0;
 
-    // Ranking da semana
+    // ── Ranking da semana (por interacoes + oportunidades ganhas) ──
     const rankSem = {};
-    hist.forEach(h => {
-      const nm = h.seller?.name || 'Sem vendedor';
-      if (!rankSem[nm]) rankSem[nm] = {contatos:0,conversoes:0};
+    interSemana.forEach(i => {
+      const nm = i.seller?.name || i.seller_name || 'Sem vendedor';
+      if (!rankSem[nm]) rankSem[nm] = {contatos:0,ganhas:0,valor:0};
       rankSem[nm].contatos++;
-      if (h.result==='Comprou') rankSem[nm].conversoes++;
     });
-    const topSem = Object.entries(rankSem).sort((a,b)=>b[1].contatos-a[1].contatos);
-
-    // Motivos de perda
-    const motivos = {};
-    CL.filter(c=>c.loss_reason).forEach(c=>{
-      motivos[c.loss_reason] = (motivos[c.loss_reason]||0)+1;
+    ganhasSemana.forEach(o => {
+      const nm = o.seller_name || 'Sem vendedor';
+      if (!rankSem[nm]) rankSem[nm] = {contatos:0,ganhas:0,valor:0};
+      rankSem[nm].ganhas++;
+      rankSem[nm].valor += Number(o.valor_estimado)||0;
     });
-    const topMotivos = Object.entries(motivos).sort((a,b)=>b[1]-a[1]);
+    const topSem = Object.entries(rankSem).sort((a,b)=>(b[1].ganhas-a[1].ganhas)||(b[1].contatos-a[1].contatos));
 
-    // Funil geral
-    const funil = ['Pendente','Em contato','Comprou','Nao comprou','Inativo']
-      .map(s => ({ s, n: CL.filter(c=>c.status===s).length }));
+    // ── Funil por estagio ──
+    const ESTAGIOS = [
+      {k:'lead',lbl:'Lead'},{k:'qualificado',lbl:'Qualificado'},
+      {k:'proposta_enviada',lbl:'Proposta enviada'},{k:'em_negociacao',lbl:'Em negociação'},
+      {k:'ganha',lbl:'Ganha'},{k:'perdida',lbl:'Perdida'},
+    ];
+    const funil = ESTAGIOS.map(e => ({ lbl:e.lbl, n: opps.filter(o=>o.estagio===e.k).length }));
+    const totalOpps = opps.length;
 
     corpo.innerHTML = `
-      <!-- Capa -->
       <div class="rel-cover">
         <div class="rel-logo" style="background:transparent;padding:0;width:auto;height:auto;border-radius:0">
           <img src="logo.png" alt="Adiblock" style="height:56px;width:auto">
@@ -4835,96 +4847,100 @@ async function gerarRelatorio() {
         <p>${fmtPer(inicioSemana)} até ${fmtPer(agora)} &nbsp;•&nbsp; Gerado em ${fmtPer(agora)}</p>
       </div>
 
-      <!-- Resumo geral -->
-      <div class="rel-section">
-        <div class="rel-section-title">Resumo Geral</div>
-        <div class="rel-cards">
-          <div class="rel-card blue"><div class="rel-num">${totalBase}</div><div class="rel-lbl">Total na Base</div></div>
-          <div class="rel-card green"><div class="rel-num">${novosCont}</div><div class="rel-lbl">Novos esta semana</div></div>
-          <div class="rel-card blue"><div class="rel-num">${ativos}</div><div class="rel-lbl">Ativos (Pendente + Em contato)</div></div>
-          <div class="rel-card green"><div class="rel-num">${taxaConv}%</div><div class="rel-lbl">Taxa de Conversão Total</div></div>
-        </div>
-      </div>
-
-      <!-- Atividade da semana -->
       <div class="rel-section">
         <div class="rel-section-title">Atividade da Semana</div>
         <div class="rel-cards">
-          <div class="rel-card blue"><div class="rel-num">${contatosSem}</div><div class="rel-lbl">Contatos Realizados</div></div>
-          <div class="rel-card green"><div class="rel-num">${conversoesSem}</div><div class="rel-lbl">Conversões (Comprou)</div></div>
-          <div class="rel-card yellow"><div class="rel-num">${vencidos}</div><div class="rel-lbl">Retornos Vencidos</div></div>
-          <div class="rel-card ${novosCont>0?'green':'blue'}"><div class="rel-num">${novosCont}</div><div class="rel-lbl">Novos Cadastros</div></div>
+          <div class="rel-card blue"><div class="rel-num">${interSemana.length}</div><div class="rel-lbl">Interações registradas</div></div>
+          <div class="rel-card green"><div class="rel-num">${ganhasSemana.length}</div><div class="rel-lbl">Oportunidades ganhas</div></div>
+          <div class="rel-card blue"><div class="rel-num">${propsSemana.length}</div><div class="rel-lbl">Propostas geradas</div></div>
+          <div class="rel-card green"><div class="rel-num">${pedidosSemana.length}</div><div class="rel-lbl">Viraram pedido</div></div>
+        </div>
+        <div class="rel-cards" style="margin-top:10px">
+          <div class="rel-card green"><div class="rel-num">${fMoeda(valorGanhoSem)}</div><div class="rel-lbl">Valor ganho na semana</div></div>
+          <div class="rel-card blue"><div class="rel-num">${novasEmpresas}</div><div class="rel-lbl">Novas empresas</div></div>
+          <div class="rel-card blue"><div class="rel-num">${novasOpps}</div><div class="rel-lbl">Novas oportunidades</div></div>
+          <div class="rel-card yellow"><div class="rel-num">${vencidos}</div><div class="rel-lbl">Retornos vencidos</div></div>
         </div>
       </div>
 
-      <!-- Alertas -->
+      <div class="rel-section">
+        <div class="rel-section-title">Visão Geral do Comercial</div>
+        <div class="rel-cards">
+          <div class="rel-card blue"><div class="rel-num">${totalEmpresas}</div><div class="rel-lbl">Empresas na base</div></div>
+          <div class="rel-card blue"><div class="rel-num">${abertas.length}</div><div class="rel-lbl">Oportunidades abertas</div></div>
+          <div class="rel-card green"><div class="rel-num">${fMoeda(pipelineTot)}</div><div class="rel-lbl">Pipeline em aberto</div></div>
+          <div class="rel-card green"><div class="rel-num">${taxaConv}%</div><div class="rel-lbl">Taxa de conversão</div></div>
+        </div>
+      </div>
+
       <div class="rel-section">
         <div class="rel-section-title">Pontos de Atenção</div>
         ${vencidos > 0
-          ? `<div class="rel-alert-box" style="margin-bottom:10px">⚠ <strong>${vencidos} cliente(s)</strong> com data de retorno vencida aguardando contato.</div>`
+          ? `<div class="rel-alert-box" style="margin-bottom:10px">⚠ <strong>${vencidos} oportunidade(s)</strong> com retorno vencido aguardando contato.</div>`
           : `<div class="rel-ok-box" style="margin-bottom:10px">✓ Nenhum retorno vencido. Ótimo!</div>`}
-        ${contatosSem === 0
-          ? `<div class="rel-alert-box">⚠ Nenhum contato registrado esta semana. Verifique a atividade da equipe.</div>`
-          : `<div class="rel-ok-box">✓ ${contatosSem} contato(s) registrado(s) esta semana.</div>`}
+        ${interSemana.length === 0
+          ? `<div class="rel-alert-box">⚠ Nenhuma interação registrada esta semana. Verifique a atividade da equipe.</div>`
+          : `<div class="rel-ok-box">✓ ${interSemana.length} interação(ões) registrada(s) esta semana.</div>`}
       </div>
 
-      <!-- Ranking semanal -->
       <div class="rel-section">
         <div class="rel-section-title">Ranking de Vendedores — Semana</div>
         ${topSem.length ? `
           <table class="rel-table">
-            <thead><tr><th>#</th><th>Vendedor</th><th>Contatos</th><th>Conversões</th><th>Taxa</th></tr></thead>
+            <thead><tr><th>#</th><th>Vendedor</th><th>Interações</th><th>Ganhas</th><th>Valor ganho</th></tr></thead>
             <tbody>${topSem.map(([nm,d],i)=>`
               <tr>
                 <td>${['🥇','🥈','🥉'][i]||i+1}</td>
-                <td style="font-weight:600">${nm}</td>
+                <td style="font-weight:600">${escHtml(nm)}</td>
                 <td>${d.contatos}</td>
-                <td style="color:var(--ok);font-weight:600">${d.conversoes}</td>
-                <td>${d.contatos>0?Math.round(d.conversoes/d.contatos*100):0}%</td>
+                <td style="color:var(--ok);font-weight:600">${d.ganhas}</td>
+                <td>${d.valor>0?fMoeda(d.valor):'—'}</td>
               </tr>`).join('')}
             </tbody>
-          </table>` : '<p style="font-size:13px;color:var(--mt)">Nenhum contato registrado esta semana.</p>'}
+          </table>` : '<p style="font-size:13px;color:var(--mt)">Nenhuma atividade registrada esta semana.</p>'}
       </div>
 
-      <!-- Funil atual -->
       <div class="rel-section">
-        <div class="rel-section-title">Funil de Status Atual</div>
+        <div class="rel-section-title">Funil de Oportunidades (atual)</div>
         <table class="rel-table">
-          <thead><tr><th>Status</th><th>Clientes</th><th>% da Base</th></tr></thead>
+          <thead><tr><th>Estágio</th><th>Oportunidades</th><th>% do total</th></tr></thead>
           <tbody>${funil.map(f=>`
             <tr>
-              <td>${f.s}</td>
+              <td>${f.lbl}</td>
               <td style="font-weight:600">${f.n}</td>
-              <td>${totalBase>0?Math.round(f.n/totalBase*100):0}%</td>
+              <td>${totalOpps>0?Math.round(f.n/totalOpps*100):0}%</td>
             </tr>`).join('')}
           </tbody>
         </table>
       </div>
 
-      <!-- Novos clientes da semana -->
-      ${novos.length ? `
+      ${ganhasSemana.length ? `
       <div class="rel-section">
-        <div class="rel-section-title">Novos Clientes Cadastrados na Semana (${novos.length})</div>
+        <div class="rel-section-title">Oportunidades Ganhas na Semana (${ganhasSemana.length})</div>
         <table class="rel-table">
-          <thead><tr><th>Nome</th><th>Vendedor</th><th>Status</th></tr></thead>
-          <tbody>${novos.slice(0,10).map(c=>`
+          <thead><tr><th>Empresa</th><th>Oportunidade</th><th>Vendedor</th><th>Valor</th></tr></thead>
+          <tbody>${ganhasSemana.slice(0,15).map(o=>`
             <tr>
-              <td style="font-weight:600">${c.name}</td>
-              <td>${c.seller_name||c.seller?.name||'—'}</td>
-              <td>${c.status}</td>
+              <td style="font-weight:600">${escHtml(o.company_nome||'—')}</td>
+              <td>${escHtml(o.titulo||'—')}</td>
+              <td>${escHtml(o.seller_name||'—')}</td>
+              <td>${o.valor_estimado!=null?fMoeda(o.valor_estimado):'—'}</td>
             </tr>`).join('')}
           </tbody>
         </table>
       </div>` : ''}
 
-      <!-- Motivos de perda -->
-      ${topMotivos.length ? `
+      ${pedidosSemana.length ? `
       <div class="rel-section">
-        <div class="rel-section-title">Motivos de Perda (Acumulado)</div>
+        <div class="rel-section-title">Pedidos Fechados na Semana (${pedidosSemana.length})</div>
         <table class="rel-table">
-          <thead><tr><th>Motivo</th><th>Ocorrências</th></tr></thead>
-          <tbody>${topMotivos.map(([m,n])=>`
-            <tr><td>${m}</td><td style="font-weight:600;color:var(--er)">${n}</td></tr>`).join('')}
+          <thead><tr><th>Nº Pedido</th><th>Cliente</th><th>Status</th></tr></thead>
+          <tbody>${pedidosSemana.slice(0,15).map(p=>`
+            <tr>
+              <td style="font-weight:600">${numPedido(p)||numProposta(p)}</td>
+              <td>${escHtml(p.snapshot?.cliente?.name||'—')}</td>
+              <td>${p.status==='expedido'?'Expedido':'Pedido'}</td>
+            </tr>`).join('')}
           </tbody>
         </table>
       </div>` : ''}
@@ -4934,6 +4950,7 @@ async function gerarRelatorio() {
       </div>`;
 
   } catch(e) {
+    console.error('gerarRelatorio:', e);
     corpo.innerHTML = `<div class="se"><h3>Erro ao gerar relatório</h3><p style="color:var(--er)">${e.message}</p></div>`;
   }
 }

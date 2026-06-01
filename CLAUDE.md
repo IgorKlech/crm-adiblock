@@ -4,6 +4,24 @@ Guia de contexto para novas sessões. Leia antes de qualquer implementação.
 
 ---
 
+## ⚠️ REGRA DE OURO — NUNCA QUEBRAR
+
+1. **NUNCA rodar o `supabase_setup.sql` INTEIRO no banco de produção.**
+   O bloco de `DROP TABLE` do modelo antigo já está comentado, mas o hábito
+   certo é: mudanças de banco vão sempre em **blocos pequenos e específicos**,
+   nunca o arquivo completo. Em 01/06/2026 o arquivo inteiro foi rodado e
+   apagou todas as propostas/pedidos (recuperados via `audit_log`).
+
+2. **Plano Supabase é Free — NÃO há backup automático restaurável.**
+   A rede de segurança é: (a) `audit_log` (só mudanças, parcial) e
+   (b) o botão **"Baixar Backup"** no app (Dashboard) que exporta tudo em
+   JSON. Orientar o usuário a baixar o backup periodicamente (ex: toda sexta).
+
+3. **Migração destrutiva, se algum dia necessária, vai em arquivo SEPARADO**
+   e versionado — nunca no setup que é rodado com frequência.
+
+---
+
 ## 1. O que é este projeto
 
 **CRM Adiblock** — sistema comercial interno da Adiblock (fabricante de aditivos para concreto).

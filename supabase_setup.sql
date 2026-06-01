@@ -70,20 +70,27 @@ CREATE POLICY "profiles_delete_admin" ON public.profiles FOR DELETE TO authentic
 
 
 -- -------------------------------------------------------------------------
--- 1) DROP do modelo antigo (clients + tabelas dependentes)
+-- 1) [DESATIVADO] DROP do modelo antigo (clients + tabelas dependentes)
 -- -------------------------------------------------------------------------
--- Remove tabelas antigas do realtime antes de dropar (evita lock)
-DO $$ BEGIN ALTER PUBLICATION supabase_realtime DROP TABLE public.clients;         EXCEPTION WHEN OTHERS THEN NULL; END $$;
-DO $$ BEGIN ALTER PUBLICATION supabase_realtime DROP TABLE public.client_products; EXCEPTION WHEN OTHERS THEN NULL; END $$;
-DO $$ BEGIN ALTER PUBLICATION supabase_realtime DROP TABLE public.call_history;    EXCEPTION WHEN OTHERS THEN NULL; END $$;
-DO $$ BEGIN ALTER PUBLICATION supabase_realtime DROP TABLE public.proposals;       EXCEPTION WHEN OTHERS THEN NULL; END $$;
-
-DROP TABLE IF EXISTS public.lgpd_requests    CASCADE;
-DROP TABLE IF EXISTS public.client_products  CASCADE;
-DROP TABLE IF EXISTS public.call_history     CASCADE;
-DROP TABLE IF EXISTS public.proposals        CASCADE;
-DROP TABLE IF EXISTS public.clients          CASCADE;
-DROP VIEW  IF EXISTS public.companies_with_tier;
+-- ⚠⚠⚠ ATENCAO — NUNCA REATIVAR ESTE BLOCO ⚠⚠⚠
+--
+-- Estes DROP TABLE eram da migracao UNICA do modelo antigo (clients) para o
+-- modelo B2B (companies), feita uma vez no Sprint 3 (maio/2026). A migracao
+-- JA ACONTECEU. Manter os DROP ativos fazia com que, ao rodar este arquivo
+-- inteiro de novo, TODAS as propostas/pedidos fossem APAGADOS e a numeracao
+-- reiniciada. Isso causou perda de dados em producao (recuperada via audit_log).
+--
+-- Os comandos ficam comentados como registro historico. Se algum dia precisar
+-- migrar de novo de um modelo legado, faca num arquivo SEPARADO e versionado,
+-- NUNCA neste setup que e rodado com frequencia.
+--
+-- DROP TABLE IF EXISTS public.lgpd_requests    CASCADE;
+-- DROP TABLE IF EXISTS public.client_products  CASCADE;
+-- DROP TABLE IF EXISTS public.call_history     CASCADE;
+-- DROP TABLE IF EXISTS public.proposals        CASCADE;
+-- DROP TABLE IF EXISTS public.clients          CASCADE;
+--
+-- A view companies_with_tier usa CREATE OR REPLACE mais abaixo, nao precisa DROP.
 
 
 -- -------------------------------------------------------------------------
@@ -899,9 +906,10 @@ CREATE TABLE IF NOT EXISTS public.pedido_sequences (
   ultimo int NOT NULL DEFAULT 0
 );
 
--- Seed: garante que o proximo pedido de 2026 sera 0339-26
+-- Seed: maior pedido emitido = 342 (recuperado do audit_log), proximo sera 0343-26.
+-- GREATEST garante que rodar de novo nunca DIMINUI o contador.
 INSERT INTO public.pedido_sequences (ano, ultimo)
-  VALUES (2026, 338)
+  VALUES (2026, 342)
   ON CONFLICT (ano) DO UPDATE
     SET ultimo = GREATEST(pedido_sequences.ultimo, EXCLUDED.ultimo);
 

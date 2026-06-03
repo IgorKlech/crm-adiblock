@@ -12,8 +12,9 @@
 -- - Idempotente: rodar 2x nao causa dano (a 2a vez nao encontra os antigos).
 -- - Pareamento feito linha a linha contra o catalogo real do banco em 03/06/2026.
 --
--- Produtos que ficaram FORA da lista nova (NAO alterados de proposito):
---   ADIGROUT AR PLUS, ADIPOX, MORFLOOR HR, VERTICAL CURE
+-- Produtos fora da lista nova:
+--   ADIGROUT AR PLUS -> MANTIDO (continua ativo)
+--   ADIPOX, MORFLOOR HR, VERTICAL CURE -> EXCLUIDOS (sairam de linha)
 -- =========================================================================
 
 -- ── Bombonas ──
@@ -31,10 +32,9 @@ UPDATE public.products SET embalagem='Tambor 220' WHERE embalagem='Tambor' AND n
 UPDATE public.products SET embalagem='Tambor 180' WHERE embalagem='Tambor' AND nome='WP FLEXIBLE';
 
 -- ── CNTs ──
-UPDATE public.products SET embalagem='CNT 1000' WHERE embalagem='CNT' AND nome IN ('ACS 800','CURE CA','EDIMPER M','HYDROFLEX RR','HYDROFLEX RS','HYDROFLEX S','HYDROFLEX S A','INCORPOR BS PLUS','INCORPOR BS-D','KOLA','KOLA PLUS TIX','KOLA SBR','KOLA SUPER','PLASTICIZER BINDER','PLASTICIZER CW','PLASTICIZER HC','PLASTICIZER PREMIUM','PLASTICIZER SAD','PLASTICIZER SAD 20','RELENT','RELENT AD','RELENT BIO-VO','RELENT CONCENTRATE','RELENT RTU');
+UPDATE public.products SET embalagem='CNT 1000' WHERE embalagem='CNT' AND nome IN ('ACS 800','CI 900','CURE CA','EDIMPER M','HYDROFLEX RR','HYDROFLEX RS','HYDROFLEX S','HYDROFLEX S A','INCORPOR BS PLUS','INCORPOR BS-D','KOLA','KOLA PLUS TIX','KOLA SBR','KOLA SUPER','PLASTICIZER BINDER','PLASTICIZER CW','PLASTICIZER HC','PLASTICIZER PREMIUM','PLASTICIZER SAD','PLASTICIZER SAD 20','RELENT','RELENT AD','RELENT BIO-VO','RELENT CONCENTRATE','RELENT RTU');
 UPDATE public.products SET embalagem='CNT 1200' WHERE embalagem='CNT' AND nome IN ('POLYPLAST 146','POLYPLAST 151','POLYPLAST 167','POLYPLAST 170 D','POLYPLAST 170 PLUS','POLYPLAST 4300','ACEPESS FAST','FASTER','RETARTIVE WR 2010','SUPERFLUID AC');
 UPDATE public.products SET embalagem='CNT 1250' WHERE embalagem='CNT' AND nome IN ('ACCELIK AS','ACCELIK SF','EDIMPER PLUS');
-UPDATE public.products SET embalagem='CNT 100'  WHERE embalagem='CNT' AND nome='CI 900';
 UPDATE public.products SET embalagem='CNT 1100' WHERE embalagem='CNT' AND nome='RETARTIVE WR 2048';
 
 -- ── Sacos e Balde ──
@@ -54,8 +54,11 @@ UPDATE public.products SET embalagem='Conjunto 1'    WHERE embalagem='Conjunto' 
 UPDATE public.products SET embalagem='Conjunto 20'   WHERE embalagem='Conjunto' AND nome='SUPROFLEX CONJUNTO';
 
 -- ── PRIME JD: nome + embalagem mudam ──
-UPDATE public.products SET nome='PRIME JD CONJUNTO', embalagem='Conjunto 1'
-  WHERE nome='PRIME JD CONJUNTO 1KG' AND embalagem='Conjunto';
+UPDATE public.products SET nome='Prime JD Conjunto', embalagem='Conjunto 1'
+  WHERE nome IN ('PRIME JD CONJUNTO 1KG','PRIME JD CONJUNTO');
+
+-- ── Produtos que sairam de linha (ADIGROUT AR PLUS fica) ──
+DELETE FROM public.products WHERE nome IN ('ADIPOX','MORFLOOR HR','VERTICAL CURE');
 
 NOTIFY pgrst, 'reload schema';
 

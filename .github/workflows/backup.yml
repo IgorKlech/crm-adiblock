@@ -1,0 +1,116 @@
+name: Backup diário Supabase
+
+# Sprint 7.5: rede de seguranca contra perda de dados (plano Free do Supabase
+# nao tem backup restauravel). Exporta todas as tabelas em JSON todo dia.
+#
+# Secrets necessarios (Settings > Secrets and variables > Actions):
+#   SUPABASE_URL          ex: https://kgiynhrytnzfdywgjhby.supabase.co
+#   SUPABASE_SERVICE_KEY  service_role key (NUNCA commitar no repo!)
+#   BACKUP_REPO_TOKEN     (opcional) PAT com acesso ao repo <owner>/crm-backups.
+#                         Se ausente, salva na branch "backups" deste mesmo repo.
+
+on:
+  schedule:
+    - cron: '0 6 * * *'      # 03:00 America/Sao_Paulo (BRT = UTC-3)
+  workflow_dispatch: {}       # permite rodar manualmente pra testar
+
+permissions:
+  contents: write             # push na branch backups deste repo
+
+jobs:
+  backup:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Exportar tabelas e publicar
+        env:
+          SUPABASE_URL:         ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
+          BACKUP_REPO_TOKEN:    ${{ secrets.BACKUP_REPO_TOKEN }}
+          GH_TOKEN:             ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+
+          if [ -z "${SUPABASE_URL:-}" ] || [ -z "${SUPABASE_SERVICE_KEY:-}" ]; then
+            echo "::error::Configure os secrets SUPABASE_URL e SUPABASE_SERVICE_KEY."
+            exit 1
+          fi
+
+          DATA=$(TZ=America/Sao_Paulo date +%F)     # AAAA-MM-DD no fuso de SP
+          DEST_DIR="bkp_work"
+          OUT="$DEST_DIR/backups/$DATA"
+          mkdir -p "$OUT"
+
+          TABELAS="companies contacts opportunities opportunity_products interactions proposals tasks products profiles audit_log lgpd_requests"
+          PAGE=1000
+
+          # Busca uma tabela inteira, paginando via Range header ate esvaziar.
+          fetch_table() {
+            local table="$1" out="$2" offset=0 end count resp
+            echo "[]" > "$out"
+            while true; do
+              end=$((offset + PAGE - 1))
+              resp=$(curl -s "$SUPABASE_URL/rest/v1/$table?select=*" \
+                -H "apikey: $SUPABASE_SERVICE_KEY" \
+                -H "Authorization: Bearer $SUPABASE_SERVICE_KEY" \
+                -H "Accept: application/json" \
+                -H "Range-Unit: items" \
+                -H "Range: $offset-$end")
+              if ! echo "$resp" | jq -e 'type=="array"' >/dev/null 2>&1; then
+                echo "::warning::Tabela '$table' nao retornou array (pulando). Resposta: $(echo "$resp" | head -c 200)"
+                break
+              fi
+              count=$(echo "$resp" | jq 'length')
+              [ "$count" -eq 0 ] && break
+              jq -s '.[0] + .[1]' "$out" <(echo "$resp") > "$out.tmp" && mv "$out.tmp" "$out"
+              [ "$count" -lt "$PAGE" ] && break
+              offset=$((offset + PAGE))
+            done
+            echo "  $table: $(jq 'length' "$out") registros"
+          }
+
+          echo "Exportando tabelas ($DATA):"
+          for t in $TABELAS; do
+            fetch_table "$t" "$OUT/$t.json"
+          done
+
+          # Manifesto com totais (facilita conferencia rapida)
+          jq -n --arg data "$DATA" \
+            '{gerado_em: (now|todate), data: $data}' > "$OUT/_meta.json"
+
+          # ── Destino: repo externo crm-backups (se houver token) ou branch backups ──
+          if [ -n "${BACKUP_REPO_TOKEN:-}" ]; then
+            REPO_URL="https://x-access-token:${BACKUP_REPO_TOKEN}@github.com/${GITHUB_REPOSITORY_OWNER}/crm-backups.git"
+            BRANCH="main"
+          else
+            REPO_URL="https://x-access-token:${GH_TOKEN}@github.com/${GITHUB_REPOSITORY}.git"
+            BRANCH="backups"
+          fi
+
+          # Clona a branch destino; se nao existir, cria orfa (sem historico da main)
+          if ! git clone --depth 1 --branch "$BRANCH" "$REPO_URL" dest 2>/dev/null; then
+            git clone --depth 1 "$REPO_URL" dest
+            cd dest
+            git checkout --orphan "$BRANCH"
+            git rm -rf . >/dev/null 2>&1 || true
+            cd ..
+          fi
+
+          mkdir -p dest/backups
+          cp -r "$OUT" "dest/backups/$DATA"
+
+          # Retencao: mantem as 30 pastas de data mais recentes, apaga o resto
+          cd dest/backups
+          ls -1d */ 2>/dev/null | sed 's#/##' | sort | head -n -30 | xargs -r rm -rf
+          cd ../..
+
+          cd dest
+          git config user.name  "backup-bot"
+          git config user.email "backup-bot@users.noreply.github.com"
+          git add -A
+          if git diff --cached --quiet; then
+            echo "Sem mudancas no backup de hoje."
+          else
+            git commit -m "Backup $DATA"
+            git push origin "$BRANCH"
+            echo "Backup $DATA publicado em $BRANCH."
+          fi

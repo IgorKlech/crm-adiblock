@@ -2993,8 +2993,10 @@ function calNav(dir) {
 async function baixarBackup() {
   toast('Gerando backup...', 'Buscando todos os dados', 'info');
   try {
-    // Busca direto do banco (dados frescos e completos, sem depender do cache local)
-    const [companies, contacts, opportunities, opp_products, interactions, proposals, tasks, profiles] =
+    // Busca direto do banco (dados frescos e completos, sem depender do cache local).
+    // Sprint 7.5: cobre TODAS as tabelas (mesma lista do backup automatico).
+    const [companies, contacts, opportunities, opp_products, interactions,
+           proposals, tasks, products, profiles, audit_log, lgpd_requests] =
       await Promise.all([
         api('GET','companies','select=*'),
         api('GET','contacts','select=*'),
@@ -3003,7 +3005,10 @@ async function baixarBackup() {
         api('GET','interactions','select=*'),
         api('GET','proposals','select=*'),
         api('GET','tasks','select=*').catch(()=>[]),
+        api('GET','products','select=*').catch(()=>[]),
         api('GET','profiles','select=id,name,email,role'),
+        api('GET','audit_log','select=*').catch(()=>[]),
+        api('GET','lgpd_requests','select=*').catch(()=>[]),
       ]);
 
     const backup = {
@@ -3014,11 +3019,12 @@ async function baixarBackup() {
         totais: {
           empresas: companies.length, contatos: contacts.length,
           oportunidades: opportunities.length, propostas: proposals.length,
-          tarefas: tasks.length,
+          tarefas: tasks.length, produtos: products.length,
+          audit_log: audit_log.length, lgpd: lgpd_requests.length,
         },
       },
       companies, contacts, opportunities, opportunity_products: opp_products,
-      interactions, proposals, tasks, profiles,
+      interactions, proposals, tasks, products, profiles, audit_log, lgpd_requests,
     };
 
     const blob = new Blob([JSON.stringify(backup, null, 2)], { type: 'application/json' });
@@ -3628,6 +3634,23 @@ async function iniciar(user) {
   // iniciar() roda mais de uma vez (ex: TOKEN_REFRESHED do Supabase).
   if (window._bellTimer) clearInterval(window._bellTimer);
   window._bellTimer = setInterval(updateBell, 60000);
+  // Sprint 7.5: cinto e suspensorio — toda sexta lembra o admin do backup manual
+  lembreteBackupSexta();
+}
+
+// Sprint 7.5: na sexta-feira, lembra o admin de baixar o backup manual
+// (complementa o backup automatico diario via GitHub Actions). Mostra 1x por dia.
+function lembreteBackupSexta() {
+  if (MEP?.role !== 'admin') return;
+  const hoje = new Date();
+  if (hoje.getDay() !== 5) return; // 5 = sexta-feira
+  const chave = 'crm_bkp_lembrete';
+  const hojeStr = hoje.toISOString().slice(0,10);
+  try { if (localStorage.getItem(chave) === hojeStr) return; } catch {}
+  setTimeout(() => {
+    toast('Sexta-feira: hora do backup 💾', 'Abra o Dashboard e clique em "Baixar Backup" pra guardar uma cópia.', 'info');
+    try { localStorage.setItem(chave, hojeStr); } catch {}
+  }, 3000);
 }
 
 // ── Eventos ───────────────────────────────────────────────────────────────

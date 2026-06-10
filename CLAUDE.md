@@ -12,10 +12,21 @@ Guia de contexto para novas sessões. Leia antes de qualquer implementação.
    nunca o arquivo completo. Em 01/06/2026 o arquivo inteiro foi rodado e
    apagou todas as propostas/pedidos (recuperados via `audit_log`).
 
-2. **Plano Supabase é Free — NÃO há backup automático restaurável.**
-   A rede de segurança é: (a) `audit_log` (só mudanças, parcial) e
-   (b) o botão **"Baixar Backup"** no app (Dashboard) que exporta tudo em
-   JSON. Orientar o usuário a baixar o backup periodicamente (ex: toda sexta).
+2. **Plano Supabase é Free — não tem backup nativo restaurável.** A rede de
+   segurança (Sprint 7.5) tem 3 camadas:
+   (a) **Backup automático diário** via GitHub Actions (`.github/workflows/backup.yml`,
+       03:00 BRT) que exporta todas as tabelas em JSON para a branch `backups`;
+   (b) o botão **"Baixar Backup"** no app (Dashboard, admin) — backup manual,
+       lembrado por toast toda sexta;
+   (c) o `audit_log` (só mudanças, parcial) como último recurso.
+   Restauração: ver **`docs/RESTORE.md`**.
+
+   **Secrets do GitHub** (Settings > Secrets and variables > Actions) que o
+   workflow exige — NUNCA colocar a service key em arquivo do repo:
+   - `SUPABASE_URL` — ex: `https://kgiynhrytnzfdywgjhby.supabase.co`
+   - `SUPABASE_SERVICE_KEY` — a `service_role` key (Supabase > Settings > API)
+   - `BACKUP_REPO_TOKEN` — *(opcional)* PAT com acesso ao repo `<owner>/crm-backups`.
+     Se ausente, o backup vai para a branch `backups` deste mesmo repo.
 
 3. **Migração destrutiva, se algum dia necessária, vai em arquivo SEPARADO**
    e versionado — nunca no setup que é rodado com frequência.

@@ -921,6 +921,11 @@
   </div>
 </div>
 
+<!-- Sprint 8.1: modularização incremental em <script src> (sem build, sem type=module).
+     Ordem importa: módulos carregam ANTES do script principal pra os globals existirem.
+     TODO: migrar para ES modules quando desacoplar os globals. -->
+<script src="js/format.js"></script>
+
 <script>
 // ── Config ────────────────────────────────────────────────────────────────
 const SB_URL = 'https://kgiynhrytnzfdywgjhby.supabase.co';
@@ -1019,57 +1024,12 @@ const hj = () => new Date().toISOString().split('T')[0];
 // Sprint 6.1: callback agora e timestamptz, vencido = momento ja passou
 const venc = d => !!d && new Date(d).getTime() < Date.now();
 
-function fData(d) {
-  if (!d) return '—';
-  // Tolerante: aceita 'YYYY-MM-DD' (date puro) ou 'YYYY-MM-DDTHH...' (timestamptz)
-  const dateOnly = String(d).slice(0,10);
-  const [y,m,dd] = dateOnly.split('-');
-  return dd+'/'+m+'/'+y;
-}
-// Sprint 6.1: data + hora local pra exibir callbacks
-function fDataHora(d) {
-  if (!d) return '—';
-  const dt = new Date(d);
-  if (isNaN(dt)) return '—';
-  return dt.toLocaleString('pt-BR', { day:'2-digit', month:'2-digit', year:'2-digit', hour:'2-digit', minute:'2-digit' });
-}
-// Sprint 6.1: somente a hora "14:30"
-function fHora(d) {
-  if (!d) return '';
-  const dt = new Date(d);
-  if (isNaN(dt)) return '';
-  return dt.toLocaleTimeString('pt-BR', { hour:'2-digit', minute:'2-digit' });
-}
-// Sprint 6.1: timestamptz do DB -> formato do <input type="datetime-local"> em horario LOCAL
-function dtToInput(ts) {
-  if (!ts) return '';
-  const d = new Date(ts);
-  if (isNaN(d)) return '';
-  const pad = n => String(n).padStart(2,'0');
-  return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
-}
-// Sprint 6.1: valor de <input type="datetime-local"> -> ISO UTC pro DB
-function inputToISO(v) {
-  if (!v) return null;
-  const d = new Date(v);
-  return isNaN(d) ? null : d.toISOString();
-}
-function fRel(d) {
-  if (!d) return '';
-  const df = Math.round((new Date(d) - new Date(hj())) / 86400000);
-  if (df===0) return 'Hoje';
-  if (df===1) return 'Amanhã';
-  if (df===-1) return 'Ontem';
-  return df < 0 ? Math.abs(df)+'d atrás' : 'em '+df+'d';
-}
+// Sprint 8.1b: fData, fDataHora, fHora, dtToInput, inputToISO, fRel movidos para js/format.js
 function fDH(dt) {
   if (!dt) return '—';
   return new Date(dt).toLocaleString('pt-BR',{day:'2-digit',month:'2-digit',year:'2-digit',hour:'2-digit',minute:'2-digit'});
 }
-function fMoeda(v) {
-  if (v==null||v==='') return '—';
-  return Number(v).toLocaleString('pt-BR',{style:'currency',currency:'BRL'});
-}
+// Sprint 8.1b: fMoeda movido para js/format.js
 function fMoedaK(v) {
   if (!v) return '—';
   return v >= 1000
@@ -5142,7 +5102,7 @@ document.querySelectorAll('.pf-tab').forEach(t => t.addEventListener('click', ()
 }));
 
 // ── Gestão de Múltiplos Produtos ─────────────────────────────────────────
-const escHtml = s => String(s==null?'':s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+// Sprint 8.1b: escHtml movido para js/format.js
 const fmtBRL = n => 'R$ '+Number(n).toFixed(2).replace('.',',');
 
 // Retorna [{nome, embalagens:[{embalagem,preco_office,preco_pj,...}]}], 1 entrada por nome

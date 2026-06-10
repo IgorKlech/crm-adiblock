@@ -97,17 +97,20 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--tx);font-si
 
 /* NAVBAR */
 #nb{height:56px;background:var(--nb);display:flex;align-items:center;justify-content:space-between;padding:0 20px;position:sticky;top:0;z-index:100}
-.nbl{display:flex;align-items:center;gap:20px}
+.nbl{display:flex;align-items:center;gap:14px;min-width:0;flex-shrink:1}
 .br{display:flex;align-items:center;gap:10px;flex-shrink:0}
 .bi{width:28px;height:28px;border-radius:7px;background:var(--p);color:#fff;font-size:13px;font-weight:800;display:flex;align-items:center;justify-content:center}
 .bn2{color:rgba(255,255,255,.7);font-size:15px;font-weight:400}.bn2 strong{color:#fff;font-weight:700}
 #tabs{display:flex;gap:1px}
-.tb{display:flex;align-items:center;gap:6px;padding:7px 14px;background:transparent;border:none;color:rgba(255,255,255,.55);font-size:13px;font-weight:400;font-family:inherit;cursor:pointer;border-radius:var(--rs);transition:all .15s}
+.tb{display:flex;align-items:center;gap:5px;padding:7px 10px;background:transparent;border:none;color:rgba(255,255,255,.55);font-size:13px;font-weight:400;font-family:inherit;cursor:pointer;border-radius:var(--rs);transition:all .15s;white-space:nowrap}
 .tb svg{width:14px;height:14px}
 .tb:hover{background:rgba(255,255,255,.08);color:rgba(255,255,255,.85)}
 .tb.ac{background:rgba(255,255,255,.12);color:#fff;font-weight:600}
 .tb-short{display:none}/* Sprint 7.3: label curto da tab, so aparece no mobile */
-.nbr{display:flex;align-items:center;gap:10px}
+.nbr{display:flex;align-items:center;gap:10px;flex-shrink:0}
+/* Sprint 8.2: com 7 abas, esconde o nome "Controle Comercial" em telas medias
+   pra liberar espaco e evitar sobreposicao com o lado direito da navbar */
+@media(max-width:1280px){ .bn2{display:none} }
 .uc{display:flex;align-items:center;gap:8px}
 .ua{width:28px;height:28px;border-radius:50%;font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0;color:#fff}
 .un{font-size:13px;font-weight:500;color:rgba(255,255,255,.85)}

@@ -60,6 +60,10 @@
           <svg width="14" height="14" viewBox="0 0 20 20" fill="currentColor"><path d="M9 2a1 1 0 00-1 1v1H6a2 2 0 00-2 2v11a2 2 0 002 2h8a2 2 0 002-2V6a2 2 0 00-2-2h-2V3a1 1 0 00-1-1H9zm0 2h2v1H9V4zM6 7h8v9H6V7zm2 2v1h4V9H8zm0 3v1h4v-1H8z"/></svg>
           <span class="tb-full">Propostas</span><span class="tb-short">Prop</span>
         </button>
+        <button class="tb" data-tab="rd">
+          <svg width="14" height="14" viewBox="0 0 20 20" fill="currentColor"><path d="M10 2a8 8 0 100 16 8 8 0 000-16zm0 2a6 6 0 110 12 6 6 0 010-12zm0 2a4 4 0 100 8 4 4 0 000-8zm0 2a2 2 0 110 4 2 2 0 010-4z"/></svg>
+          <span class="tb-full">Radar</span><span class="tb-short">Radar</span>
+        </button>
         <button class="tb" data-tab="db">
           <svg width="14" height="14" viewBox="0 0 20 20" fill="currentColor"><path d="M2 11a1 1 0 011-1h2a1 1 0 011 1v5a1 1 0 01-1 1H3a1 1 0 01-1-1v-5zM8 7a1 1 0 011-1h2a1 1 0 011 1v9a1 1 0 01-1 1H9a1 1 0 01-1-1V7zM14 4a1 1 0 011-1h2a1 1 0 011 1v12a1 1 0 01-1 1h-2a1 1 0 01-1-1V4z"/></svg>
           <span class="tb-full">Dashboard</span><span class="tb-short">Dash</span>
@@ -227,6 +231,33 @@
         </div>
       </div>
       <div id="pr-body" style="padding:0 24px 30px"></div>
+    </div>
+
+    <!-- RADAR DE REATIVAÇÃO (Sprint 8.2) -->
+    <div id="rd-view" class="vw">
+      <div class="ph">
+        <div><h2>Radar de Reativação</h2><span class="ps" id="rd-stats">—</span></div>
+        <div class="pa" style="gap:10px;flex-wrap:wrap">
+          <label class="td-filtro-wrap">Dormente há mais de
+            <select id="rd-dias" onchange="renderRadar()">
+              <option value="90">90 dias</option>
+              <option value="180" selected>180 dias</option>
+              <option value="365">365 dias</option>
+            </select>
+          </label>
+          <button class="btn bg sm" onclick="renderRadar()">↺ Atualizar</button>
+        </div>
+      </div>
+      <div style="padding:0 24px 30px">
+        <div id="rd-hero" class="rd-hero"></div>
+        <div class="rd-msg-box">
+          <label style="font-size:12px;font-weight:600;color:var(--tx2);display:block;margin-bottom:6px">
+            Mensagem do WhatsApp <span style="font-weight:400;color:var(--mt)">— use {nome_contato} e {empresa}</span>
+          </label>
+          <textarea id="rd-msg" rows="2" oninput="salvarRadarMsg()" placeholder="Olá {nome_contato}, ..."></textarea>
+        </div>
+        <div id="rd-body"></div>
+      </div>
     </div>
 
     <!-- DASHBOARD -->
@@ -2705,6 +2736,7 @@ document.querySelectorAll('.tb').forEach(b => b.addEventListener('click',()=>{
   if (b.dataset.tab==='eq') renderEquipe();
   if (b.dataset.tab==='kb') renderKanban();
   if (b.dataset.tab==='pr') renderPropostas();
+  if (b.dataset.tab==='rd') renderRadar();
 }));
 
 // Sprint 6.5: filtro "so meus" da aba Propostas
@@ -3509,6 +3541,148 @@ function excluirPropostaById(id, label) {
     PROPOSTAS = await fetchPropostas();
     if (document.getElementById('pr-view')?.classList.contains('ac')) renderPropostas();
   }, `${num} restaurada`);
+}
+
+// ── Sprint 8.2: Radar de Reativação — clientes dormentes priorizados ──────
+let RADAR_DIAS = 180;
+const RADAR_MSG_DEFAULT = 'Olá {nome_contato}, tudo bem? Faz um tempo que não fechamos um pedido com a {empresa}. Temos novidades que podem te interessar — posso te apresentar?';
+
+function getRadarMsg() {
+  try { return localStorage.getItem('crm_radar_msg') || RADAR_MSG_DEFAULT; } catch { return RADAR_MSG_DEFAULT; }
+}
+function salvarRadarMsg() {
+  try { localStorage.setItem('crm_radar_msg', document.getElementById('rd-msg').value); } catch {}
+}
+
+// Contato principal (objeto) — prioriza principal-com-telefone p/ casar nome+fone
+function contatoPrincipalDe(companyId) {
+  const c = CL.find(x => x.id === companyId);
+  if (!c) return null;
+  const cts = c.contatos || [];
+  return cts.find(x => x.principal && x.telefone) || cts.find(x => x.telefone)
+      || cts.find(x => x.principal) || cts[0] || null;
+}
+
+async function renderRadar() {
+  const body  = document.getElementById('rd-body');
+  const hero  = document.getElementById('rd-hero');
+  const stats = document.getElementById('rd-stats');
+  if (!body) return;
+  const msgEl = document.getElementById('rd-msg');
+  if (msgEl && !msgEl.value) msgEl.value = getRadarMsg();
+  RADAR_DIAS = parseInt(document.getElementById('rd-dias').value, 10) || 180;
+  body.innerHTML = '<div class="sl"><div class="sp"></div></div>';
+
+  try {
+    const agora = Date.now();
+    const corte = agora - RADAR_DIAS*86400000;
+    // Atividade recente por empresa: busca interacoes do ultimo ano (cobre os
+    // 3 presets) e filtra por RADAR_DIAS no front. opportunity_id -> company via CL.
+    const desdeISO = new Date(agora - 365*86400000).toISOString();
+    let inter = [];
+    try { inter = await api('GET','interactions',`datetime=gte.${desdeISO}&select=opportunity_id,datetime`) || []; }
+    catch { inter = []; }
+    const oppToCompany = {};
+    CL.forEach(c => (c.oportunidades||[]).forEach(o => { oppToCompany[o.id] = c.id; }));
+    const ultIntPorEmpresa = {};
+    inter.forEach(i => {
+      const cid = oppToCompany[i.opportunity_id]; if (!cid) return;
+      const t = new Date(i.datetime).getTime();
+      if (!ultIntPorEmpresa[cid] || t > ultIntPorEmpresa[cid]) ultIntPorEmpresa[cid] = t;
+    });
+
+    const dormentes = [];
+    CL.forEach(c => {
+      const ganhas = (c.oportunidades||[]).filter(o => o.estagio === 'ganha');
+      if (!ganhas.length) return;                              // precisa ter comprado no passado
+      const valorHist = ganhas.reduce((s,o)=>s+(Number(o.valor_estimado)||0),0);
+      const ultGanhaMs = Math.max(...ganhas.map(o => new Date(o.closed_at||o.updated_at||o.created_at||0).getTime()));
+      const ultIntMs   = ultIntPorEmpresa[c.id] || 0;
+      if (ultGanhaMs >= corte || ultIntMs >= corte) return;    // teve atividade recente -> nao dormente
+      const ultAtividade = Math.max(ultGanhaMs, ultIntMs);
+      const diasDorm = Math.floor((agora - ultAtividade)/86400000);
+      const ultGanhaOpp = ganhas.slice().sort((a,b)=>
+        new Date(b.closed_at||b.created_at||0) - new Date(a.closed_at||a.created_at||0))[0];
+      // Score = valor historico ganho ponderado pela recencia. Decaimento suave:
+      // peso = 365/(365+diasDorm) -> ~1 se parou ha pouco, ~0.5 em 1 ano.
+      // Prioriza quem vale mais E esfriou ha menos tempo (mais facil reativar).
+      const score = valorHist * (365/(365+diasDorm));
+      dormentes.push({ c, valorHist, diasDorm, ultGanhaOpp, score });
+    });
+    dormentes.sort((a,b)=> b.score - a.score);
+
+    const totalDormente = dormentes.reduce((s,d)=>s+d.valorHist,0);
+    hero.innerHTML = `<div class="rd-hero-val">${fMoeda(totalDormente)}</div>
+      <div class="rd-hero-lbl">em valor histórico dormente — ${dormentes.length} cliente(s) prontos pra reativar</div>`;
+    stats.textContent = `${dormentes.length} dormente(s)`;
+
+    if (!dormentes.length) {
+      body.innerHTML = `<div class="pf-empty"><span class="es-ico">🎯</span>
+        <div class="es-tit">Nenhum cliente dormente nesse período</div>
+        <div class="es-msg">Todos que já compraram tiveram atividade nos últimos ${RADAR_DIAS} dias. Bom sinal!</div></div>`;
+      return;
+    }
+
+    const waSvg = '<svg viewBox="0 0 24 24" fill="currentColor" style="width:16px;height:16px"><path d="M.057 24l1.687-6.163c-1.041-1.804-1.588-3.849-1.587-5.946.003-6.556 5.338-11.891 11.893-11.891 3.181.001 6.167 1.24 8.413 3.488 2.245 2.248 3.481 5.236 3.48 8.414-.003 6.557-5.338 11.892-11.893 11.892-1.99-.001-3.951-.5-5.688-1.448l-6.305 1.654zm6.597-3.807c1.676.995 3.276 1.591 5.392 1.592 5.448 0 9.886-4.434 9.889-9.885.002-5.462-4.415-9.89-9.881-9.892-5.452 0-9.887 4.434-9.889 9.884-.001 2.225.651 3.891 1.746 5.634l-.999 3.648 3.742-.981zm11.387-5.464c-.074-.124-.272-.198-.57-.347-.297-.149-1.758-.868-2.031-.967-.272-.099-.47-.149-.669.149-.198.297-.768.967-.941 1.165-.173.198-.347.223-.644.074-.297-.149-1.255-.462-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.297-.347.446-.521.151-.172.2-.296.3-.495.099-.198.05-.372-.025-.521-.075-.148-.669-1.611-.916-2.206-.242-.579-.487-.501-.669-.51l-.57-.01c-.198 0-.52.074-.792.372s-1.04 1.016-1.04 2.479 1.065 2.876 1.213 3.074c.149.198 2.096 3.2 5.077 4.487.709.306 1.263.489 1.694.626.712.226 1.36.194 1.872.118.571-.085 1.758-.719 2.006-1.413.248-.695.248-1.29.173-1.414z"/></svg>';
+
+    body.innerHTML = '<div class="rd-list">' + dormentes.map(d => {
+      const c = d.c;
+      const ct = contatoPrincipalDe(c.id);
+      const fone = ct?.telefone || null;
+      const wa = foneParaWa(fone);
+      const ultData = d.ultGanhaOpp?.closed_at || d.ultGanhaOpp?.created_at;
+      const ultValor = d.ultGanhaOpp?.valor_estimado;
+      const acoes = [
+        wa ? `<a class="btn wa-btn" href="${radarWaHref(wa, ct?.nome, c.razao_social)}" target="_blank" rel="noopener" onclick="event.stopPropagation()">${waSvg} WhatsApp</a>` : '',
+        wa ? `<a class="btn bg" href="tel:+${wa}" onclick="event.stopPropagation()">📞 Ligar</a>` : '',
+        `<button class="btn bp" onclick="event.stopPropagation();criarReativacao('${c.id}')">↻ Criar reativação</button>`,
+      ].join('');
+      return `<div class="rd-card">
+        <div class="rd-card-top">
+          <span class="rd-card-nome" onclick="abrPerfil('${c.id}')">${escHtml(c.razao_social)}</span>
+          <span class="rd-card-dias">${d.diasDorm}d dormente</span>
+        </div>
+        <div class="rd-card-meta">
+          <span>Último pedido: <b>${ultData?fData(ultData):'—'}</b>${ultValor!=null?` · <b>${fMoeda(ultValor)}</b>`:''}</span>
+          <span>Total histórico: <b>${fMoeda(d.valorHist)}</b></span>
+          ${ct?`<span>${escHtml(ct.nome)}${fone?` · ${escHtml(fone)}`:''}</span>`:'<span style="color:var(--mt)">sem contato cadastrado</span>'}
+        </div>
+        <div class="rd-card-actions">${acoes}</div>
+      </div>`;
+    }).join('') + '</div>';
+  } catch(err) {
+    console.error('renderRadar:', err);
+    body.innerHTML = '<div class="pf-empty" style="color:var(--er)">Erro ao montar o Radar: '+escHtml(err.message||'')+'</div>';
+  }
+}
+
+// Monta o link wa.me com a mensagem do template (placeholders substituidos)
+function radarWaHref(wa, contatoNome, empresaNome) {
+  const tpl = (document.getElementById('rd-msg')?.value) || getRadarMsg();
+  const msg = tpl.replace(/{nome_contato}/g, contatoNome || '').replace(/{empresa}/g, empresaNome || '');
+  return `https://wa.me/${wa}?text=${encodeURIComponent(msg)}`;
+}
+
+// Cria oportunidade de reativacao (estagio lead) e abre o modal de interacao
+async function criarReativacao(companyId) {
+  const c = CL.find(x => x.id === companyId);
+  if (!c) return;
+  try {
+    const ret = await api('POST','opportunities', null, {
+      company_id:  companyId,
+      seller_id:   ME.id,
+      seller_name: MEP?.name || null,
+      titulo:      'Reativação — ' + c.razao_social,
+      estagio:     'lead',
+    });
+    const opp = Array.isArray(ret) ? ret[0] : ret;
+    CL = await fetchCl();
+    toast('Oportunidade de reativação criada', c.razao_social, 'success');
+    if (opp?.id) abrInteracao(opp.id, companyId, 'hoje');
+  } catch(err) {
+    console.error('criarReativacao:', err);
+    toast('Erro ao criar oportunidade', err.message||'', 'warning');
+  }
 }
 
 function renderKanban() {
@@ -6004,6 +6178,7 @@ document.addEventListener('keydown', e => {
   if (e.key === 'd' || e.key === 'D') { e.preventDefault(); document.querySelector('.tb[data-tab="db"]')?.click(); }
   if (e.key === 'c' || e.key === 'C') { e.preventDefault(); document.querySelector('.tb[data-tab="cl"]')?.click(); }
   if (e.key === 'p' || e.key === 'P') { e.preventDefault(); document.querySelector('.tb[data-tab="pr"]')?.click(); }
+  if (e.key === 'r' || e.key === 'R') { e.preventDefault(); document.querySelector('.tb[data-tab="rd"]')?.click(); }
 });
 </script>
 
@@ -6029,8 +6204,11 @@ document.addEventListener('keydown', e => {
   <div class="kbd-card">
     <h3>Atalhos de teclado</h3>
     <div class="kbd-list">
-      <div class="kbd-item"><span>Novo cliente (aba Clientes)</span><kbd>N</kbd></div>
-      <div class="kbd-item"><span>Ir para Clientes</span><kbd>C</kbd></div>
+      <div class="kbd-item"><span>Novo cliente (aba Empresas)</span><kbd>N</kbd></div>
+      <div class="kbd-item"><span>Ir para Hoje</span><kbd>T</kbd></div>
+      <div class="kbd-item"><span>Ir para Empresas</span><kbd>C</kbd></div>
+      <div class="kbd-item"><span>Ir para Propostas</span><kbd>P</kbd></div>
+      <div class="kbd-item"><span>Ir para Radar</span><kbd>R</kbd></div>
       <div class="kbd-item"><span>Ir para Dashboard</span><kbd>D</kbd></div>
       <div class="kbd-item"><span>Busca global</span><kbd>Ctrl + K</kbd></div>
       <div class="kbd-item"><span>Alternar tema claro/escuro</span><kbd>Ctrl + Shift + L</kbd></div>

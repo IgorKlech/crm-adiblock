@@ -964,3 +964,23 @@ body.role-leitor .read-only-banner{display:block}
 .prod-price-hint b{color:var(--p);font-weight:600}
 .prod-price-hint .prod-total{margin-left:auto;color:var(--tx);font-weight:500}
 .prod-price-hint .prod-total b{color:var(--p);font-size:12px}
+
+/* ── Sprint 8.2: Radar de Reativação ── */
+.rd-hero{background:linear-gradient(135deg,var(--p),var(--ph));color:#fff;border-radius:var(--rl);padding:20px 22px;margin-bottom:16px;box-shadow:var(--shm)}
+.rd-hero .rd-hero-val{font-size:28px;font-weight:800;line-height:1.1}
+.rd-hero .rd-hero-lbl{font-size:13px;opacity:.9;margin-top:4px}
+.rd-msg-box{background:var(--sur);border:1px solid var(--bdr);border-radius:var(--r);padding:12px 14px;margin-bottom:16px}
+.rd-msg-box textarea{width:100%;box-sizing:border-box;border:1.5px solid var(--bdr);border-radius:var(--rs);padding:8px 10px;font-family:inherit;font-size:13px;color:var(--tx);background:var(--bg);outline:none;resize:vertical}
+.rd-msg-box textarea:focus{border-color:var(--p)}
+.rd-list{display:flex;flex-direction:column;gap:12px}
+.rd-card{background:var(--sur);border:1px solid var(--bdr);border-left:4px solid var(--wr);border-radius:var(--r);padding:14px 16px;box-shadow:var(--sh)}
+.rd-card-top{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.rd-card-nome{font-size:15px;font-weight:700;color:var(--p);cursor:pointer;line-height:1.3}
+.rd-card-dias{font-size:11px;font-weight:700;color:var(--wr);background:var(--wr2);padding:3px 9px;border-radius:99px;white-space:nowrap}
+.rd-card-meta{display:flex;flex-wrap:wrap;gap:6px 16px;margin-top:8px;font-size:12.5px;color:var(--tx2)}
+.rd-card-meta b{color:var(--tx)}
+.rd-card-actions{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px;padding-top:12px;border-top:1px solid var(--bdr)}
+.rd-card-actions .btn{min-height:40px;justify-content:center}
+@media(max-width:768px){
+  .rd-card-actions .btn{flex:1;min-height:44px;min-width:90px}
+}

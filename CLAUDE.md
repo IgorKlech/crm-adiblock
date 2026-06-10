@@ -20,6 +20,10 @@ Guia de contexto para novas sessões. Leia antes de qualquer implementação.
 3. **Migração destrutiva, se algum dia necessária, vai em arquivo SEPARADO**
    e versionado — nunca no setup que é rodado com frequência.
 
+4. **Toda mudança de schema vai em arquivo NOVO em `/migrations`** com data no
+   nome (`AAAA-MM-DD-descricao.sql`), nunca editando migrations antigas. Uma
+   migration já aplicada é histórico imutável — para corrigir algo, crie outra.
+
 ---
 
 ## 1. O que é este projeto
@@ -29,7 +33,28 @@ Guia de contexto para novas sessões. Leia antes de qualquer implementação.
 - URL produção: **https://crm-adiblock.vercel.app/**
 - Repo GitHub: **https://github.com/IgorKlech/crm-adiblock**
 - Deploy: Vercel (auto-deploy ao push em `main`)
-- Stack: **single-file `index.html`** + Supabase via CDN + Vercel estático
+- Stack: `index.html` (em migração para módulos `<script src>`) + Supabase via CDN + Vercel estático
+
+---
+
+## Visão de produto
+
+O CRM deixará de ser apenas interno (Adiblock) e está sendo preparado para virar
+**produto multi-empresa (multi-tenant)**.
+
+- **No futuro, todas as tabelas terão `org_id`** isolando os dados de cada empresa
+  cliente; o RLS passará a filtrar por organização além de por usuário.
+- **Toda feature nova deve ser escrita já sabendo disso.** Na prática:
+  - **Nada de hard-codar dados Adiblock em lógica nova.** Dados específicos da
+    Adiblock (CNPJ, endereço, termos comerciais, nomes de vendedores, catálogo)
+    são *conteúdo*, não regra — devem vir de tabela/config, nunca embutidos em
+    `if`/constante dentro de função.
+  - Lógica nova não deve assumir "empresa única". Pensar sempre "de qual
+    organização é este dado?".
+  - O `ADIBLOCK_INFO` e afins existentes são legado tolerado; **não criar novos**
+    desse tipo. Quando tocar numa área dessas, preferir mover para config.
+- A migração para multi-tenant será incremental e em sprints próprios — não
+  refatorar tudo de uma vez. Mas **cada linha nova nasce multi-tenant-aware**.
 
 ---
 
@@ -37,13 +62,13 @@ Guia de contexto para novas sessões. Leia antes de qualquer implementação.
 
 | Restrição | Motivo |
 |---|---|
-| **Single-file `index.html`** | Zero atrito de deploy; qualquer pessoa edita; sem build tool |
+| **Migração incremental para módulos `<script src>` sem build tool** | O single-file `index.html` cumpriu seu papel e está sendo aposentado de forma incremental. Vercel continua estático. Nenhum framework ou bundler até decisão explícita. |
 | **Vanilla JS (sem framework)** | Escolha consciente — não usar React, Vue, etc. |
 | **Supabase via CDN** | `@supabase/supabase-js@2.39.3` importado pelo jsDelivr |
 | **Sem servidor próprio** | Toda lógica de backend é RLS + triggers PostgreSQL |
 | **Vercel sem build step** | Apenas arquivos estáticos — sem `package.json`, sem bundler |
 
-> ⚠ Nunca sugerir quebrar essas restrições. Se vier pedido de framework ou build tool, implementar dentro dos limites acima.
+> ⚠ Nunca sugerir quebrar essas restrições. Se vier pedido de framework ou build tool, implementar dentro dos limites acima. A divisão de `index.html` em múltiplos `<script src>` é permitida e incentivada (cada arquivo carrega como `<script>` separado, sem bundler).
 
 ---
 

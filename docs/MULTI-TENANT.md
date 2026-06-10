@@ -497,10 +497,17 @@ versão pré-9.x (as policies "ATUAL" acima). Guardar a versão antiga em
 1. **Numeração por org** — `numProposta()`/`numPedido()` já leem do registro;
    nada muda. A função SQL de numeração de pedido passa a filtrar por
    `(org_id, ano)` — mudança no banco, não no front.
-2. **Backup automático** (`.github/workflows/backup.yml`) e `baixarBackup()`:
-   com a service key, leem **todas** as orgs. Quando houver >1 org real,
-   decidir se o backup é global (admin do produto) ou por-org. Hoje: global,
-   sem mudança.
+2. **Backup — decisão aprovada: global (dono) + por-org (cada empresa).**
+   Sai quase de graça da própria arquitetura RLS, sem código novo:
+   - **Global do dono**: o `.github/workflows/backup.yml` usa a `service_role`
+     key, que **ignora o RLS** → continua exportando **todas as orgs**. É o seu
+     backup-mãe. Sem mudança.
+   - **Por-org**: o botão "Baixar Backup" no app usa o **token do usuário
+     logado**, então o RLS **filtra automaticamente** só os dados da org dele.
+     Quando houver multi-tenant, cada admin de empresa baixa só o que é seu —
+     sem nenhuma alteração no `baixarBackup()`.
+   Único ajuste futuro (cosmético): o `_meta` do backup global poderia separar
+   os totais por org. Não-bloqueante.
 3. **Tela de cadastro de org / troca de org**: só existe quando entrarmos em
    onboarding (fora desta fase — §6).
 
@@ -591,8 +598,8 @@ Esta migração entrega **apenas o isolamento de dados**. Ficam para depois:
   nesta fase. Suporte a usuário em várias orgs é fase futura.
 - **Admin do produto (super-admin)**: papel que enxerga todas as orgs (para
   suporte). Hoje, só via `service_role` no painel.
-- **Backup por-org**: hoje o backup é global; segmentar por org vem com o
-  billing.
+- ~~Backup por-org~~ **RESOLVIDO no design** (item 3, exceção 2): global do dono
+  via service_role + por-org via RLS no botão "Baixar Backup". Sem código novo.
 - **Branding por org**: logo/cores/termos por organização (o `ADIBLOCK_INFO`
   hoje é fixo; vira config por org).
 

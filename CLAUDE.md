@@ -289,6 +289,28 @@ Três documentos distintos — **nunca misturar ao imprimir**:
 | 6.4 | Pedido de Produção (sem valores, para a fábrica) | c3c7e95 + 96845a9 |
 | 6.5 | Aba Propostas (em andamento / pedido / cancelada), status na cot-page | 20f82d0 |
 | 6.6 | Cards do Dashboard interativos (drill-down por card) | 6f0146c |
+| 6.7 | Numeração de pedido independente da proposta (`pedido_numero`/`pedido_ano`, `pedido_sequences`) + excluir proposta (admin) | 55eea96 |
+| 6.8 | Status `expedido` + modal de expedição (NF + transportadora) | 10c2310 |
+| 7.0 | Contrato do projeto atualizado: fim do single-file, visão multi-tenant | 7ce7e19 |
+| 7.1 | Ações rápidas na tela Hoje (WhatsApp/Ligar/Registrar) | bd101ce |
+| 7.2 | Próximo passo obrigatório + motivo de perda (`perda_motivo`) + badge de órfãs | b5ac3f1 |
+| 7.3 | Mobile real: cards em listas, tabs com label curto, bottom-sheets | f415f1f |
+| 7.4 | Painel de adoção por vendedor (admin) na aba Equipe | d5a6013 |
+| 7.5 | Backup diário automático (GitHub Actions) + `docs/RESTORE.md` | f65bbc6 |
+| 8.1a/b | Modularização: extrai `css/app.css` e `js/format.js` (EM ANDAMENTO) | d126950 + 529c7c9 |
+| 8.2 | Radar de Reativação (clientes dormentes priorizados, atalho R) | 86a0064 |
+| 9.0 | Design doc multi-tenant (`docs/MULTI-TENANT.md`) — só documento | 8fc80dd |
+
+---
+
+### Em andamento / não concluídos
+
+- **Sprint 8.1 (modularização) está PAUSADO** após extrair só CSS e `format.js`.
+  Faltam: `config.js`, `state.js`, `api.js`, `js/views/*`, `modals.js`, `main.js`,
+  e apagar os órfãos `app.js`/`style.css`. Retomar com smoke test entre cada
+  módulo (ordem de carga dos `<script src>` é crítica — globals compartilhados).
+- **Sprint 9.x (multi-tenant) é só design** ([docs/MULTI-TENANT.md](docs/MULTI-TENANT.md)).
+  Nenhuma migração escrita até aprovação do design.
 
 ---
 
@@ -386,17 +408,33 @@ Técnico:
 
 ```
 crm-adiblock/
-├── index.html          ← arquivo principal (5500+ linhas, tudo aqui)
-├── supabase_setup.sql  ← schema completo + migrations (idempotente)
+├── index.html          ← HTML + <script> inline (a maior parte do JS ainda aqui)
+├── css/
+│   └── app.css         ← todo o CSS (extraído do <style> no Sprint 8.1a)
+├── js/
+│   └── format.js       ← helpers de formatação (Sprint 8.1b). Mais módulos virão.
+├── supabase_setup.sql  ← schema completo (DROP destrutivo COMENTADO — Regra de Ouro)
+├── migrations/         ← mudanças de schema datadas (AAAA-MM-DD-*.sql)
+│   └── 2026-06-03-embalagens-reais.sql
+├── docs/
+│   ├── RESTORE.md      ← guia de restauração de backup
+│   └── MULTI-TENANT.md ← design da migração multi-tenant (Sprint 9.0)
+├── .github/workflows/
+│   └── backup.yml      ← backup diário automático (Sprint 7.5)
 ├── vercel.json         ← headers Cache-Control: no-store
 ├── logo.png            ← logo Adiblock (usada nas propostas)
-├── app.js              ← ÓRFÃO (não referenciado, pode ignorar)
-├── style.css           ← ÓRFÃO (não referenciado, pode ignorar)
+├── app.js              ← ÓRFÃO (não referenciado) — APAGAR ao concluir Sprint 8.1
+├── style.css           ← ÓRFÃO (não referenciado) — APAGAR ao concluir Sprint 8.1
 └── .claude/
     ├── settings.json
-    ├── thinking-logs/  ← blocos de thinking exportados da sessão anterior
+    ├── commands/       ← skills: /deploy, /sql-pending, /status
+    ├── thinking-logs/  ← blocos de thinking exportados
     └── memory/         ← memórias persistentes do Claude
 ```
+
+> Carregamento JS: `index.html` carrega `<script src="js/format.js">` ANTES do
+> `<script>` inline (globals compartilhados, sem `type=module`). Novos módulos
+> seguem a mesma ordem. CSS via `<link href="css/app.css">`.
 
 ---
 
@@ -404,12 +442,14 @@ crm-adiblock/
 
 Da lista de sprints sugeridos, ainda faltam:
 
-- **U1**: Documentar atalhos no cheat-sheet (botão ⌨ já existe)
+- **Sprint 8.1 (resto)**: concluir modularização (config/state/api/views/modals/main) e apagar `app.js`/`style.css`
+- **Sprint 9.1+**: executar a migração multi-tenant após aprovação do design ([docs/MULTI-TENANT.md](docs/MULTI-TENANT.md))
 - **U4**: Confirmação inline (toggles sem modal)
-- **U5**: Mobile-friendly real (testar em celular, ajustar tabelas)
 - **U7**: Avatar/iniciais coloridas consistente em todas as telas
-- **O1**: Quebrar index.html em `<script src>` modulares (cache por arquivo)
 - **O2**: Drag-and-drop no Kanban do Pipeline
 - **O3**: Timeline unificada no perfil (interações + alterações + propostas)
 - **O4**: Anexos via Supabase Storage (PDF, foto da obra)
 - **Pedido Comercial**: documento com nº OC do cliente, transportadora (distinto de Proposta e Pedido de Produção)
+- **closed_at retroativo**: opps ganhas com `closed_at` nulo afetam precisão do Radar (usa `created_at` como fallback)
+
+> Já feitos da lista antiga: U1 (cheat-sheet), U5 (mobile Sprint 7.3), O1 (modularização em andamento).

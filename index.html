@@ -1146,7 +1146,7 @@ document.getElementById('cono').onclick = fechaConf;
 // e computa tier + métricas client-side a partir das oportunidades embedded.
 async function fetchCl() {
   const rows = await api('GET', 'companies',
-    'select=*,contatos:contacts(id,nome,cargo,email,telefone,papel,principal),oportunidades:opportunities(id,titulo,estagio,valor_estimado,seller_id,seller_name,callback_date,closed_at,obra)&order=razao_social.asc');
+    'select=*,contatos:contacts(id,nome,cargo,email,telefone,papel,principal),oportunidades:opportunities(id,titulo,estagio,valor_estimado,seller_id,seller_name,callback_date,closed_at,created_at,obra)&order=razao_social.asc');
   const seisMesesAtras = Date.now() - 365 * 86400000;
   return (rows||[]).map(c => {
     const opps = c.oportunidades || [];
@@ -3596,13 +3596,17 @@ async function renderRadar() {
       const ganhas = (c.oportunidades||[]).filter(o => o.estagio === 'ganha');
       if (!ganhas.length) return;                              // precisa ter comprado no passado
       const valorHist = ganhas.reduce((s,o)=>s+(Number(o.valor_estimado)||0),0);
-      const ultGanhaMs = Math.max(...ganhas.map(o => new Date(o.closed_at||o.updated_at||o.created_at||0).getTime()));
+      // Data de quando ganhou: closed_at (trigger) ou created_at como fallback.
+      // Filtra datas invalidas/zero pra nao cair em 1970 (bug dos 20614 dias).
+      const dataGanha = o => new Date(o.closed_at || o.created_at || 0).getTime();
+      const ganhaDatas = ganhas.map(dataGanha).filter(t => t > 0);
+      if (!ganhaDatas.length) return;                          // sem data confiavel -> nao lista
+      const ultGanhaMs = Math.max(...ganhaDatas);
       const ultIntMs   = ultIntPorEmpresa[c.id] || 0;
       if (ultGanhaMs >= corte || ultIntMs >= corte) return;    // teve atividade recente -> nao dormente
       const ultAtividade = Math.max(ultGanhaMs, ultIntMs);
       const diasDorm = Math.floor((agora - ultAtividade)/86400000);
-      const ultGanhaOpp = ganhas.slice().sort((a,b)=>
-        new Date(b.closed_at||b.created_at||0) - new Date(a.closed_at||a.created_at||0))[0];
+      const ultGanhaOpp = ganhas.slice().sort((a,b)=> dataGanha(b) - dataGanha(a))[0];
       // Score = valor historico ganho ponderado pela recencia. Decaimento suave:
       // peso = 365/(365+diasDorm) -> ~1 se parou ha pouco, ~0.5 em 1 ano.
       // Prioriza quem vale mais E esfriou ha menos tempo (mais facil reativar).

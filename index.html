@@ -723,6 +723,8 @@ td strong{color:var(--tx);font-weight:600}
 .classif-inativo{background:#f3f4f6;color:#4b5563;border-color:#9ca3af}
 .classif-indicacao{background:#fce7f3;color:#9d174d;border-color:#f472b6}
 .estagio-badge{display:inline-block;font-size:10px;font-weight:600;padding:3px 8px;border-radius:99px}
+/* Sprint 7.2: badge de oportunidade orfa (sem proximo passo) */
+.badge-orfa{display:inline-block;font-size:10px;font-weight:700;padding:2px 7px;border-radius:99px;background:var(--wr2);color:var(--wr);white-space:nowrap}
 .est-lead{background:#f3f4f6;color:#4b5563}
 .est-qualificado{background:#dbeafe;color:#1e40af}
 .est-proposta_enviada{background:#fef3c7;color:#92400e}
@@ -1156,6 +1158,7 @@ body.role-leitor .read-only-banner{display:block}
         <div class="sk sw2 sk-click" onclick="drillDashboard('pendentes')" title="Ver leads pendentes"><div class="sic sy"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></div><div><div class="sv" id="d3">-</div><div class="sl2">Pendentes</div><div class="sprg"><div class="sprf sy" id="d3b" style="width:0%"></div></div></div></div>
         <div class="sk sd sk-click" onclick="drillDashboard('vencidos')" title="Ver retornos vencidos"><div class="sic sr"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg></div><div><div class="sv" id="d4">-</div><div class="sl2">Retornos Vencidos</div></div></div>
         <div class="sk sk-pipe sk-click" onclick="drillDashboard('pipeline')" title="Ver oportunidades em aberto"><div class="sic" style="color:var(--ac)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/></svg></div><div><div class="sv" id="d5" style="font-size:18px;margin-top:4px">-</div><div class="sl2">Valor do Pipeline</div></div></div>
+        <div class="sk sw2 sk-click" onclick="drillDashboard('sempasso')" title="Oportunidades abertas sem próximo passo"><div class="sic sy"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg></div><div><div class="sv" id="d6">-</div><div class="sl2">Sem próximo passo</div></div></div>
       </div>
       <!-- Alertas de Inatividade -->
       <div id="inact-wrap" style="display:none" class="inact-wrap">
@@ -1719,10 +1722,23 @@ body.role-leitor .read-only-banner{display:block}
             <option>Nao tem interesse</option><option>Ligar de volta</option>
           </select>
         </div>
-        <div class="fg"><label>Próximo retorno</label><input type="datetime-local" id="int-cb"></div>
+        <div class="fg"><label>Próximo retorno</label><input type="datetime-local" id="int-cb" oninput="limpaIntErro()"></div>
       </div>
       <div class="fg"><label>Contato com quem falou</label><select id="int-contato"><option value="">—</option></select></div>
       <div class="fg"><label>Anotação</label><textarea id="int-notes" placeholder="O que foi conversado..." rows="3"></textarea></div>
+      <div class="fg">
+        <label>Encerrar oportunidade <span style="font-weight:400;color:var(--mt);font-size:11px">— em vez de agendar retorno</span></label>
+        <select id="int-encerrar" onchange="limpaIntErro()">
+          <option value="">Não encerrar (vou agendar o retorno)</option>
+          <option value="ganha">✓ Ganhou</option>
+          <option value="perdida|Preço">Perdeu — preço</option>
+          <option value="perdida|Concorrente">Perdeu — concorrente</option>
+          <option value="perdida|Sem verba">Perdeu — sem verba</option>
+          <option value="perdida|Sem interesse">Sem interesse</option>
+          <option value="perdida|Empresa inativa">Empresa inativa</option>
+        </select>
+      </div>
+      <div class="ferr" id="int-ferr">Agende o próximo retorno ou encerre a oportunidade.</div>
       <div class="ma">
         <button type="button" class="btn bg" onclick="fechaInteracao()">Cancelar</button>
         <button type="submit" class="btn bp">Registrar</button>
@@ -2440,6 +2456,11 @@ function drillDashboard(tipo) {
     titulo = `Pipeline em aberto — ${fMoeda(tot)} (${lst.length})`;
     rows = lst.map(o => rowOpp(o, `<div class="drill-rt">${fMoeda(o.valor_estimado)}<small>${o.seller_name||''}</small></div>`)).join('');
   }
+  else if (tipo === 'sempasso') {
+    const lst = opps.filter(semProximoPasso).sort((a,b)=>(a.company_nome||'').localeCompare(b.company_nome||''));
+    titulo = `Sem próximo passo (${lst.length})`;
+    rows = lst.map(o => rowOpp(o, `<div class="drill-rt" style="color:var(--wr)">${o.callback_date?fData(o.callback_date):'sem retorno'}<small>${o.seller_name||''}</small></div>`)).join('');
+  }
 
   document.getElementById('drill-titulo').textContent = titulo;
   document.getElementById('drill-body').innerHTML = rows
@@ -2982,6 +3003,7 @@ async function renderDb() {
   setSafe('d3', leads);
   setSafe('d4', vencidos.length);
   setSafe('d5', fMoedaK(pipelineTot));
+  setSafe('d6', opps.filter(semProximoPasso).length); // Sprint 7.2: orfas
   const d2b = document.getElementById('d2b'); if (d2b) d2b.style.width = tot ? ((clientes+contas)/tot*100)+'%' : '0%';
   const d3b = document.getElementById('d3b'); if (d3b) d3b.style.width = tot ? (leads/tot*100)+'%' : '0%';
 
@@ -4374,6 +4396,7 @@ function renderKanban() {
       ? itens.map(o => `<div class="kb-card" draggable="true" data-id="${o.id}" data-est="${o.estagio}" onclick="abrPerfil('${o.company_id}')">
           <div class="kb-card-emp">${escHtml(o.company_nome||'')}</div>
           <div class="kb-card-tit">${escHtml(o.titulo||'')}</div>
+          ${semProximoPasso(o)?'<div><span class="badge-orfa">⚠ sem próximo passo</span></div>':''}
           <div class="kb-card-meta">
             ${o.valor_estimado!=null?`<span class="kb-meta-val">${fMoeda(o.valor_estimado)}</span>`:''}
             ${o.callback_date?`<span>📅 ${fDataHora(o.callback_date)}</span>`:''}
@@ -5150,6 +5173,17 @@ const CLASSIF_LBL = {
 // Sprint 4.2: bulk de oportunidades no perfil da empresa
 let pfOppSelected = new Set();
 
+// Sprint 7.2: estagios "em aberto" (ainda em negociacao, nao fechados)
+const ESTAGIOS_ABERTOS = ['lead','qualificado','proposta_enviada','em_negociacao'];
+
+// Sprint 7.2: oportunidade ORFA = aberta e sem proximo passo agendado
+// (callback nulo ou no passado). Usada no badge e no card do dashboard.
+function semProximoPasso(o) {
+  if (!ESTAGIOS_ABERTOS.includes(o.estagio)) return false;
+  if (!o.callback_date) return true;
+  return new Date(o.callback_date).getTime() < Date.now();
+}
+
 // Sprint 6.3: sugere o proximo passo de acao para a oportunidade baseado em estagio + datas
 function proximoPasso(o) {
   if (o.estagio === 'ganha')   return { txt: 'Oportunidade ganha. Boa venda!', urg: 'done', ico: '🏆' };
@@ -5225,7 +5259,7 @@ function renderPfOportunidades(c) {
         return `<div class="pf-card pf-opp-card ${sel?'pf-opp-selected':''}">
         <input type="checkbox" class="pf-opp-cb" ${sel?'checked':''} onclick="toggleOppSel('${o.id}',this.checked)" title="Selecionar pra ação em massa">
         <div class="pf-card-main">
-          <div class="pf-card-title">${escHtml(o.titulo)} <span class="estagio-badge est-${o.estagio}">${ESTAGIO_LBL[o.estagio]||o.estagio}</span></div>
+          <div class="pf-card-title">${escHtml(o.titulo)} <span class="estagio-badge est-${o.estagio}">${ESTAGIO_LBL[o.estagio]||o.estagio}</span>${semProximoPasso(o)?' <span class="badge-orfa">⚠ sem próximo passo</span>':''}</div>
           <div class="pf-card-sub">
             ${o.obra?`Obra: <b>${escHtml(o.obra)}</b> · `:''}
             ${o.seller_name?`Vendedor: ${escHtml(o.seller_name)} · `:''}
@@ -5675,8 +5709,15 @@ function abrInteracao(oppId, companyId, origem) {
   const contatos = c?.contatos || [];
   document.getElementById('int-contato').innerHTML = '<option value="">—</option>' +
     contatos.map(ct => `<option value="${ct.id}">${escHtml(ct.nome)}</option>`).join('');
+  limpaIntErro(); // Sprint 7.2: garante estado limpo de validacao
   document.getElementById('int-m').classList.add('op');
   setTimeout(() => document.getElementById('int-res').focus(), 80);
+}
+
+// Sprint 7.2: limpa o destaque de erro do "proximo passo obrigatorio"
+function limpaIntErro() {
+  document.getElementById('int-cb').classList.remove('err','shake');
+  document.getElementById('int-ferr').classList.remove('show');
 }
 
 function fechaInteracao() {
@@ -5689,22 +5730,61 @@ document.getElementById('int-f').addEventListener('submit', async e => {
   if (!INT_OID || !ME) return;
   const oppId  = INT_OID;
   const origem = INT_ORIGEM; // captura antes de fechaInteracao() zerar
+  const result   = document.getElementById('int-res').value;
+  const cbVal    = document.getElementById('int-cb').value;
+  const encerrar = document.getElementById('int-encerrar').value; // '' | 'ganha' | 'perdida|Motivo'
+
+  // ── Sprint 7.2: proximo passo obrigatorio ──
+  // Saidas validas: (a) agendou retorno, (b) encerrou a opp, ou
+  // (c) excecao: resultado "Comprou" encerra como ganha sem exigir retorno.
+  const temRetorno  = !!cbVal;
+  const temEncerrar = !!encerrar;
+  const comprou     = result === 'Comprou';
+  if (!temRetorno && !temEncerrar && !comprou) {
+    const cbField = document.getElementById('int-cb');
+    document.getElementById('int-ferr').classList.add('show');
+    cbField.classList.add('err','shake');
+    setTimeout(() => cbField.classList.remove('shake'), 400);
+    return;
+  }
+
+  // Define o desfecho da oportunidade
+  let novoEstagio = null, motivoPerda = null;
+  if (temEncerrar) {
+    const [est, mot] = encerrar.split('|');
+    novoEstagio = est;            // 'ganha' ou 'perdida'
+    motivoPerda = mot || null;
+  } else if (comprou && !temRetorno) {
+    novoEstagio = 'ganha';        // excecao: Comprou sem retorno = ganha
+  }
+
   const d = {
-    opportunity_id: INT_OID,
+    opportunity_id: oppId,
     contact_id:     document.getElementById('int-contato').value || null,
     seller_id:      ME.id,
     datetime:       new Date().toISOString(),
-    result:         document.getElementById('int-res').value,
-    next_callback:  inputToISO(document.getElementById('int-cb').value),
+    result,
+    next_callback:  inputToISO(cbVal),
     notes:          document.getElementById('int-notes').value.trim() || null,
   };
   try {
     await api('POST','interactions',null, d);
-    // Atualiza callback_date da oportunidade se vier definido
-    if (d.next_callback) {
-      await api('PATCH','opportunities',`id=eq.${oppId}`, { callback_date: d.next_callback });
+    // Atualiza a oportunidade: encerra (ganha/perdida) OU agenda o retorno
+    const oppPatch = {};
+    if (novoEstagio === 'ganha') {
+      oppPatch.estagio = 'ganha';
+    } else if (novoEstagio === 'perdida') {
+      oppPatch.estagio = 'perdida';
+      oppPatch.perda_motivo = motivoPerda;
+    } else if (d.next_callback) {
+      oppPatch.callback_date = d.next_callback;
     }
-    toast('Interação registrada','','success');
+    if (Object.keys(oppPatch).length) {
+      await api('PATCH','opportunities',`id=eq.${oppId}`, oppPatch);
+    }
+    const msg = novoEstagio === 'ganha' ? 'Oportunidade ganha! ' :
+                novoEstagio === 'perdida' ? 'Oportunidade encerrada' : '';
+    toast('Interação registrada', msg, 'success');
     fechaInteracao();
     CL = await fetchCl();
     // Sprint 7.1: se veio da tela Hoje, NAO abre perfil — re-renderiza a agenda

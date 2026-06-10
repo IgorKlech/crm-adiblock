@@ -543,6 +543,26 @@ td strong{color:var(--tx);font-weight:600}
 .cl-card-actions{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px;padding-top:12px;border-top:1px solid var(--bdr)}
 .cl-card-actions .btn{flex:1;min-height:44px;min-width:90px;justify-content:center;font-size:13px}
 
+/* ── Sprint 7.4: painel de adocao por vendedor ── */
+.adp-table{width:100%;border-collapse:collapse;font-size:12.5px}
+.adp-table th{text-align:left;padding:8px 10px;background:var(--bg);border-bottom:1.5px solid var(--bdr);font-weight:600;color:var(--tx2);font-size:11px;text-transform:uppercase;letter-spacing:.03em;white-space:nowrap}
+.adp-table th.num,.adp-table td.num{text-align:right;font-variant-numeric:tabular-nums}
+.adp-table td{padding:9px 10px;border-bottom:1px solid var(--bdr);color:var(--tx)}
+.adp-table tr:last-child td{border-bottom:none}
+.adp-nome{font-weight:600;color:var(--tx)}
+.adp-warn{color:var(--wr);font-weight:700}
+.adp-crit{color:var(--er);font-weight:700}
+.adp-cards{display:none;flex-direction:column;gap:12px}
+.adp-card{background:var(--sur);border:1px solid var(--bdr);border-radius:var(--r);padding:14px;box-shadow:var(--sh)}
+.adp-card-nome{font-size:14px;font-weight:700;color:var(--tx);margin-bottom:10px}
+.adp-card-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px 14px;font-size:12.5px}
+.adp-card-grid .adp-k{color:var(--mt);display:block;font-size:11px}
+.adp-card-grid .adp-v{color:var(--tx);font-weight:600}
+@media(max-width:768px){
+  .adp-table-wrap{display:none}
+  .adp-cards{display:flex}
+}
+
 /* ── Página de Perfil ── */
 #pfpage{display:none;position:fixed;inset:0;background:var(--bg);z-index:280;overflow-y:auto;flex-direction:column}
 #pfpage.op{display:flex}
@@ -1263,6 +1283,12 @@ body.role-leitor .read-only-banner{display:block}
         💡 Para adicionar um novo vendedor: clique no botão acima, crie o usuário no Supabase Auth (marque "Auto Confirm User"). Em segundos o trigger cria o perfil aqui. Depois edite nome/cargo/contatos abaixo.
       </div>
       <div id="eq-list"></div>
+
+      <!-- Sprint 7.4: painel de adocao por vendedor (so admin) -->
+      <div id="eq-adocao" class="admin-only" style="margin-top:28px">
+        <h3 style="font-size:15px;font-weight:600;color:var(--tx);margin-bottom:4px">Adoção <span style="font-weight:400;color:var(--mt);font-size:12px">— últimos 30 dias</span></h3>
+        <div id="eq-adocao-body"><div class="sl"><div class="sp"></div></div></div>
+      </div>
     </div>
   </div>
 </div>
@@ -2096,7 +2122,7 @@ document.getElementById('cono').onclick = fechaConf;
 // e computa tier + métricas client-side a partir das oportunidades embedded.
 async function fetchCl() {
   const rows = await api('GET', 'companies',
-    'select=*,contatos:contacts(id,nome,cargo,email,telefone,papel,principal),oportunidades:opportunities(id,titulo,estagio,valor_estimado,seller_name,callback_date,closed_at,obra)&order=razao_social.asc');
+    'select=*,contatos:contacts(id,nome,cargo,email,telefone,papel,principal),oportunidades:opportunities(id,titulo,estagio,valor_estimado,seller_id,seller_name,callback_date,closed_at,obra)&order=razao_social.asc');
   const seisMesesAtras = Date.now() - 365 * 86400000;
   return (rows||[]).map(c => {
     const opps = c.oportunidades || [];
@@ -4577,9 +4603,93 @@ async function renderEquipe() {
         <button class="btn bp sm" onclick="abrEqEdit('${p.id}')">Editar</button>
       </div>`;
     }).join('');
+    // Sprint 7.4: painel de adocao (so admin — o container ja e .admin-only)
+    if (ehAdmin()) renderAdocao();
   } catch(err) {
     console.error('renderEquipe:', err);
     el.innerHTML = '<div class="pf-empty" style="color:var(--er)">Erro ao carregar equipe: '+escHtml(err.message||'')+'</div>';
+  }
+}
+
+// Sprint 7.4: painel de adocao por vendedor (uso do sistema nos ult. 30 dias).
+// TODO: quando houver volume, mover a agregacao para uma VIEW SQL
+// (ex: vw_adocao_vendedor) em vez de agregar no cliente.
+async function renderAdocao() {
+  const cont = document.getElementById('eq-adocao-body');
+  if (!cont) return;
+  cont.innerHTML = '<div class="sl"><div class="sp"></div></div>';
+  try {
+    const desde = new Date(Date.now() - 30*86400000);
+    const desdeISO = desde.toISOString();
+    // Query agregada: interacoes dos ult. 30 dias (base pequena, agrega no front)
+    const inter = await api('GET', 'interactions',
+      `datetime=gte.${desdeISO}&select=seller_id,datetime`);
+
+    // Indexa interacoes por seller_id
+    const porVendedor = {};
+    (inter||[]).forEach(i => {
+      if (!i.seller_id) return;
+      (porVendedor[i.seller_id] ||= []).push(i.datetime);
+    });
+
+    // Oportunidades abertas por vendedor (de CL, em memoria), via seller_id
+    const opps = todasOpps().filter(o => ESTAGIOS_ABERTOS.includes(o.estagio));
+    const agoraMs = Date.now();
+
+    const linhas = PF.map(p => {
+      const datas = porVendedor[p.id] || [];
+      const totalInter = datas.length;
+      const mediaSem = (totalInter / (30/7)); // media por semana nos 30 dias
+      const ultima = datas.length ? datas.reduce((a,b)=> a>b ? a : b) : null;
+      const minhasOpps = opps.filter(o => o.seller_id === p.id);
+      const abertas = minhasOpps.length;
+      const orfas = minhasOpps.filter(semProximoPasso).length;
+      const pctOrfas = abertas ? Math.round(orfas/abertas*100) : 0;
+      const atrasados = minhasOpps.filter(o => o.callback_date && new Date(o.callback_date).getTime() < agoraMs).length;
+      return { p, nome: p.name || (p.email||'').split('@')[0] || '?', totalInter, mediaSem, ultima, abertas, pctOrfas, atrasados };
+    }).sort((a,b) => b.totalInter - a.totalInter);
+
+    const pctCls = pct => pct > 50 ? 'adp-crit' : (pct > 30 ? 'adp-warn' : '');
+    const mediaTxt = m => m > 0 ? m.toFixed(1) : '0';
+
+    // Tabela (desktop)
+    const tabela = `<div class="adp-table-wrap"><table class="adp-table">
+      <thead><tr>
+        <th>Vendedor</th>
+        <th class="num">Interações</th>
+        <th class="num">Média/sem</th>
+        <th class="num">Opps abertas</th>
+        <th class="num">% sem próx. passo</th>
+        <th class="num">Atrasados</th>
+        <th>Última interação</th>
+      </tr></thead>
+      <tbody>${linhas.map(l => `<tr>
+        <td class="adp-nome">${escHtml(l.nome)}</td>
+        <td class="num">${l.totalInter}</td>
+        <td class="num">${mediaTxt(l.mediaSem)}</td>
+        <td class="num">${l.abertas}</td>
+        <td class="num ${pctCls(l.pctOrfas)}">${l.abertas ? l.pctOrfas+'%' : '—'}</td>
+        <td class="num ${l.atrasados>0?'adp-warn':''}">${l.atrasados}</td>
+        <td>${l.ultima ? fRel(l.ultima) : '<span style="color:var(--mt2)">nunca</span>'}</td>
+      </tr>`).join('')}</tbody>
+    </table></div>`;
+
+    // Cards (mobile)
+    const cards = `<div class="adp-cards">${linhas.map(l => `<div class="adp-card">
+      <div class="adp-card-nome">${escHtml(l.nome)}</div>
+      <div class="adp-card-grid">
+        <div><span class="adp-k">Interações (30d)</span><span class="adp-v">${l.totalInter} · ${mediaTxt(l.mediaSem)}/sem</span></div>
+        <div><span class="adp-k">Opps abertas</span><span class="adp-v">${l.abertas}</span></div>
+        <div><span class="adp-k">% sem próx. passo</span><span class="adp-v ${pctCls(l.pctOrfas)}">${l.abertas ? l.pctOrfas+'%' : '—'}</span></div>
+        <div><span class="adp-k">Atrasados</span><span class="adp-v ${l.atrasados>0?'adp-warn':''}">${l.atrasados}</span></div>
+        <div style="grid-column:1/-1"><span class="adp-k">Última interação</span><span class="adp-v">${l.ultima ? fRel(l.ultima) : 'nunca'}</span></div>
+      </div>
+    </div>`).join('')}</div>`;
+
+    cont.innerHTML = tabela + cards;
+  } catch(err) {
+    console.error('renderAdocao:', err);
+    cont.innerHTML = '<div class="pf-empty" style="color:var(--er)">Erro ao carregar adoção: '+escHtml(err.message||'')+'</div>';
   }
 }
 

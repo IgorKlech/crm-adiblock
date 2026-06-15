@@ -227,6 +227,20 @@
           <label class="td-filtro-wrap">
             <input type="checkbox" id="pr-meus" checked> <span>Só os meus</span>
           </label>
+          <label class="td-filtro-wrap">Período
+            <select id="pr-periodo" onchange="setPrPeriodo(this.value)">
+              <option value="0">Todos</option>
+              <option value="30">30 dias</option>
+              <option value="60">60 dias</option>
+              <option value="90">90 dias</option>
+              <option value="custom">Personalizado</option>
+            </select>
+          </label>
+          <span id="pr-custom" class="pr-custom-range" style="display:none">
+            <input type="date" id="pr-de" onchange="renderPropostas()" title="De">
+            <span style="color:var(--mt)">até</span>
+            <input type="date" id="pr-ate" onchange="renderPropostas()" title="Até">
+          </span>
           <button class="btn bg sm" onclick="renderPropostas()">↺ Atualizar</button>
         </div>
       </div>
@@ -3305,11 +3319,40 @@ const KB_ESTAGIOS = ['lead','qualificado','proposta_enviada','em_negociacao','ga
 
 // ── Sprint 6.5: Lista de Propostas (Em andamento / Pedidos / Canceladas) ─
 let PR_STATUS = 'em_andamento';
+let PR_PERIODO = 0; // 0 = todos; 30/60/90 dias; ou 'custom'
 
 function setPrStatus(s) {
   PR_STATUS = s;
   document.querySelectorAll('#pr-tabs .td-sw').forEach(b => b.classList.toggle('ac', b.dataset.st === s));
   renderPropostas();
+}
+
+// Sprint 9.2: filtro de periodo da aba Propostas
+function setPrPeriodo(v) {
+  PR_PERIODO = v === 'custom' ? 'custom' : (parseInt(v, 10) || 0);
+  const custom = document.getElementById('pr-custom');
+  if (custom) custom.style.display = (v === 'custom') ? 'inline-flex' : 'none';
+  renderPropostas();
+}
+
+// Filtra propostas pela data de geracao (created_at) conforme o periodo escolhido
+function filtrarPeriodoPropostas(lst) {
+  if (PR_PERIODO === 'custom') {
+    const deV  = document.getElementById('pr-de')?.value;
+    const ateV = document.getElementById('pr-ate')?.value;
+    const de  = deV  ? new Date(deV  + 'T00:00:00').getTime() : null;
+    const ate = ateV ? new Date(ateV + 'T23:59:59').getTime() : null;
+    return lst.filter(p => {
+      const t = new Date(p.created_at).getTime();
+      if (de  && t < de)  return false;
+      if (ate && t > ate) return false;
+      return true;
+    });
+  }
+  const dias = Number(PR_PERIODO) || 0;
+  if (!dias) return lst;                       // "Todos"
+  const corte = Date.now() - dias*86400000;
+  return lst.filter(p => new Date(p.created_at).getTime() >= corte);
 }
 
 function totalProposta(p) {
@@ -3335,18 +3378,23 @@ function renderPropostas() {
   const meuId = ME?.id;
 
   const all = (PROPOSTAS||[]).filter(p => (p.status||'em_andamento') === PR_STATUS);
-  const lst = soMeus && meuId ? all.filter(p => p.seller_id === meuId) : all;
+  let lst = soMeus && meuId ? all.filter(p => p.seller_id === meuId) : all;
+  lst = filtrarPeriodoPropostas(lst); // Sprint 9.2: filtro de periodo
 
   const totVal = lst.reduce((s,p)=>s+totalProposta(p),0);
   stats.textContent = `${lst.length} proposta(s)${totVal>0?' · '+fMoeda(totVal):''}`;
 
   if (!lst.length) {
-    const vazio = {
-      em_andamento: { ico:'📝', tit:'Sem propostas em andamento', msg:'Gere uma proposta a partir de uma oportunidade pra ela aparecer aqui.' },
-      pedido:       { ico:'📦', tit:'Sem pedidos finalizados ainda', msg:'Ao marcar uma proposta como "Pedido", ela aparece aqui pra acompanhamento.' },
-      expedido:     { ico:'🚚', tit:'Nenhum pedido expedido ainda', msg:'Ao marcar um pedido como "Expedido", ele sai da fila de produção e aparece aqui.' },
-      cancelada:    { ico:'🚫', tit:'Sem propostas canceladas', msg:'Propostas canceladas aparecem aqui.' },
-    }[PR_STATUS];
+    // Sprint 9.2: se ha filtro de periodo ativo, a mensagem reflete isso
+    const periodoAtivo = PR_PERIODO === 'custom' || (Number(PR_PERIODO) > 0);
+    const vazio = periodoAtivo
+      ? { ico:'📅', tit:'Nenhuma proposta neste período', msg:'Tente ampliar o período (ex: "Todos") ou ajustar as datas.' }
+      : {
+          em_andamento: { ico:'📝', tit:'Sem propostas em andamento', msg:'Gere uma proposta a partir de uma oportunidade pra ela aparecer aqui.' },
+          pedido:       { ico:'📦', tit:'Sem pedidos finalizados ainda', msg:'Ao marcar uma proposta como "Pedido", ela aparece aqui pra acompanhamento.' },
+          expedido:     { ico:'🚚', tit:'Nenhum pedido expedido ainda', msg:'Ao marcar um pedido como "Expedido", ele sai da fila de produção e aparece aqui.' },
+          cancelada:    { ico:'🚫', tit:'Sem propostas canceladas', msg:'Propostas canceladas aparecem aqui.' },
+        }[PR_STATUS];
     body.innerHTML = `<div class="pf-empty" style="margin-top:14px">
       <span class="es-ico">${vazio.ico}</span>
       <div class="es-tit">${vazio.tit}</div>

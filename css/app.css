@@ -987,3 +987,8 @@ body.role-leitor .read-only-banner{display:block}
 @media(max-width:768px){
   .rd-card-actions .btn{flex:1;min-height:44px;min-width:90px}
 }
+
+/* ── Sprint 9.2: filtro de periodo personalizado da aba Propostas ── */
+.pr-custom-range{align-items:center;gap:6px}
+.pr-custom-range input[type=date]{padding:5px 8px;border:1.5px solid var(--bdr);border-radius:var(--rs);font-size:12px;font-family:inherit;background:var(--sur);color:var(--tx);outline:none}
+.pr-custom-range input[type=date]:focus{border-color:var(--p)}

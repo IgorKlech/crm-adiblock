@@ -44,7 +44,7 @@ Guia de contexto para novas sessões. Leia antes de qualquer implementação.
 - URL produção: **https://crm-adiblock.vercel.app/**
 - Repo GitHub: **https://github.com/IgorKlech/crm-adiblock**
 - Deploy: Vercel (auto-deploy ao push em `main`)
-- Stack: `index.html` (em migração para módulos `<script src>`) + Supabase via CDN + Vercel estático
+- Stack: `index.html` (em migração para módulos `<script src>`) + Supabase (`supabase-js` servido localmente de `js/vendor/`) + Vercel estático
 
 ---
 
@@ -75,7 +75,7 @@ O CRM deixará de ser apenas interno (Adiblock) e está sendo preparado para vir
 |---|---|
 | **Migração incremental para módulos `<script src>` sem build tool** | O single-file `index.html` cumpriu seu papel e está sendo aposentado de forma incremental. Vercel continua estático. Nenhum framework ou bundler até decisão explícita. |
 | **Vanilla JS (sem framework)** | Escolha consciente — não usar React, Vue, etc. |
-| **Supabase via CDN** | `@supabase/supabase-js@2.39.3` importado pelo jsDelivr |
+| **Supabase como arquivo estático local** | `@supabase/supabase-js@2.39.3` servido de `js/vendor/` (mesma origem do Vercel). Era importado do jsDelivr, mas quando o CDN caía/era bloqueado o app inteiro ficava em tela preta (script bloqueante). Agora o local é a fonte primária e o jsDelivr é só fallback. **Não voltar a depender só do CDN.** |
 | **Sem servidor próprio** | Toda lógica de backend é RLS + triggers PostgreSQL |
 | **Vercel sem build step** | Apenas arquivos estáticos — sem `package.json`, sem bundler |
 

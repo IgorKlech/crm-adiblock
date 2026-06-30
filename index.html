@@ -8,7 +8,12 @@
 <title>Controle Comercial — Adiblock</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.3"></script>
+<!-- supabase-js: arquivo LOCAL (mesma origem do Vercel) como fonte primaria.
+     Antes vinha so do jsdelivr; quando o CDN cai/e bloqueado/fica lento, o app
+     inteiro ficava em TELA PRETA (o script bloqueante segurava a renderizacao).
+     Agora o local carrega sempre; o jsdelivr fica so como fallback. -->
+<script src="js/vendor/supabase-js-2.39.3.min.js"></script>
+<script>if(typeof supabase==='undefined'){document.write('<scr'+'ipt src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.3"><\/scr'+'ipt>');}</script>
 <link rel="stylesheet" href="css/app.css">
 </head>
 <body>
@@ -976,6 +981,22 @@
 // ── Config ────────────────────────────────────────────────────────────────
 const SB_URL = 'https://kgiynhrytnzfdywgjhby.supabase.co';
 const SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtnaXluaHJ5dG56ZmR5d2dqaGJ5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk0Mzc0NzUsImV4cCI6MjA5NTAxMzQ3NX0.8cOWLAsJyXAzid5ce73FUI-HVVYJoWyfOC3pSKci6Vs';
+// Guarda: se nem o arquivo local nem o CDN definiram `supabase`, mostra um
+// aviso visivel em vez de TELA PRETA muda (o que travava o app antes).
+if (typeof supabase === 'undefined' || !supabase.createClient) {
+  document.body.innerHTML =
+    '<div style="max-width:440px;margin:80px auto;padding:24px;font-family:Inter,system-ui,sans-serif;'
+    + 'text-align:center;color:#1f2937">'
+    + '<div style="font-size:40px">⚠️</div>'
+    + '<h2 style="margin:8px 0">Nao foi possivel carregar o sistema</h2>'
+    + '<p style="color:#6b7280;line-height:1.5">Uma biblioteca essencial nao carregou '
+    + '(possivel queda de rede ou bloqueio por extensao/firewall). '
+    + 'Verifique a conexao e tente recarregar.</p>'
+    + '<button onclick="location.reload()" style="margin-top:12px;padding:10px 20px;'
+    + 'border:0;border-radius:8px;background:#1F4E78;color:#fff;font-weight:600;cursor:pointer">'
+    + 'Recarregar</button></div>';
+  throw new Error('supabase-js nao carregou (local + CDN falharam)');
+}
 const { createClient } = supabase;
 const sb = createClient(SB_URL, SB_KEY);
 

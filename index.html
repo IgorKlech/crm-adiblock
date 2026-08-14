@@ -767,6 +767,7 @@
       <button class="btn bg sm" id="cot-cancelar-btn" onclick="cancelarProposta()" title="Cancela esta proposta" style="display:none">🚫 Cancelar</button>
       <button class="btn bg sm" id="cot-reabrir-btn" onclick="reabrirProposta()" title="Volta para Em andamento" style="display:none">↶ Reabrir</button>
       <button class="btn bd sm admin-only" id="cot-excluir-btn" onclick="excluirProposta()" title="Excluir proposta definitivamente (só admin)" style="display:none">🗑 Excluir</button>
+      <button class="btn bg sm" id="cot-pcom-btn" onclick="abrirModalPedidoComercial()" title="Confirmação formal do pedido, com o nº de OC do cliente" style="display:none">📄 Pedido Comercial</button>
       <button class="btn bg sm" onclick="abrirModalPedidoProducao()" title="Gera versao sem valores pra mandar pra fabrica">📋 Pedido de Produção</button>
       <button class="btn bg sm" onclick="window.print()">🖨 Imprimir / PDF</button>
     </div>
@@ -786,6 +787,58 @@
     </div>
   </div>
   <div id="prod-body"></div>
+</div>
+
+<!-- PEDIDO COMERCIAL — confirmacao formal do pedido pro cliente.
+     Terceiro documento: a Proposta oferta, o Pedido de Producao instrui a
+     fabrica, e este CONFIRMA o que foi fechado, no numero de OC do cliente.
+     z-index 297 (no CSS): acima da #cot-page (295) e do #prod-page (296). -->
+<div id="pcom-page">
+  <div class="rel-topbar cot-topbar pcom-topbar">
+    <div style="display:flex;align-items:center;gap:12px">
+      <button class="pf-back" onclick="fecharPedidoComercial()">← Voltar para Proposta</button>
+      <span style="font-size:15px;font-weight:600;color:var(--tx)">Pedido Comercial</span>
+    </div>
+    <div style="display:flex;gap:8px">
+      <button class="btn bg sm" onclick="abrirModalPedidoComercial()" title="Corrigir OC, transportadora ou entrega">✏ Dados de entrega</button>
+      <button class="btn bg sm" onclick="window.print()">🖨 Imprimir / PDF</button>
+    </div>
+  </div>
+  <div id="pcom-body"></div>
+</div>
+
+<!-- MODAL DADOS DO PEDIDO COMERCIAL -->
+<div class="mo" id="pcom-m" style="z-index:310">
+  <div class="md" style="max-width:520px">
+    <div class="mh">
+      <h3>Dados do Pedido Comercial</h3>
+      <button class="mx" type="button" onclick="document.getElementById('pcom-m').classList.remove('op')" aria-label="Fechar">✕</button>
+    </div>
+    <form id="pcom-f">
+      <div class="fg">
+        <label for="pcom-oc">Nº da OC do cliente <span style="color:var(--mt);font-weight:400;font-size:11px">— o número no sistema dele</span></label>
+        <input type="text" id="pcom-oc" placeholder="Ex: 4500123789" maxlength="60">
+        <div style="font-size:11px;color:var(--mt);margin-top:5px;line-height:1.5">
+          É por este número que o cliente cobra e confere. Preenchido aqui, ele passa a achar o pedido na busca.
+        </div>
+      </div>
+      <div class="fr">
+        <div class="fg"><label for="pcom-transp">Transportadora</label>
+          <input type="text" id="pcom-transp" placeholder="Ex: Rodo X, retirada..."></div>
+        <div class="fg"><label for="pcom-prev">Previsão de entrega</label>
+          <input type="date" id="pcom-prev"></div>
+      </div>
+      <div class="fg">
+        <label for="pcom-local">Local de entrega</label>
+        <input type="text" id="pcom-local" placeholder="Ex: Obra Hs Incorporações — Rua X, 100">
+      </div>
+      <p id="pcom-erro" class="em"></p>
+      <div class="ma">
+        <button type="button" class="btn bg" onclick="document.getElementById('pcom-m').classList.remove('op')">Cancelar</button>
+        <button type="submit" class="btn bp" id="pcom-sub">Salvar e gerar</button>
+      </div>
+    </form>
+  </div>
 </div>
 
 <!-- Modal: solicita 'Quem solicitou' e observacoes da producao -->
@@ -1358,7 +1411,7 @@ const fetchTasks = () => api('GET','tasks','select=*,company:companies(id,razao_
 async function fetchPropostas() {
   try {
     return await api('GET','proposals',
-      'select=id,ano,numero,revisao,pedido_numero,pedido_ano,company_id,opportunity_id,seller_id,snapshot,status,status_changed_at,nf_numero,transportadora,created_at&order=created_at.desc&limit=500');
+      'select=id,ano,numero,revisao,pedido_numero,pedido_ano,company_id,opportunity_id,seller_id,snapshot,status,status_changed_at,nf_numero,transportadora,oc_numero,entrega_local,entrega_previsao,created_at&order=created_at.desc&limit=500');
   } catch(e) {
     console.warn('fetchPropostas: colunas novas indisponiveis, usando select basico', e.message);
     return await api('GET','proposals',
@@ -2745,7 +2798,7 @@ async function checkSchema() {
     ['opportunity_products', 'id,opportunity_id,produto,embalagem,qtd_kg,preco_kg,created_at'],
     ['interactions',         'id,opportunity_id,contact_id,seller_id,datetime,result,next_callback,notes,created_at'],
     ['products',             'id,nome,embalagem,preco_materia_prima,preco_office,preco_pj'],
-    ['proposals',            'id,ano,numero,revisao,opportunity_id,company_id,seller_id,snapshot,created_at'],
+    ['proposals',            'id,ano,numero,revisao,oc_numero,entrega_local,entrega_previsao,opportunity_id,company_id,seller_id,snapshot,created_at'],
     ['proposal_revisions',   'id,proposal_id,revisao,snapshot,motivo,created_at,created_by'],
     ['lgpd_requests',        'id,company_id,company_name,acao,detalhes,requested_by,created_at'],
     ['audit_log',            'id,table_name,row_id,action,user_id,user_name,user_role,old_data,new_data,changes,company_id,created_at'],
@@ -3084,6 +3137,10 @@ document.addEventListener('keydown', e => {
   // Revisao de pedido: o historico abre por cima do editor, entao sai antes.
   if (document.getElementById('edp-hist-m')?.classList.contains('op')) { document.getElementById('edp-hist-m').classList.remove('op'); return; }
   if (document.getElementById('edp-m')?.classList.contains('op')) { fecharEditarPedido(); return; }
+  // Pedido Comercial: primeiro o modal de dados, depois a pagina do documento
+  // (que precisa devolver a cot-page, nao so sumir).
+  if (document.getElementById('pcom-m')?.classList.contains('op')) { document.getElementById('pcom-m').classList.remove('op'); return; }
+  if (document.getElementById('pcom-page')?.classList.contains('op')) { fecharPedidoComercial(); return; }
   if (document.getElementById('cm').classList.contains('op')) { fechaModal(); return; }
   if (document.getElementById('co').classList.contains('op')) { fechaConf(); return; }
   if (document.getElementById('sp').classList.contains('op')) { fechaPainel(); return; }
@@ -3359,6 +3416,202 @@ function fecharProducao() {
   document.getElementById('cot-page').classList.add('op');
 }
 
+// ── Pedido Comercial (2026-08-14) ─────────────────────────────────────────
+// O terceiro documento: a Proposta oferta, o Pedido de Producao instrui a
+// fabrica, e este CONFIRMA pro cliente o pedido fechado — no numero de OC
+// DELE, que e por onde ele cobra, confere e paga.
+//
+// OC, transportadora e entrega moram em COLUNA (nao no snapshot): sao dados
+// de cumprimento, chegam depois, e o snapshot e o que foi negociado.
+
+function abrirModalPedidoComercial() {
+  const p = PROP_ATUAL;
+  if (!p) { toast('Sem proposta carregada','','warning'); return; }
+  const snap = p.snapshot || {};
+  const c = snap.cliente || {};
+  document.getElementById('pcom-oc').value     = p.oc_numero || '';
+  // Transportadora e a mesma coluna que a expedicao usa — nao duplicar
+  document.getElementById('pcom-transp').value = p.transportadora || '';
+  document.getElementById('pcom-prev').value   = p.entrega_previsao || '';
+  // Default do local: a obra da oportunidade, senao o endereco do cliente
+  document.getElementById('pcom-local').value  = p.entrega_local
+    || c.obra
+    || [c.endereco, c.cidade && c.uf ? c.cidade+'/'+c.uf : (c.cidade||c.uf||'')].filter(Boolean).join(' — ')
+    || '';
+  document.getElementById('pcom-erro').textContent = '';
+  document.getElementById('pcom-m').classList.add('op');
+  setTimeout(() => document.getElementById('pcom-oc')?.focus(), 80);
+}
+
+document.getElementById('pcom-f')?.addEventListener('submit', async e => {
+  e.preventDefault();
+  const p = PROP_ATUAL;
+  const err = document.getElementById('pcom-erro');
+  err.textContent = '';
+  if (!p) return;
+  const dados = {
+    oc_numero:        document.getElementById('pcom-oc').value.trim() || null,
+    transportadora:   document.getElementById('pcom-transp').value.trim() || null,
+    entrega_previsao: document.getElementById('pcom-prev').value || null,
+    entrega_local:    document.getElementById('pcom-local').value.trim() || null,
+  };
+  const btn = document.getElementById('pcom-sub');
+  btn.disabled = true; btn.textContent = 'Salvando...';
+  try {
+    await api('PATCH', 'proposals', `id=eq.${p.id}`, dados);
+    PROP_ATUAL = { ...p, ...dados };
+    const idx = PROPOSTAS.findIndex(x => x.id === p.id);
+    if (idx >= 0) PROPOSTAS[idx] = PROP_ATUAL;
+
+    document.getElementById('pcom-m').classList.remove('op');
+    renderPedidoComercial(PROP_ATUAL);
+    // Esconde a cot-page por baixo, senao a impressao leva as duas paginas
+    // juntas (mesmo motivo do fix do Sprint 6.4 no Pedido de Producao).
+    document.getElementById('cot-page').classList.remove('op');
+    const page = document.getElementById('pcom-page');
+    page.classList.add('op'); page.scrollTop = 0;
+    document.body.style.overflow = 'hidden';
+    if (document.getElementById('pr-view')?.classList.contains('ac')) renderPropostas();
+  } catch(ex) {
+    console.error('pedido comercial:', ex);
+    err.textContent = /oc_numero|entrega_/i.test(ex.message||'')
+      ? 'O banco ainda não tem as colunas do Pedido Comercial. Rode migrations/2026-08-14-pedido-comercial.sql.'
+      : (ex.message || 'Não foi possível salvar.');
+  } finally {
+    btn.disabled = false; btn.textContent = 'Salvar e gerar';
+  }
+});
+
+function fecharPedidoComercial() {
+  document.getElementById('pcom-page').classList.remove('op');
+  document.getElementById('cot-page').classList.add('op');
+}
+
+function renderPedidoComercial(prop) {
+  const snap  = prop.snapshot || {};
+  const c     = snap.cliente || {};
+  const cond  = snap.condicoes || {};
+  const consultor = snap.consultor || {};
+  const prods = snap.produtos || [];
+
+  const pedLabel = numPedido(prop) || numProposta(prop);
+  const dataStr  = new Date().toLocaleDateString('pt-BR');
+  const frete    = Number(cond.frete_valor) || 0;
+
+  let subtotal = 0, ipiTotal = 0;
+  const linhas = prods.map((p, i) => {
+    const q  = Number(p.qtd_kg)  || 0;
+    const pr = Number(p.preco_kg)|| 0;
+    const sub = q * pr;
+    const ipi = sub * ((Number(p.ipi)||0)/100);
+    subtotal += sub; ipiTotal += ipi;
+    return `<tr>
+      <td class="num">${p.item || i+1}</td>
+      <td><b>${escHtml(p.produto||'—')}</b>${p.embalagem?`<div class="pcom-emb">${escHtml(p.embalagem)}</div>`:''}</td>
+      <td class="num">${q.toLocaleString('pt-BR')}</td>
+      <td class="num">${fmtBRL(pr)}</td>
+      <td class="num">${fmtBRL(sub + ipi)}</td>
+    </tr>`;
+  }).join('');
+  const total = subtotal + ipiTotal + frete;
+
+  const entregaPrev = prop.entrega_previsao ? fData(prop.entrega_previsao) : null;
+
+  document.getElementById('pcom-body').innerHTML = `<div class="cot-body">
+    <div class="cot-header">
+      <div class="cot-logo-wrap">
+        <img src="logo.png" alt="Adiblock">
+        <div>
+          <div class="cot-title">Adiblock — Aditivos para Concretos</div>
+          <div class="cot-h1">Pedido Comercial</div>
+        </div>
+      </div>
+      <div class="cot-meta">
+        <div>Pedido: <b>${escHtml(pedLabel)}</b></div>
+        ${(prop.revisao||1) > 1 ? `<div>Revisão: <b>${prop.revisao}</b></div>` : ''}
+        <div>Emissão: <b>${dataStr}</b></div>
+      </div>
+    </div>
+
+    <!-- A OC do cliente e o dado mais importante da folha: e o numero pelo
+         qual ELE se refere ao pedido. Por isso vem em destaque, no topo. -->
+    ${prop.oc_numero ? `<div class="pcom-oc-box">
+      <span>Ordem de compra do cliente</span>
+      <b>${escHtml(prop.oc_numero)}</b>
+    </div>` : `<div class="pcom-oc-box pcom-oc-vazia">
+      <span>Ordem de compra do cliente</span>
+      <b>não informada</b>
+    </div>`}
+
+    <div class="cot-2col">
+      <div>
+        <div class="cot-sect-title">Cliente</div>
+        <div class="cot-info-list">
+          <div><span>Nome:</span> <b>${escHtml(c.name||'—')}</b></div>
+          ${c.cnpj?`<div><span>CNPJ/CPF:</span> <b>${escHtml(c.cnpj)}</b></div>`:''}
+          ${c.ie?`<div><span>I.E.:</span> ${escHtml(c.ie)}</div>`:''}
+          ${c.contato_outros?`<div><span>Solicitante:</span> <b>${escHtml(c.contato_outros)}</b></div>`:''}
+          ${c.phone?`<div><span>Telefone:</span> ${escHtml(c.phone)}</div>`:''}
+        </div>
+      </div>
+      <div>
+        <div class="cot-sect-title">Entrega</div>
+        <div class="cot-info-list">
+          <div><span>Local:</span> <b>${escHtml(prop.entrega_local || c.obra || '—')}</b></div>
+          <div><span>Frete:</span> ${escHtml(cond.frete||'—')}${frete>0?' · '+fmtBRL(frete):''}</div>
+          <div><span>Transportadora:</span> ${escHtml(prop.transportadora||'a definir')}</div>
+          ${entregaPrev?`<div><span>Previsão:</span> <b>${escHtml(entregaPrev)}</b></div>`:''}
+          ${prop.nf_numero?`<div><span>Nota fiscal:</span> <b>${escHtml(prop.nf_numero)}</b></div>`:''}
+        </div>
+      </div>
+    </div>
+
+    <div class="cot-sect-title" style="margin-top:18px">Itens do pedido</div>
+    <table class="cot-tab pcom-tab">
+      <thead><tr>
+        <th class="num" style="width:38px">Item</th>
+        <th>Produto</th>
+        <th class="num" style="width:90px">Qtd (kg)</th>
+        <th class="num" style="width:90px">R$/kg</th>
+        <th class="num" style="width:110px">Total</th>
+      </tr></thead>
+      <tbody>${linhas || '<tr><td colspan="5" style="text-align:center;color:var(--mt)">— sem itens —</td></tr>'}</tbody>
+      <tfoot>
+        <tr><td colspan="4" class="cot-total-lbl">Subtotal</td><td class="num cot-total-val">${fmtBRL(subtotal)}</td></tr>
+        ${ipiTotal>0?`<tr><td colspan="4" class="cot-total-lbl">IPI</td><td class="num cot-total-val">${fmtBRL(ipiTotal)}</td></tr>`:''}
+        ${frete>0?`<tr><td colspan="4" class="cot-total-lbl">Frete</td><td class="num cot-total-val">${fmtBRL(frete)}</td></tr>`:''}
+        <tr><td colspan="4" class="cot-total-lbl">Total do pedido</td><td class="num cot-total-val">${fmtBRL(total)}</td></tr>
+      </tfoot>
+    </table>
+
+    <div class="cot-2col" style="margin-top:18px">
+      <div>
+        <div class="cot-sect-title">Condições</div>
+        <div class="cot-info-list">
+          <div><span>Pagamento:</span> <b>${escHtml(cond.prazo_pagamento||'—')}</b></div>
+          <div><span>Consultor:</span> ${escHtml(consultor.nome||'—')}</div>
+          ${consultor.telefone?`<div><span>Telefone:</span> ${escHtml(consultor.telefone)}</div>`:''}
+        </div>
+      </div>
+      <div>
+        <div class="cot-sect-title">Fornecedor</div>
+        <div class="cot-info-list">
+          <div>${escHtml(ADIBLOCK_INFO.razao)}</div>
+          <div>CNPJ: ${escHtml(ADIBLOCK_INFO.cnpj)}</div>
+          <div>${escHtml(ADIBLOCK_INFO.telefone)}</div>
+        </div>
+      </div>
+    </div>
+
+    ${cond.obs?`<div class="cot-obs" style="margin-top:16px">${escHtml(cond.obs)}</div>`:''}
+
+    <div class="cot-footer">
+      Documento de confirmação de pedido. Valores e condições conforme a proposta
+      ${escHtml(numProposta(prop))}${(prop.revisao||1)>1?` (revisão ${prop.revisao})`:''}.
+    </div>
+  </div>`;
+}
+
 // Sprint 6.4: extrai peso/volume por embalagem.
 // 1o: regex pega numero no nome ("Bombona 20" -> 20, "Saco 25" -> 25)
 // 2o: tabela de defaults pra nomes padrao do setor quimico sem numero
@@ -3585,6 +3838,7 @@ function renderPropostas() {
       </div>
       <div class="pr-emp">${escHtml(empNome)}</div>
       ${tit?`<div class="pr-tit">${escHtml(tit)}</div>`:''}
+      ${p.oc_numero?`<div class="pr-tit" style="color:var(--tx2);font-weight:600">OC do cliente: ${escHtml(p.oc_numero)}</div>`:''}
       ${p.nf_numero?`<div class="pr-tit" style="color:var(--p);font-weight:600">NF ${escHtml(p.nf_numero)}${p.transportadora?' · '+escHtml(p.transportadora):''}</div>`:''}
       <div class="pr-meta">
         <span>${escHtml(vend)} · ${dt}</span>
@@ -3629,6 +3883,10 @@ function atualizarTopoCotacao() {
   // Botoes de acao: todos os vendedores veem (qualquer proposta), leitor nao ve
   const podeAcionar = MEP?.role !== 'leitor';
   document.getElementById('cot-editar-btn').style.display = podeEditarProposta(p) ? '' : 'none';
+  // Pedido Comercial so faz sentido depois que virou pedido: e a CONFIRMACAO
+  // de algo fechado. Proposta em andamento ainda e oferta.
+  document.getElementById('cot-pcom-btn').style.display =
+    (st === 'pedido' || st === 'expedido') ? '' : 'none';
   document.getElementById('cot-finalizar-btn').style.display = (podeAcionar && st === 'em_andamento') ? '' : 'none';
   document.getElementById('cot-expedir-btn').style.display   = (podeAcionar && st === 'pedido') ? '' : 'none';
   document.getElementById('cot-cancelar-btn').style.display  = (podeAcionar && (st === 'em_andamento' || st === 'pedido')) ? '' : 'none';
@@ -3648,7 +3906,7 @@ async function mudarStatusProposta(novoStatus, msgSucesso) {
     });
     // Re-busca a proposta pra pegar o pedido_numero atribuido pelo trigger
     const fresh = await api('GET','proposals',
-      `id=eq.${PROP_ATUAL.id}&select=id,ano,numero,revisao,pedido_numero,pedido_ano,status,status_changed_at,snapshot,company_id,opportunity_id,seller_id,created_at`);
+      `id=eq.${PROP_ATUAL.id}&select=id,ano,numero,revisao,pedido_numero,pedido_ano,status,status_changed_at,nf_numero,transportadora,oc_numero,entrega_local,entrega_previsao,snapshot,company_id,opportunity_id,seller_id,created_at`);
     const updated = Array.isArray(fresh) ? fresh[0] : fresh;
     if (updated) {
       PROP_ATUAL = { ...PROP_ATUAL, ...updated };
@@ -3713,7 +3971,7 @@ document.getElementById('expedicao-f').addEventListener('submit', async e => {
     });
     // Re-busca pra sincronizar estado local
     const fresh = await api('GET','proposals',
-      `id=eq.${PROP_ATUAL.id}&select=id,ano,numero,revisao,pedido_numero,pedido_ano,status,status_changed_at,nf_numero,transportadora,snapshot,company_id,opportunity_id,seller_id,created_at`);
+      `id=eq.${PROP_ATUAL.id}&select=id,ano,numero,revisao,pedido_numero,pedido_ano,status,status_changed_at,nf_numero,transportadora,oc_numero,entrega_local,entrega_previsao,snapshot,company_id,opportunity_id,seller_id,created_at`);
     const updated = Array.isArray(fresh) ? fresh[0] : fresh;
     if (updated) {
       PROP_ATUAL = { ...PROP_ATUAL, ...updated };
@@ -6387,12 +6645,17 @@ function renderSearch(q) {
     return hay.includes(term);
   }).slice(0, 6);
 
-  // Propostas: busca por numero/ano "12/2026" ou pelo titulo da opp no snapshot
+  // Propostas: busca por numero/ano "12/2026", pelo titulo da opp no snapshot,
+  // pelo numero do pedido, ou pela OC do cliente — quando ele liga cobrando,
+  // cita o numero DELE, nunca o nosso.
   const props = !term ? [] : PROPOSTAS.filter(p => {
     const num = `${p.numero}/${p.ano}`;
+    const ped = numPedido(p) || '';
+    const oc  = p.oc_numero || '';
     const tit = p.snapshot?.oportunidade?.titulo || '';
     const emp = p.snapshot?.cliente?.name || '';
-    return num.includes(term) || tit.toLowerCase().includes(term) || emp.toLowerCase().includes(term);
+    return num.includes(term) || ped.includes(term) || oc.toLowerCase().includes(term)
+        || tit.toLowerCase().includes(term) || emp.toLowerCase().includes(term);
   }).slice(0, 6);
 
   if (!emps.length && !conts.length && !props.length) {

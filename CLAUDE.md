@@ -125,7 +125,10 @@ companies_with_tier — calcula tier automático (lead/cliente/conta) baseado em
 
 - `opportunities.callback_date` — **timestamptz** (não `date`). Migrado em Sprint 6.1.
 - `interactions.next_callback` — **timestamptz** (idem).
-- `proposals.status` — `em_andamento | pedido | cancelada` (Sprint 6.5).
+- `proposals.status` — `em_andamento | pedido | cancelada | expedido` (Sprint 6.5/6.8).
+- `proposals.revisao` — contador de revisões (1 = original). Ver seção 11.
+- `proposals.oc_numero` — nº da ordem de compra **no sistema do cliente**. `text`,
+  não `int`: vem com zeros à esquerda, letras e barras conforme o ERP dele.
 - `audit_log.company_id` — **sem FK** (audit log sobrevive à exclusão LGPD).
 
 ### Funções e triggers
@@ -224,6 +227,7 @@ Tema dark: `[data-theme="dark"]` com override de todas as variáveis.
 310  — prod-req-m (modal pedido produção)
 302  — #edp-hist-m (histórico de revisões — abre sobre o editor)
 300  — #co (confirm), drill-m (dashboard drill), #edp-m (editar pedido)
+297  — #pcom-page (pedido comercial)
 296  — #prod-page (pedido produção)
 295  — #cot-page (proposta)
 293  — task-m
@@ -286,15 +290,30 @@ e **apaga** o hash assim que inicializa — quem ler depois não acha nada.
 
 ## 8. Documentos imprimíveis
 
-Três documentos distintos — **nunca misturar ao imprimir**:
+Quatro documentos distintos — **nunca misturar ao imprimir**:
 
-| Documento | Página | Z-index | Tem valores? |
-|---|---|---|---|
-| Proposta Comercial | `#cot-page` | 295 | Sim (preços, IPI, total) |
-| Pedido de Produção | `#prod-page` | 296 | Não — só produto/embalagem/qtd/peso |
-| Relatório Semanal | `#rel-page` | 280 | — |
+| Documento | Página | Z-index | Para quem | Tem valores? |
+|---|---|---|---|---|
+| Proposta Comercial | `#cot-page` | 295 | cliente | Sim (preços, IPI, total) |
+| Pedido de Produção | `#prod-page` | 296 | fábrica | Não — só produto/embalagem/qtd/peso |
+| Pedido Comercial | `#pcom-page` | 297 | cliente | Sim — confirma o pedido fechado |
+| Relatório Semanal | `#rel-page` | 280 | interno | — |
 
-**Regra de print**: ao abrir `#prod-page`, a `#cot-page` tem `.op` removido. Ao fechar, restaura. Impede que ambos apareçam no PDF.
+Os três primeiros são etapas distintas, não versões do mesmo papel: a **Proposta**
+oferta, o **Pedido de Produção** instrui a fábrica, e o **Pedido Comercial**
+confirma formalmente o que foi fechado — carregando o **nº da OC do cliente**,
+que é o número pelo qual *ele* cobra, confere e paga. O botão só aparece quando
+o status já é `pedido` ou `expedido`: confirmar exige algo fechado.
+
+**Regra de print**: ao abrir `#prod-page` ou `#pcom-page`, a `#cot-page` tem `.op`
+removido. Ao fechar, restaura. Sem isso o PDF sai com dois documentos colados —
+já aconteceu no Sprint 6.4. O `@media print` tem uma regra `body:has(...)` para
+cada combinação possível.
+
+**Campos de cumprimento ficam em coluna, não no snapshot**: `oc_numero`,
+`entrega_local`, `entrega_previsao`, `transportadora` e `nf_numero` chegam depois
+da negociação, às vezes dias depois. O snapshot é o que foi *negociado* e é
+imutável — enfiar dado de entrega nele obrigaria a reescrever documento fechado.
 
 **`pesoDaEmbalagem(emb)`** — extrai peso por embalagem:
 - Regex: `"Bombona 20"` → 20, `"Saco 25"` → 25
@@ -471,7 +490,8 @@ crm-adiblock/
 ├── supabase_setup.sql  ← schema completo (DROP destrutivo COMENTADO — Regra de Ouro)
 ├── migrations/         ← mudanças de schema datadas (AAAA-MM-DD-*.sql)
 │   ├── 2026-06-03-embalagens-reais.sql
-│   └── 2026-08-14-revisao-pedidos.sql
+│   ├── 2026-08-14-revisao-pedidos.sql
+│   └── 2026-08-14-pedido-comercial.sql
 ├── docs/
 │   ├── RESTORE.md      ← guia de restauração de backup
 │   └── MULTI-TENANT.md ← design da migração multi-tenant (Sprint 9.0)
@@ -499,13 +519,14 @@ crm-adiblock/
 Da lista de sprints sugeridos, ainda faltam:
 
 - **Sprint 8.1 (resto)**: concluir modularização (config/state/api/views/modals/main) e apagar `app.js`/`style.css`
-- **Sprint 9.1+**: executar a migração multi-tenant após aprovação do design ([docs/MULTI-TENANT.md](docs/MULTI-TENANT.md))
 - **U4**: Confirmação inline (toggles sem modal)
 - **U7**: Avatar/iniciais coloridas consistente em todas as telas
-- **O2**: Drag-and-drop no Kanban do Pipeline
-- **O3**: Timeline unificada no perfil (interações + alterações + propostas)
+- **O3**: Timeline unificada no perfil (interações + alterações + propostas + revisões de pedido)
 - **O4**: Anexos via Supabase Storage (PDF, foto da obra)
-- **Pedido Comercial**: documento com nº OC do cliente, transportadora (distinto de Proposta e Pedido de Produção)
 - **closed_at retroativo**: opps ganhas com `closed_at` nulo afetam precisão do Radar (usa `created_at` como fallback)
+- **Guia do vendedor desatualizado**: `docs/GUIA-VENDEDOR.*` está untracked e não cobre editar pedido (revisões), Pedido Comercial nem recuperação de senha
 
-> Já feitos da lista antiga: U1 (cheat-sheet), U5 (mobile Sprint 7.3), O1 (modularização em andamento).
+> Já feitos: U1 (cheat-sheet), U5 (mobile Sprint 7.3), O1 (modularização em
+> andamento), **O2** (drag-and-drop do Kanban — já existia em `renderKanban()`;
+> a lista dizia o contrário), **Pedido Comercial** (2026-08-14), **Sprint 9.1**
+> (etapas D e F aplicadas).

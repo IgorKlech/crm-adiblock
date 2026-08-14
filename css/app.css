@@ -1063,19 +1063,35 @@ body.role-leitor .read-only-banner{display:block}
 .prod-obs-box{margin-top:18px;border:1.5px solid var(--bdr2);border-radius:8px;padding:14px 16px;font-size:12.5px;line-height:1.6;color:var(--tx);background:#fff}
 .prod-obs-box b{color:var(--mt);font-weight:700;text-transform:uppercase;font-size:10px;letter-spacing:.04em;display:block;margin-bottom:6px}
 
+/* ── Pedido Comercial (2026-08-14) ── */
+/* 297: acima da #cot-page (295) e do #prod-page (296) */
+#pcom-page{display:none;position:fixed;inset:0;background:var(--bg);z-index:297;overflow-y:auto}
+#pcom-page.op{display:block}
+/* A OC do cliente e o dado pelo qual ELE se refere ao pedido — vem em destaque */
+.pcom-oc-box{display:flex;align-items:baseline;gap:12px;flex-wrap:wrap;margin:16px 0;padding:12px 16px;background:var(--ps);border-left:4px solid var(--p);border-radius:6px}
+.pcom-oc-box span{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--mt)}
+.pcom-oc-box b{font-size:19px;font-weight:700;color:var(--p);font-variant-numeric:tabular-nums;letter-spacing:.5px}
+.pcom-oc-vazia{background:var(--wr2);border-left-color:var(--wr)}
+.pcom-oc-vazia b{font-size:14px;color:var(--wr-tx);font-style:italic;font-weight:600}
+.pcom-emb{font-size:11px;color:var(--mt);margin-top:2px}
+
 /* ── @media print ── */
 @media print{
   /* Esconde TUDO por padrão (app principal, login, painéis, modais, banners) */
   body > *{display:none!important}
-  /* Mostra apenas a página que está sendo impressa (cot-page, rel-page ou prod-page) */
+  /* Mostra apenas a página que está sendo impressa */
   body > #cot-page.op,
   body > #rel-page.op,
+  body > #pcom-page.op,
   body > #prod-page.op{display:block!important;position:static!important;overflow:visible!important;background:#fff!important;z-index:auto!important}
   /* Sprint 6.4 fix: quando Pedido de Producao esta aberto, esconde a Proposta
-     que continua com .op por baixo. Sem isso, impressao leva os dois juntos. */
-  body:has(#prod-page.op) > #cot-page.op{display:none!important}
+     que continua com .op por baixo. Sem isso, impressao leva os dois juntos.
+     Mesma armadilha vale pro Pedido Comercial. */
+  body:has(#prod-page.op) > #cot-page.op,
+  body:has(#pcom-page.op) > #cot-page.op,
+  body:has(#pcom-page.op) > #prod-page.op{display:none!important}
   /* Esconde topbars das páginas impressas (só conteúdo) */
-  .rel-topbar,.cot-topbar,.prod-topbar{display:none!important}
+  .rel-topbar,.cot-topbar,.prod-topbar,.pcom-topbar{display:none!important}
   body{background:#fff!important}
   .rel-card,.rel-table,.rel-section,.cot-sect,.cot-tab tr,.prod-tab tr{break-inside:avoid}
   .cot-body{border:none!important;margin:0!important;padding:0!important;max-width:100%!important}

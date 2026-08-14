@@ -301,7 +301,7 @@ Três documentos distintos — **nunca misturar ao imprimir**:
 | 8.2 | Radar de Reativação (clientes dormentes priorizados, atalho R) | 86a0064 |
 | 9.0 | Design doc multi-tenant (`docs/MULTI-TENANT.md`) — só documento | 8fc80dd |
 | 9.1 | Multi-tenant etapas D/F: NOT NULL + índices compostos + numeração por org, policies RLS por org | 404eb33 + 7b83512 |
-| 9.3 | Auditoria de UX: logo/favicon, recuperação de senha, cores do tema escuro, mover estágio sem arrastar, navbar mobile | (este) |
+| 9.3 | Auditoria de UX: logo/favicon, recuperação de senha, cores do tema escuro, mover estágio sem arrastar, navbar mobile | 0e0d841 |
 
 ---
 

@@ -72,7 +72,9 @@
   --sh:0 1px 2px rgba(9,30,66,.08),0 2px 6px rgba(9,30,66,.06);
   --shm:0 8px 24px rgba(9,30,66,.10);
   --shl:0 24px 60px rgba(9,30,66,.18);
-  --ring:0 0 0 3px var(--ac-glow);   /* foco na cor da marca */
+  --p-glow:rgba(20,58,110,.16);
+  --ring:0 0 0 3px var(--ac-glow);     /* foco de teclado: amarelo da marca */
+  --ring-p:0 0 0 3px var(--p-glow);    /* foco de campo em edicao: azul */
   /* Formas mais suaves, na direcao do site (14 / 22 / pilula). Nao vou ate
      la: card de lista com 22px de raio infla numa tela densa. */
   --r:14px;--rs:10px;--rl:20px;--rp:999px;
@@ -90,6 +92,7 @@
   --p:#8fb8f0;       /* azul da marca clareado o bastante pra ler sobre navy */
   --ph:#b9d3f8;
   --ps:rgba(143,184,240,.14);
+  --p-glow:rgba(143,184,240,.22);
   --tx:#eaf1fa;
   --tx2:#b9cbe0;
   --mt:#8aa2bd;
@@ -165,7 +168,7 @@ h1,h2,h3,h4{font-weight:800;letter-spacing:-.02em;line-height:1.2}
 .fg{margin-bottom:14px}
 .fg label{display:block;font-size:var(--fs-xs);font-weight:600;color:var(--tx2);text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px}
 .fg input,.fg select,.fg textarea{width:100%;padding:9px 12px;border:1.5px solid var(--bdr);border-radius:var(--rs);font-size:var(--fs-md);font-family:inherit;color:var(--tx);background:var(--sur);outline:none;transition:border-color .15s,box-shadow .15s;appearance:none}
-.fg input:focus,.fg select:focus,.fg textarea:focus{border-color:var(--p);box-shadow:0 0 0 3px rgba(37,99,235,.1)}
+.fg input:focus,.fg select:focus,.fg textarea:focus{border-color:var(--p);box-shadow:var(--ring-p)}
 .fg textarea{resize:vertical;min-height:80px}
 .fr{display:grid;grid-template-columns:1fr 1fr;gap:14px}
 .fs{margin-bottom:18px}
@@ -217,10 +220,15 @@ h1,h2,h3,h4{font-weight:800;letter-spacing:-.02em;line-height:1.2}
 #tabs::-webkit-scrollbar{display:none}
 /* Aba nao encolhe: com overflow-x, encolher so espremeria o texto ate ilegivel */
 .tb{flex:none}
-.tb{display:flex;align-items:center;gap:5px;padding:7px 10px;background:transparent;border:none;color:rgba(255,255,255,.55);font-size:var(--fs-md);font-weight:400;font-family:inherit;cursor:pointer;border-radius:var(--rs);transition:all .15s;white-space:nowrap}
+/* Aba com a forma do site: pilula e peso 600. O 400 anterior ficava fino
+   demais ao lado da Manrope, que tem um 600 cheio. */
+.tb{display:flex;align-items:center;gap:5px;padding:7px 14px;background:transparent;border:none;color:rgba(255,255,255,.62);font-size:var(--fs-md);font-weight:600;font-family:inherit;cursor:pointer;border-radius:var(--rp);transition:color .2s var(--ease),background .2s var(--ease);white-space:nowrap}
 .tb svg{width:14px;height:14px}
 .tb:hover{background:rgba(255,255,255,.08);color:rgba(255,255,255,.85)}
-.tb.ac{background:rgba(255,255,255,.12);color:#fff;font-weight:600}
+/* Aba ativa marcada pelo AMARELO da marca: a barrinha embaixo diz onde
+   voce esta sem precisar de mais um fundo claro competindo na navbar. */
+.tb.ac{background:rgba(255,255,255,.12);color:#fff;font-weight:700;position:relative}
+.tb.ac::after{content:'';position:absolute;left:14px;right:14px;bottom:2px;height:2px;border-radius:2px;background:var(--ac)}
 .tb-short{display:none}/* Sprint 7.3: label curto da tab, so aparece no mobile */
 .nbr{display:flex;align-items:center;gap:10px;flex-shrink:0}
 /* Sprint 8.2: com 7 abas, esconde o nome "Controle Comercial" em telas medias
@@ -245,7 +253,7 @@ h1,h2,h3,h4{font-weight:800;letter-spacing:-.02em;line-height:1.2}
 .si{position:absolute;left:11px;top:50%;transform:translateY(-50%);width:15px;height:15px;color:var(--mt);pointer-events:none}
 .si svg{width:15px;height:15px}
 .sb{width:100%;padding:8px 12px 8px 34px;border:1.5px solid var(--bdr);border-radius:var(--rs);font-size:var(--fs-md);font-family:inherit;background:var(--sur);color:var(--tx);outline:none;transition:border-color .15s}
-.sb:focus{border-color:var(--p);box-shadow:0 0 0 3px rgba(37,99,235,.1)}
+.sb:focus{border-color:var(--p);box-shadow:var(--ring-p)}
 .fs2{padding:8px 32px 8px 12px;border:1.5px solid var(--bdr);border-radius:var(--rs);font-size:var(--fs-md);font-family:inherit;background:var(--sur);color:var(--tx);outline:none;cursor:pointer;min-width:165px;appearance:none;transition:border-color .15s;
   background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 20 20' fill='%2394a3b8'%3E%3Cpath fill-rule='evenodd' d='M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z'/%3E%3C/svg%3E");
   background-repeat:no-repeat;background-position:right 10px center;background-color:var(--sur)}
@@ -339,7 +347,7 @@ td strong{color:var(--tx);font-weight:600}
 .tl::before{content:'';position:absolute;left:15px;top:8px;bottom:0;width:2px;background:var(--bdr)}
 .tli{position:relative;padding-left:42px;margin-bottom:16px}
 .tld{position:absolute;left:7px;top:4px;width:18px;height:18px;border-radius:50%;border:2px solid var(--sur);background:var(--p);box-shadow:0 0 0 2px var(--bdr2)}
-.dc{background:var(--ok);box-shadow:0 0 0 2px rgba(5,150,105,.2)}.df{background:var(--p);box-shadow:0 0 0 2px rgba(37,99,235,.2)}
+.dc{background:var(--ok);box-shadow:0 0 0 2px rgba(5,150,105,.2)}.df{background:var(--p);box-shadow:0 0 0 2px var(--p-glow)}
 .dn{background:var(--mt2)}.di{background:var(--er);box-shadow:0 0 0 2px rgba(220,38,38,.2)}
 .dw{background:var(--ok)}.dcp{background:var(--wr)}
 .tlc{background:var(--sur);border-radius:var(--rs);padding:11px 13px;border:1px solid var(--bdr)}
@@ -730,7 +738,7 @@ td strong{color:var(--tx);font-weight:600}
 
 /* ── Notas internas ── */
 .notes-area{width:100%;min-height:200px;border:1.5px solid var(--bdr);border-radius:var(--r);padding:14px;font-size:var(--fs-md);font-family:inherit;color:var(--tx);resize:vertical;outline:none;line-height:1.7;transition:border-color .15s;background:var(--sur)}
-.notes-area:focus{border-color:var(--p);box-shadow:0 0 0 3px rgba(37,99,235,.1)}
+.notes-area:focus{border-color:var(--p);box-shadow:var(--ring-p)}
 
 /* ── Status do vendedor ── */
 .vs-wrap{display:flex;align-items:center;gap:6px}

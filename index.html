@@ -618,7 +618,7 @@
       </div>
       <div class="ma">
         <button type="button" class="btn bg" onclick="document.getElementById('gcm').classList.remove('op')">Cancelar</button>
-        <button type="submit" class="btn bp" id="gc-sub">Gerar Proposta</button>
+        <button type="submit" class="btn bac" id="gc-sub">Gerar Proposta</button>
       </div>
     </form>
   </div>
@@ -766,7 +766,7 @@
     </div>
     <div style="display:flex;gap:8px" id="cot-acoes">
       <button class="btn bg sm" id="cot-editar-btn" onclick="abrirEditarPedido()" title="Altera produtos, preços e condições gerando uma nova revisão" style="display:none">✏ Editar</button>
-      <button class="btn bp sm" id="cot-finalizar-btn" onclick="finalizarComoPedido()" title="Marca esta proposta como Pedido aceito" style="display:none">✓ Marcar como Pedido</button>
+      <button class="btn bac sm" id="cot-finalizar-btn" onclick="finalizarComoPedido()" title="Marca esta proposta como Pedido aceito" style="display:none">✓ Marcar como Pedido</button>
       <button class="btn bg sm" id="cot-expedir-btn" onclick="expedicaoProposta()" title="Marca como expedido — pedido entregue" style="display:none">🚚 Marcar como Expedido</button>
       <button class="btn bg sm" id="cot-cancelar-btn" onclick="cancelarProposta()" title="Cancela esta proposta" style="display:none">🚫 Cancelar</button>
       <button class="btn bg sm" id="cot-reabrir-btn" onclick="reabrirProposta()" title="Volta para Em andamento" style="display:none">↶ Reabrir</button>
@@ -5503,7 +5503,7 @@ function renderPfOportunidades(c) {
           ${(() => { const p = proximoPasso(o); return `<div class="pp pp-${p.urg}"><span class="pp-ico">${p.ico}</span><span class="pp-txt"><b>Próximo passo:</b> ${p.txt}</span></div>`; })()}
           <div class="pf-opp-actions">
             <button class="btn bg sm" onclick="abrInteracao('${o.id}','${c.id}')">Registrar interação</button>
-            <button class="btn bg sm" onclick="abrCotacaoFromOpp('${o.id}','${c.id}')">Gerar proposta</button>
+            <button class="btn bac sm" onclick="abrCotacaoFromOpp('${o.id}','${c.id}')">Gerar proposta</button>
             <button class="btn bp sm" onclick="abrOpp('${c.id}','${o.id}')">Editar</button>
             <button class="btn bod sm" onclick="delOpp('${o.id}','${escHtml(o.titulo).replace(/'/g,"\\'")}')">✕</button>
           </div>

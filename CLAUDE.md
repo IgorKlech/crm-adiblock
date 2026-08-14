@@ -107,7 +107,8 @@ contacts            — contatos dentro de uma empresa (N por empresa)
 opportunities       — oportunidades de venda (N por empresa)
 opportunity_products— produtos de uma oportunidade
 interactions        — histórico de contatos por oportunidade
-proposals           — propostas comerciais (snapshot jsonb imutável)
+proposals           — propostas comerciais (snapshot jsonb da revisão vigente)
+proposal_revisions  — revisões anteriores de um pedido (imutável: só SELECT/INSERT)
 tasks               — tarefas livres (Sprint 6.2, sem oportunidade)
 audit_log           — log imutável de INSERT/UPDATE/DELETE
 lgpd_requests       — ações LGPD
@@ -221,7 +222,8 @@ Tema dark: `[data-theme="dark"]` com override de todas as variáveis.
 450  — bell-pop
 400  — #tc (toasts), schema-banner
 310  — prod-req-m (modal pedido produção)
-300  — #co (confirm), drill-m (dashboard drill)
+302  — #edp-hist-m (histórico de revisões — abre sobre o editor)
+300  — #co (confirm), drill-m (dashboard drill), #edp-m (editar pedido)
 296  — #prod-page (pedido produção)
 295  — #cot-page (proposta)
 293  — task-m
@@ -393,6 +395,32 @@ Requisito LGPD: o log de auditoria deve sobreviver à exclusão da empresa. Com 
 
 Proposta comercial é documento legal. Se o preço ou nome do produto mudar no catálogo depois, a proposta original deve preservar os valores exatos do momento da geração. Nunca fazer JOIN para buscar dados atuais de uma proposta antiga.
 
+### Como editar um pedido sem quebrar a imutabilidade (2026-08-14)
+
+Cliente pedir desconto ao trocar a forma de pagamento, ou pedir pra acrescentar
+outro material num pedido já fechado, é rotina. Editar o `snapshot` no lugar
+resolveria — e apagaria a prova do que valia antes. O `audit_log` **não** cobre
+esse buraco: `snapshot` está na lista de campos que ele ignora.
+
+Então editar **versiona**, não sobrescreve:
+
+```
+proposals.snapshot   → sempre a revisão VIGENTE
+proposals.revisao    → contador (1 = original)
+proposal_revisions   → o passado, uma linha por revisão anterior + motivo + autor
+```
+
+Ao salvar: **arquiva primeiro** (`POST proposal_revisions` com o snapshot antigo),
+**sobrescreve depois** (`PATCH proposals`). Nessa ordem, um erro no meio deixa
+uma revisão arquivada sobrando — inofensivo. Na ordem inversa, o mesmo erro
+perderia o snapshot antigo para sempre.
+
+`proposal_revisions` tem policy de `SELECT` e `INSERT` apenas — sem `UPDATE`,
+sem `DELETE`, nem para admin. Histórico que pode ser reescrito não é histórico.
+
+Só `em_andamento` e `pedido` aceitam edição. `expedido` fica travado porque a NF
+já foi emitida — mudar o pedido depois disso descasa do fiscal.
+
 ### Por que `toastUndo` em vez de `confirm()` nativo?
 
 `confirm()` bloqueia o thread JS, é feio, e não funciona em iframes (Vercel preview). `toastUndo` é otimista: esconde o item imediatamente na UI, executa o DELETE no DB após 7s se não houver clique em "Desfazer".
@@ -442,7 +470,8 @@ crm-adiblock/
 │   └── format.js       ← helpers de formatação (Sprint 8.1b). Mais módulos virão.
 ├── supabase_setup.sql  ← schema completo (DROP destrutivo COMENTADO — Regra de Ouro)
 ├── migrations/         ← mudanças de schema datadas (AAAA-MM-DD-*.sql)
-│   └── 2026-06-03-embalagens-reais.sql
+│   ├── 2026-06-03-embalagens-reais.sql
+│   └── 2026-08-14-revisao-pedidos.sql
 ├── docs/
 │   ├── RESTORE.md      ← guia de restauração de backup
 │   └── MULTI-TENANT.md ← design da migração multi-tenant (Sprint 9.0)

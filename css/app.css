@@ -228,6 +228,10 @@ td strong{color:var(--tx);font-weight:600}
 .mo{display:none;position:fixed;inset:0;background:rgba(0,0,0,.35);z-index:200;align-items:center;justify-content:center;padding:20px}
 /* Modais que abrem POR CIMA do perfil da empresa (#pfpage z-index 280) */
 #cont-m,#opp-m,#int-m,#gcm{z-index:290}
+/* Editar pedido abre por cima da #cot-page (295), entao 290 nao basta.
+   O historico abre por cima do editor. */
+#edp-m{z-index:300}
+#edp-hist-m{z-index:302}
 .mo.op{display:flex}
 .md{background:var(--sur);border-radius:var(--r);padding:28px;width:100%;max-width:600px;max-height:92vh;overflow-y:auto;box-shadow:var(--shl);animation:mIn .18s ease;border:1px solid var(--bdr)}
 @keyframes mIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
@@ -940,6 +944,65 @@ body.role-leitor .read-only-banner{display:block}
 .gc-prow input,.gc-prow select{padding:6px 8px;border:1px solid var(--bdr);border-radius:6px;font-size:12px;font-family:inherit;background:var(--sur);color:var(--tx);outline:none;width:100%;box-sizing:border-box}
 .gc-prow input:focus,.gc-prow select:focus{border-color:var(--p)}
 .gc-prow .num{text-align:right}
+
+/* ── Editar pedido / revisões (2026-08-14) ── */
+/* Selo "rev. N": no card da aba Propostas e ao lado do status na cot-page. */
+.pr-rev{background:var(--est3-bg);color:var(--est3-tx)}
+.cot-rev-badge{background:var(--est3-bg);color:var(--est3-tx);border:1px solid var(--est3-tx);border-radius:99px;padding:3px 10px;font-family:inherit;font-size:11px;font-weight:700;cursor:pointer;letter-spacing:.4px}
+.cot-rev-badge:hover{filter:brightness(.95)}
+.cot-rev-badge:focus-visible{outline:2px solid var(--p);outline-offset:2px}
+.edp-aviso{background:var(--ps);border-left:3px solid var(--p);border-radius:var(--rs);padding:10px 14px;font-size:12.5px;line-height:1.55;color:var(--tx2);margin-bottom:18px}
+/* Grid do editor: sem a coluna Embalagem do .gc-prow (ela vira subtitulo do
+   produto), com Total ao vivo e o botao de remover na ponta. */
+.edp-phead,.edp-prow{display:grid;grid-template-columns:2.1fr .8fr .8fr .55fr .9fr 32px;gap:8px;align-items:center}
+.edp-phead{font-size:11px;font-weight:600;color:var(--mt);text-transform:uppercase;letter-spacing:.04em;padding-bottom:6px;border-bottom:1.5px solid var(--bdr)}
+.edp-prow{font-size:12.5px;padding:8px 0;border-bottom:1px solid var(--bdr)}
+.edp-prow input,.edp-prow select{padding:6px 8px;border:1px solid var(--bdr);border-radius:6px;font-size:12px;font-family:inherit;background:var(--sur);color:var(--tx);outline:none;width:100%;box-sizing:border-box}
+.edp-prow input:focus,.edp-prow select:focus{border-color:var(--p)}
+.edp-prow .num{text-align:right}
+.edp-emb{font-size:11px;color:var(--mt);margin-top:1px}
+/* O rotulo de cada campo so aparece no celular, onde o cabecalho some */
+.edp-fld{display:block}
+.edp-fld > span,.edp-lin-tot-lbl{display:none;font-size:10px;font-weight:600;color:var(--mt);text-transform:uppercase;letter-spacing:.04em;margin-bottom:3px}
+.edp-lin-tot{font-variant-numeric:tabular-nums;color:var(--tx2);font-weight:600}
+.edp-novo-wrap{display:flex;flex-direction:column;gap:4px}
+.edp-tag-novo{align-self:flex-start;font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;padding:1px 6px;border-radius:99px;background:var(--ok2);color:var(--ok-tx)}
+.edp-del{background:none;border:1px solid transparent;border-radius:6px;color:var(--mt2);font-size:14px;line-height:1;cursor:pointer;padding:6px;transition:all .12s}
+.edp-del:hover{background:var(--er2);color:var(--er);border-color:var(--er)}
+.edp-del:focus-visible{outline:2px solid var(--er);outline-offset:1px}
+.edp-vazio{font-size:12.5px;color:var(--mt);padding:14px 0;text-align:center}
+/* Sem border-top: a ultima .edp-prow ja fecha com a propria borda inferior,
+   e as duas juntas davam uma linha dupla. */
+.edp-tot-bar{display:flex;align-items:center;justify-content:flex-end;flex-wrap:wrap;gap:10px;margin-top:12px;font-size:13px;color:var(--mt)}
+.edp-tot-bar b{font-size:15px;color:var(--tx);font-variant-numeric:tabular-nums}
+/* Delta vs. revisao vigente: o vendedor esta com o cliente no telefone e
+   precisa ver o efeito do desconto antes de salvar. */
+.edp-delta{font-size:11.5px;font-weight:700;padding:2px 9px;border-radius:99px}
+.edp-delta.up{background:var(--er2);color:var(--er-tx)}
+.edp-delta.down{background:var(--ok2);color:var(--ok-tx)}
+/* Histórico */
+.edp-rev{border:1px solid var(--bdr);border-radius:var(--rs);padding:12px 14px;margin-bottom:10px;background:var(--bg)}
+.edp-rev.atual{background:var(--sur);border-color:var(--p);box-shadow:var(--sh)}
+.edp-rev-head{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}
+.edp-rev-num{font-size:11px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;color:var(--p)}
+.edp-rev-meta{font-size:11px;color:var(--mt)}
+.edp-rev-motivo{font-size:12.5px;color:var(--tx2);font-style:italic;margin-top:6px;line-height:1.5}
+.edp-rev-prods{font-size:12px;color:var(--tx2);margin-top:8px;line-height:1.7}
+.edp-rev-cond{font-size:12px;color:var(--mt);margin-top:8px;padding-top:8px;border-top:1px dashed var(--bdr)}
+.edp-rev-cond b{color:var(--tx);font-variant-numeric:tabular-nums}
+@media(max-width:640px){
+  /* Em celular a grade de 6 colunas nao cabe: a linha vira um bloco de 3
+     colunas com o nome do produto em cima e cada campo mostrando o proprio
+     rotulo (o cabecalho da tabela sai de cena). */
+  .edp-phead{display:none}
+  .edp-prow{grid-template-columns:1fr 1fr 1fr;gap:10px;padding:14px 0}
+  .edp-prow > div:first-child,.edp-novo-wrap{grid-column:1/3}
+  .edp-del{grid-row:1;grid-column:3;justify-self:end;align-self:start}
+  .edp-fld > span,.edp-lin-tot-lbl{display:block}
+  .edp-lin-tot{grid-column:1/4;text-align:right;padding-top:2px}
+  .edp-lin-tot-lbl{display:inline;margin-right:6px}
+  .edp-prow input{min-height:42px;font-size:15px}  /* 16px-ish: evita o zoom do iOS */
+}
 
 /* ── Cotação imprimível ── */
 #cot-page{display:none;position:fixed;inset:0;background:var(--bg);z-index:295;overflow-y:auto}

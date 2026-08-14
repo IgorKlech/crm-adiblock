@@ -618,6 +618,67 @@
   </div>
 </div>
 
+<!-- MODAL EDITAR PEDIDO / GERAR REVISAO -->
+<!-- z-index 300 (no CSS): este modal abre por cima da #cot-page, que e 295 —
+     nao serve o 290 do #gcm, que so precisa vencer o #pfpage (280).
+     Ver a tabela de z-index na secao 6 do CLAUDE.md. -->
+<div class="mo" id="edp-m">
+  <div class="md" style="max-width:820px">
+    <div class="mh">
+      <h3 id="edp-titulo">Editar pedido</h3>
+      <button class="mx" type="button" onclick="fecharEditarPedido()" aria-label="Fechar">✕</button>
+    </div>
+    <form id="edp-f">
+      <div class="edp-aviso">
+        Isto <b>não sobrescreve</b> o pedido: gera a <b id="edp-prox-rev">revisão 2</b>.
+        A versão atual fica guardada inteira e continua consultável.
+      </div>
+      <div class="fs">
+        <div class="fsl">Produtos</div>
+        <div id="edp-prod-lista"></div>
+        <button type="button" class="btn bg sm" id="edp-add" onclick="edpAddLinha()" style="margin-top:10px">+ Acrescentar produto</button>
+      </div>
+      <div class="fs"><div class="fsl">Condições comerciais</div>
+        <div class="fr">
+          <div class="fg"><label for="edp-pgto">Prazo de pagamento</label><input type="text" id="edp-pgto" placeholder="Ex: 45DD"></div>
+          <div class="fg"><label for="edp-frete">Frete</label>
+            <select id="edp-frete"><option>FOB</option><option>CIF</option></select>
+          </div>
+          <div class="fg"><label for="edp-frete-val">Valor do frete (R$)</label><input type="number" id="edp-frete-val" step="0.01" min="0" placeholder="0,00"></div>
+          <div class="fg"><label for="edp-val">Validade (dias)</label><input type="number" id="edp-val" min="1"></div>
+        </div>
+        <div class="fg"><label for="edp-obs">Observações adicionais</label><textarea id="edp-obs" rows="2"></textarea></div>
+      </div>
+      <div class="fs">
+        <div class="fsl">Motivo da alteração <span style="font-weight:400;color:var(--er);font-size:11px">— obrigatório</span></div>
+        <div class="fg">
+          <input type="text" id="edp-motivo" required maxlength="200"
+                 placeholder="Ex: cliente trocou 30DD por 45DD e pediu 5% de desconto">
+          <div style="font-size:11px;color:var(--mt);margin-top:5px;line-height:1.5">
+            É isto que responde “por que este pedido saiu mais barato?” daqui a seis meses.
+          </div>
+        </div>
+      </div>
+      <div id="edp-erro" class="em"></div>
+      <div class="ma">
+        <button type="button" class="btn bg" onclick="fecharEditarPedido()">Cancelar</button>
+        <button type="submit" class="btn bp" id="edp-sub">Salvar revisão</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- MODAL HISTORICO DE REVISOES -->
+<div class="mo" id="edp-hist-m">
+  <div class="md" style="max-width:720px">
+    <div class="mh">
+      <h3>Histórico de revisões</h3>
+      <button class="mx" type="button" onclick="document.getElementById('edp-hist-m').classList.remove('op')" aria-label="Fechar">✕</button>
+    </div>
+    <div id="edp-hist-body"></div>
+  </div>
+</div>
+
 <!-- MODAL MINHAS CONFIGURACOES -->
 <div class="mo" id="cfgm">
   <div class="md">
@@ -692,8 +753,13 @@
       <button class="pf-back" onclick="fecharCotacao()">← Voltar</button>
       <span style="font-size:15px;font-weight:600;color:var(--tx)" id="cot-titulo">Proposta Comercial</span>
       <span id="cot-status-badge" class="pr-st" style="display:none"></span>
+      <!-- Revisao de pedido: so aparece a partir da rev. 2, e clicar abre o
+           historico. Na rev. 1 nao ha o que mostrar. -->
+      <button id="cot-rev-badge" class="cot-rev-badge" onclick="abrirHistoricoRevisoes()"
+              title="Ver histórico de alterações" style="display:none"></button>
     </div>
     <div style="display:flex;gap:8px" id="cot-acoes">
+      <button class="btn bg sm" id="cot-editar-btn" onclick="abrirEditarPedido()" title="Altera produtos, preços e condições gerando uma nova revisão" style="display:none">✏ Editar</button>
       <button class="btn bp sm" id="cot-finalizar-btn" onclick="finalizarComoPedido()" title="Marca esta proposta como Pedido aceito" style="display:none">✓ Marcar como Pedido</button>
       <button class="btn bg sm" id="cot-expedir-btn" onclick="expedicaoProposta()" title="Marca como expedido — pedido entregue" style="display:none">🚚 Marcar como Expedido</button>
       <button class="btn bg sm" id="cot-cancelar-btn" onclick="cancelarProposta()" title="Cancela esta proposta" style="display:none">🚫 Cancelar</button>
@@ -1290,7 +1356,7 @@ const fetchTasks = () => api('GET','tasks','select=*,company:companies(id,razao_
 async function fetchPropostas() {
   try {
     return await api('GET','proposals',
-      'select=id,ano,numero,pedido_numero,pedido_ano,company_id,opportunity_id,seller_id,snapshot,status,status_changed_at,nf_numero,transportadora,created_at&order=created_at.desc&limit=500');
+      'select=id,ano,numero,revisao,pedido_numero,pedido_ano,company_id,opportunity_id,seller_id,snapshot,status,status_changed_at,nf_numero,transportadora,created_at&order=created_at.desc&limit=500');
   } catch(e) {
     console.warn('fetchPropostas: colunas novas indisponiveis, usando select basico', e.message);
     return await api('GET','proposals',
@@ -2677,7 +2743,8 @@ async function checkSchema() {
     ['opportunity_products', 'id,opportunity_id,produto,embalagem,qtd_kg,preco_kg,created_at'],
     ['interactions',         'id,opportunity_id,contact_id,seller_id,datetime,result,next_callback,notes,created_at'],
     ['products',             'id,nome,embalagem,preco_materia_prima,preco_office,preco_pj'],
-    ['proposals',            'id,ano,numero,opportunity_id,company_id,seller_id,snapshot,created_at'],
+    ['proposals',            'id,ano,numero,revisao,opportunity_id,company_id,seller_id,snapshot,created_at'],
+    ['proposal_revisions',   'id,proposal_id,revisao,snapshot,motivo,created_at,created_by'],
     ['lgpd_requests',        'id,company_id,company_name,acao,detalhes,requested_by,created_at'],
     ['audit_log',            'id,table_name,row_id,action,user_id,user_name,user_role,old_data,new_data,changes,company_id,created_at'],
   ];
@@ -2705,7 +2772,8 @@ function mostrarBannerSchema(issues) {
   }
   bn.innerHTML = `
     <div class="schema-banner-title">⚠ Banco de dados desatualizado</div>
-    <div class="schema-banner-msg">Faltam colunas ou tabelas. Abra o SQL Editor do Supabase e rode <code>supabase_setup.sql</code> (é idempotente, pode rodar mesmo se já rodou antes).</div>
+    <div class="schema-banner-msg">Faltam colunas ou tabelas. Abra o SQL Editor do Supabase e rode a migration pendente da pasta <code>/migrations</code> (a mais recente que ainda não foi aplicada).
+    <b>Não rode o <code>supabase_setup.sql</code> inteiro</b> — ele contém blocos destrutivos e já apagou os dados uma vez.</div>
     <ul class="schema-banner-list">
       ${issues.map(i => `<li><b>${escHtml(i.tabela)}</b>: <code>${escHtml(i.erro)}</code></li>`).join('')}
     </ul>
@@ -3011,6 +3079,9 @@ document.addEventListener('keydown', e => {
   if (e.key !== 'Escape') return;
   // Sprint 9.3 (B-03): o modal de mover estagio vem primeiro por abrir por cima.
   if (document.getElementById('kb-move-m')?.classList.contains('op')) { fecharMoverEstagio(); return; }
+  // Revisao de pedido: o historico abre por cima do editor, entao sai antes.
+  if (document.getElementById('edp-hist-m')?.classList.contains('op')) { document.getElementById('edp-hist-m').classList.remove('op'); return; }
+  if (document.getElementById('edp-m')?.classList.contains('op')) { fecharEditarPedido(); return; }
   if (document.getElementById('cm').classList.contains('op')) { fechaModal(); return; }
   if (document.getElementById('co').classList.contains('op')) { fechaConf(); return; }
   if (document.getElementById('sp').classList.contains('op')) { fechaPainel(); return; }
@@ -3353,7 +3424,7 @@ function renderPedidoProducao(prop, solicitante, obsProd) {
         </div>
       </div>
       <div class="cot-meta">
-        <div>Pedido: <b>${escHtml(propLabel)}</b></div>
+        <div>Pedido: <b>${escHtml(propLabel)}${(prop.revisao||1) > 1 ? ` — rev. ${prop.revisao}` : ''}</b></div>
         <div>Data: <b>${dataStr}</b></div>
       </div>
     </div>
@@ -3506,6 +3577,7 @@ function renderPropostas() {
         <div style="display:flex;flex-direction:column;gap:3px">
           <span class="pr-num">Proposta ${numProposta(p)}</span>
           ${pedNum ? `<span class="pr-num" style="background:var(--ok2);color:var(--ok)">Pedido ${pedNum}</span>` : ''}
+          ${(p.revisao||1) > 1 ? `<span class="pr-num pr-rev">rev. ${p.revisao}</span>` : ''}
         </div>
         <span class="pr-st ${p.status||'em_andamento'}">${stLbl}</span>
       </div>
@@ -3545,8 +3617,16 @@ function atualizarTopoCotacao() {
   badge.textContent = st === 'pedido' && pedNum ? `Pedido ${pedNum}` : (st === 'expedido' && pedNum ? `Expedido ${pedNum}` : lbl);
   badge.className = 'pr-st ' + st;
   badge.style.display = '';
+  // Selo "rev. N" ao lado do status — so a partir da 2a versao
+  const revBadge = document.getElementById('cot-rev-badge');
+  if (revBadge) {
+    const rev = p.revisao || 1;
+    revBadge.textContent = 'rev. ' + rev;
+    revBadge.style.display = rev > 1 ? '' : 'none';
+  }
   // Botoes de acao: todos os vendedores veem (qualquer proposta), leitor nao ve
   const podeAcionar = MEP?.role !== 'leitor';
+  document.getElementById('cot-editar-btn').style.display = podeEditarProposta(p) ? '' : 'none';
   document.getElementById('cot-finalizar-btn').style.display = (podeAcionar && st === 'em_andamento') ? '' : 'none';
   document.getElementById('cot-expedir-btn').style.display   = (podeAcionar && st === 'pedido') ? '' : 'none';
   document.getElementById('cot-cancelar-btn').style.display  = (podeAcionar && (st === 'em_andamento' || st === 'pedido')) ? '' : 'none';
@@ -3566,7 +3646,7 @@ async function mudarStatusProposta(novoStatus, msgSucesso) {
     });
     // Re-busca a proposta pra pegar o pedido_numero atribuido pelo trigger
     const fresh = await api('GET','proposals',
-      `id=eq.${PROP_ATUAL.id}&select=id,ano,numero,pedido_numero,pedido_ano,status,status_changed_at,snapshot,company_id,opportunity_id,seller_id,created_at`);
+      `id=eq.${PROP_ATUAL.id}&select=id,ano,numero,revisao,pedido_numero,pedido_ano,status,status_changed_at,snapshot,company_id,opportunity_id,seller_id,created_at`);
     const updated = Array.isArray(fresh) ? fresh[0] : fresh;
     if (updated) {
       PROP_ATUAL = { ...PROP_ATUAL, ...updated };
@@ -3631,7 +3711,7 @@ document.getElementById('expedicao-f').addEventListener('submit', async e => {
     });
     // Re-busca pra sincronizar estado local
     const fresh = await api('GET','proposals',
-      `id=eq.${PROP_ATUAL.id}&select=id,ano,numero,pedido_numero,pedido_ano,status,status_changed_at,nf_numero,transportadora,snapshot,company_id,opportunity_id,seller_id,created_at`);
+      `id=eq.${PROP_ATUAL.id}&select=id,ano,numero,revisao,pedido_numero,pedido_ano,status,status_changed_at,nf_numero,transportadora,snapshot,company_id,opportunity_id,seller_id,created_at`);
     const updated = Array.isArray(fresh) ? fresh[0] : fresh;
     if (updated) {
       PROP_ATUAL = { ...PROP_ATUAL, ...updated };
@@ -3680,6 +3760,308 @@ function excluirPropostaById(id, label) {
     PROPOSTAS = await fetchPropostas();
     if (document.getElementById('pr-view')?.classList.contains('ac')) renderPropostas();
   }, `${num} restaurada`);
+}
+
+// ── Revisao de pedido (2026-08-14) ────────────────────────────────────────
+// Cliente pede desconto ao trocar a forma de pagamento, ou pede pra
+// acrescentar outro material num pedido ja fechado. Editar o snapshot no
+// lugar apagaria a prova do que foi combinado antes (proposta e documento
+// legal — CLAUDE.md secao 11), e o audit_log nao cobre: ele ignora o campo
+// snapshot. Entao editar VERSIONA: o snapshot vigente e arquivado em
+// proposal_revisions e a proposta passa pra revisao seguinte.
+//
+// Rascunho das linhas em edicao. Nao e o snapshot — vira snapshot no submit.
+let EDP_LINHAS = [];
+
+// Status que aceitam edicao. `expedido` fica de fora de proposito: a NF ja
+// foi emitida, e mudar o pedido depois disso descasa do fiscal.
+const EDP_STATUS_EDITAVEIS = new Set(['em_andamento', 'pedido']);
+
+function podeEditarProposta(p) {
+  if (!p || MEP?.role === 'leitor') return false;
+  return EDP_STATUS_EDITAVEIS.has(p.status || 'em_andamento');
+}
+
+function abrirEditarPedido() {
+  const p = PROP_ATUAL;
+  if (!p) { toast('Sem proposta carregada','','warning'); return; }
+  if (!podeEditarProposta(p)) {
+    toast('Não dá pra editar', 'Pedido expedido ou cancelado não aceita alteração.', 'warning');
+    return;
+  }
+  const snap = p.snapshot || {};
+  const cond = snap.condicoes || {};
+
+  // Copia profunda: mexer no rascunho nao pode respingar no snapshot vigente
+  // enquanto o usuario ainda nao salvou (ou se ele cancelar).
+  EDP_LINHAS = (snap.produtos || []).map(it => ({ ...it }));
+
+  document.getElementById('edp-titulo').textContent =
+    (numPedido(p) ? 'Editar pedido ' + numPedido(p) : 'Editar proposta ' + numProposta(p));
+  document.getElementById('edp-prox-rev').textContent = 'revisão ' + ((p.revisao || 1) + 1);
+  document.getElementById('edp-pgto').value      = cond.prazo_pagamento || '';
+  document.getElementById('edp-frete').value     = cond.frete || 'FOB';
+  document.getElementById('edp-frete-val').value = cond.frete_valor != null ? cond.frete_valor : '';
+  document.getElementById('edp-val').value       = cond.validade_dias || 30;
+  document.getElementById('edp-obs').value       = cond.obs || '';
+  document.getElementById('edp-motivo').value    = '';
+  document.getElementById('edp-erro').textContent = '';
+
+  edpRenderLinhas();
+  document.getElementById('edp-m').classList.add('op');
+  setTimeout(() => document.getElementById('edp-motivo')?.focus(), 80);
+}
+
+function fecharEditarPedido() {
+  document.getElementById('edp-m').classList.remove('op');
+  EDP_LINHAS = [];
+}
+
+// Catalogo (PRODS) pro <select> de "acrescentar produto". Cada opcao carrega
+// o preco sugerido no dataset pra preencher o campo sem uma segunda busca.
+function edpOpcoesCatalogo(sel) {
+  const opts = (PRODS || []).map(pr => {
+    const rot = pr.nome + (pr.embalagem ? ' — ' + pr.embalagem : '');
+    return `<option value="${escHtml(rot)}" ${rot === sel ? 'selected' : ''}
+             data-preco="${pr.preco_pj != null ? pr.preco_pj : ''}">${escHtml(rot)}</option>`;
+  }).join('');
+  // "Outro" cobre o produto que ainda nao esta no catalogo — o vendedor nao
+  // pode ficar travado esperando o cadastro pra fechar o pedido.
+  return `<option value="">— escolha —</option>${opts}<option value="__outro__">Outro (digitar)</option>`;
+}
+
+function edpRenderLinhas() {
+  const box = document.getElementById('edp-prod-lista');
+  if (!EDP_LINHAS.length) {
+    box.innerHTML = '<div class="edp-vazio">Nenhum produto. Use “Acrescentar produto” abaixo.</div>';
+    return;
+  }
+  box.innerHTML = `<div class="edp-phead">
+      <div>Produto</div><div class="num">Qtd (kg)</div><div class="num">R$/kg</div>
+      <div class="num">IPI %</div><div class="num">Total</div><div></div>
+    </div>` + EDP_LINHAS.map((it, i) => {
+    const novo = !!it._novo;
+    const nomeCel = novo
+      ? `<div class="edp-novo-wrap">
+           <select class="edp-prod-sel" onchange="edpTrocaProduto(${i}, this)">${edpOpcoesCatalogo(it.produto)}</select>
+           ${it._livre ? `<input class="edp-prod-livre" placeholder="Nome do produto"
+                                 value="${escHtml(it.produto||'')}" oninput="EDP_LINHAS[${i}].produto=this.value">` : ''}
+           <span class="edp-tag-novo">novo</span>
+         </div>`
+      : `<div><b>${escHtml(it.produto || '—')}</b>${it.embalagem ? `<div class="edp-emb">${escHtml(it.embalagem)}</div>` : ''}</div>`;
+    // Cada campo carrega o proprio rotulo num <label>. No desktop ele fica
+    // escondido (o cabecalho da tabela ja diz), no celular o cabecalho some e
+    // o rotulo aparece — senao vira uma fileira de caixas sem identificacao.
+    const campo = (lbl, val, expr) => `<label class="edp-fld">
+        <span>${lbl}</span>
+        <input class="num" type="number" step="0.01" min="0" value="${val}"
+               oninput="EDP_LINHAS[${i}].${expr};edpAtualizaTotais()">
+      </label>`;
+    return `<div class="edp-prow">
+      ${nomeCel}
+      ${campo('Qtd (kg)', it.qtd_kg != null ? it.qtd_kg : '', 'qtd_kg=parseNum(this.value)')}
+      ${campo('R$/kg', it.preco_kg != null ? it.preco_kg : '', 'preco_kg=parseNum(this.value)')}
+      ${campo('IPI %', it.ipi != null ? it.ipi : 0, 'ipi=parseNum(this.value)??0')}
+      <div class="num edp-lin-tot" data-i="${i}"><span class="edp-lin-tot-lbl">Total</span><b>—</b></div>
+      <button type="button" class="edp-del" title="Remover do pedido"
+              onclick="edpRemoveLinha(${i})" aria-label="Remover produto">✕</button>
+    </div>`;
+  }).join('') + `<div class="edp-tot-bar">
+      Total do pedido: <b id="edp-total">—</b>
+      <span id="edp-delta" class="edp-delta"></span>
+    </div>`;
+  edpAtualizaTotais();
+}
+
+function edpTrocaProduto(i, sel) {
+  const v = sel.value;
+  if (v === '__outro__') {
+    EDP_LINHAS[i]._livre = true;
+    EDP_LINHAS[i].produto = '';
+    EDP_LINHAS[i].embalagem = null;
+  } else {
+    const opt = sel.selectedOptions[0];
+    EDP_LINHAS[i]._livre = false;
+    // O rotulo do catalogo e "Nome — Embalagem"; guarda separado no snapshot
+    // porque o pedido de producao le a embalagem pra calcular peso por volume.
+    const partes = v.split(' — ');
+    EDP_LINHAS[i].produto   = partes[0] || v;
+    EDP_LINHAS[i].embalagem = partes[1] || null;
+    const preco = opt?.dataset.preco;
+    if (preco && EDP_LINHAS[i].preco_kg == null) EDP_LINHAS[i].preco_kg = Number(preco);
+  }
+  edpRenderLinhas();
+}
+
+function edpAddLinha() {
+  EDP_LINHAS.push({
+    produto: '', embalagem: null, qtd_kg: null, preco_kg: null,
+    ipi: 0, classificacao_risco: 'NÃO CLASSIFICADO',
+    _novo: true, _livre: false,
+  });
+  edpRenderLinhas();
+  setTimeout(() => document.querySelector('#edp-prod-lista .edp-prow:last-child .edp-prod-sel')?.focus(), 60);
+}
+
+function edpRemoveLinha(i) {
+  EDP_LINHAS.splice(i, 1);
+  edpRenderLinhas();
+}
+
+// Total ao vivo + quanto mudou em relacao a revisao vigente. O vendedor
+// costuma estar com o cliente no telefone — ele precisa ver o efeito do
+// desconto na hora, nao depois de salvar.
+function edpAtualizaTotais() {
+  const frete = parseNum(document.getElementById('edp-frete-val').value) || 0;
+  let tot = 0;
+  EDP_LINHAS.forEach((it, i) => {
+    const sub = (Number(it.qtd_kg)||0) * (Number(it.preco_kg)||0);
+    const comIpi = sub + sub * ((Number(it.ipi)||0)/100);
+    tot += comIpi;
+    const cel = document.querySelector(`.edp-lin-tot[data-i="${i}"] b`);
+    if (cel) cel.textContent = comIpi > 0 ? fMoeda(comIpi) : '—';
+  });
+  tot += frete;
+  const elTot = document.getElementById('edp-total');
+  if (elTot) elTot.textContent = fMoeda(tot);
+
+  const antes = totalProposta(PROP_ATUAL);
+  const el = document.getElementById('edp-delta');
+  if (!el) return;
+  const dif = tot - antes;
+  if (!antes || Math.abs(dif) < 0.005) { el.textContent = ''; return; }
+  const pct = (dif / antes) * 100;
+  el.textContent = `${dif > 0 ? '▲' : '▼'} ${fMoeda(Math.abs(dif))} (${pct > 0 ? '+' : ''}${pct.toFixed(1)}%) vs. revisão atual`;
+  el.className = 'edp-delta ' + (dif > 0 ? 'up' : 'down');
+}
+
+document.getElementById('edp-frete-val')?.addEventListener('input', edpAtualizaTotais);
+
+document.getElementById('edp-f')?.addEventListener('submit', async e => {
+  e.preventDefault();
+  const p = PROP_ATUAL;
+  const err = document.getElementById('edp-erro');
+  err.textContent = '';
+  if (!p) return;
+
+  // Revalida o status aqui tambem: o modal pode ter ficado aberto enquanto
+  // outra pessoa expediu o pedido na outra ponta.
+  if (!podeEditarProposta(p)) {
+    err.textContent = 'Este pedido mudou de status e não aceita mais alteração. Feche e abra de novo.';
+    return;
+  }
+  const motivo = document.getElementById('edp-motivo').value.trim();
+  if (!motivo) { err.textContent = 'Descreva o motivo da alteração.'; return; }
+  if (!EDP_LINHAS.length) { err.textContent = 'O pedido precisa de pelo menos um produto.'; return; }
+  const semNome = EDP_LINHAS.findIndex(it => !String(it.produto||'').trim());
+  if (semNome >= 0) { err.textContent = `Escolha o produto da linha ${semNome+1}.`; return; }
+  const semQtd = EDP_LINHAS.findIndex(it => !(Number(it.qtd_kg) > 0));
+  if (semQtd >= 0) { err.textContent = `Informe a quantidade da linha ${semQtd+1}.`; return; }
+
+  // Snapshot novo: parte do vigente e troca so produtos e condicoes. Cliente,
+  // consultor, office e oportunidade seguem como estavam — a revisao muda o
+  // que foi negociado, nao de quem e o pedido.
+  const snapAntigo = p.snapshot || {};
+  const snapshotNovo = {
+    ...snapAntigo,
+    produtos: EDP_LINHAS.map((it, idx) => ({
+      item: idx + 1,
+      produto:   String(it.produto || '').trim(),
+      embalagem: it.embalagem || null,
+      qtd_kg:    it.qtd_kg,
+      preco_kg:  it.preco_kg,
+      ipi:       it.ipi ?? 0,
+      classificacao_risco: it.classificacao_risco || 'NÃO CLASSIFICADO',
+    })),
+    condicoes: {
+      ...(snapAntigo.condicoes || {}),
+      prazo_pagamento: document.getElementById('edp-pgto').value.trim() || '30DD',
+      frete:           document.getElementById('edp-frete').value,
+      frete_valor:     parseNum(document.getElementById('edp-frete-val').value) || 0,
+      validade_dias:   parseInt(document.getElementById('edp-val').value, 10) || 30,
+      obs:             document.getElementById('edp-obs').value.trim() || null,
+    },
+  };
+
+  const btn = document.getElementById('edp-sub');
+  btn.disabled = true; btn.textContent = 'Salvando...';
+  try {
+    // ORDEM IMPORTA: arquiva primeiro, sobrescreve depois. Se o PATCH falhar,
+    // sobra uma revisao arquivada a mais (inofensivo). Na ordem inversa, uma
+    // falha aqui perderia o snapshot antigo pra sempre.
+    await api('POST', 'proposal_revisions', null, {
+      proposal_id: p.id,
+      revisao:     p.revisao || 1,
+      snapshot:    snapAntigo,
+      motivo,
+      created_by:  ME.id,
+    });
+    await api('PATCH', 'proposals', `id=eq.${p.id}`, {
+      snapshot: snapshotNovo,
+      revisao:  (p.revisao || 1) + 1,
+    });
+
+    PROP_ATUAL = { ...p, snapshot: snapshotNovo, revisao: (p.revisao || 1) + 1 };
+    const idx = PROPOSTAS.findIndex(x => x.id === p.id);
+    if (idx >= 0) PROPOSTAS[idx] = PROP_ATUAL;
+
+    fecharEditarPedido();
+    renderCotacao(PROP_ATUAL);
+    if (document.getElementById('pr-view')?.classList.contains('ac')) renderPropostas();
+    // Se ja era pedido, a fabrica provavelmente recebeu o Pedido de Producao
+    // da revisao anterior — mandar de novo e responsabilidade do vendedor.
+    toast('Revisão ' + PROP_ATUAL.revisao + ' salva',
+          (p.status === 'pedido')
+            ? 'Reenvie o Pedido de Produção — a fábrica está com a versão antiga.'
+            : 'A versão anterior continua guardada no histórico.',
+          'success');
+  } catch(ex) {
+    console.error('salvar revisao:', ex);
+    // Erro tipico se a migration ainda nao foi rodada no banco
+    err.textContent = /proposal_revisions|revisao/i.test(ex.message||'')
+      ? 'O banco ainda não tem a tabela de revisões. Rode migrations/2026-08-14-revisao-pedidos.sql.'
+      : (ex.message || 'Não foi possível salvar a revisão.');
+  } finally {
+    btn.disabled = false; btn.textContent = 'Salvar revisão';
+  }
+});
+
+async function abrirHistoricoRevisoes() {
+  const p = PROP_ATUAL;
+  if (!p) return;
+  const box = document.getElementById('edp-hist-body');
+  box.innerHTML = '<div class="edp-vazio">Carregando...</div>';
+  document.getElementById('edp-hist-m').classList.add('op');
+  try {
+    const revs = await api('GET','proposal_revisions',
+      `proposal_id=eq.${p.id}&select=revisao,snapshot,motivo,created_at,created_by&order=revisao.desc`) || [];
+    const nome = id => (PF||[]).find(x => x.id === id)?.name || '—';
+    // A revisao vigente nao esta na tabela de historico (ela vive na proposta),
+    // entao entra aqui na mao, no topo.
+    const atual = {
+      revisao: p.revisao || 1, snapshot: p.snapshot, motivo: null,
+      created_at: p.status_changed_at || p.created_at, created_by: p.seller_id, _atual: true,
+    };
+    box.innerHTML = [atual, ...revs].map(r => {
+      const prods = r.snapshot?.produtos || [];
+      const cond = r.snapshot?.condicoes || {};
+      const tot = totalProposta({ snapshot: r.snapshot });
+      return `<div class="edp-rev ${r._atual?'atual':''}">
+        <div class="edp-rev-head">
+          <span class="edp-rev-num">rev. ${r.revisao}${r._atual?' · vigente':''}</span>
+          <span class="edp-rev-meta">${escHtml(nome(r.created_by))} · ${fDataHora(r.created_at)}</span>
+        </div>
+        ${r.motivo?`<div class="edp-rev-motivo">“${escHtml(r.motivo)}”</div>`:''}
+        <div class="edp-rev-prods">${prods.map(it =>
+          `<div>${escHtml(it.produto||'—')} · ${Number(it.qtd_kg||0).toLocaleString('pt-BR')}kg · ${fMoeda(Number(it.preco_kg)||0)}/kg</div>`
+        ).join('')}</div>
+        <div class="edp-rev-cond">${escHtml(cond.prazo_pagamento||'—')} · ${escHtml(cond.frete||'—')} · <b>${fMoeda(tot)}</b></div>
+      </div>`;
+    }).join('');
+  } catch(ex) {
+    console.error('historico revisoes:', ex);
+    box.innerHTML = `<div class="edp-vazio">Não foi possível carregar o histórico. ${escHtml(ex.message||'')}</div>`;
+  }
 }
 
 // ── Sprint 8.2: Radar de Reativação — clientes dormentes priorizados ──────
@@ -4296,6 +4678,10 @@ function renderCotacao(prop) {
       <div class="cot-meta">
         <div>Proposta: <b>${escHtml(propLabel)}</b></div>
         ${pedLabel ? `<div>Pedido: <b style="color:var(--ok)">${escHtml(pedLabel)}</b></div>` : ''}
+        <!-- A revisao PRECISA sair no documento impresso: sem ela, duas versoes
+             diferentes do mesmo pedido circulam com o mesmo numero e ninguem
+             sabe qual das duas o cliente tem na mao. -->
+        ${(prop.revisao||1) > 1 ? `<div>Revisão: <b>${prop.revisao}</b></div>` : ''}
         <div>Data: <b>${dataStr}</b></div>
         <div>Validade: <b>${validade}</b></div>
       </div>

@@ -1,0 +1,229 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<title>Guia do Vendedor — CRM Adiblock</title>
+<style>
+  @page { size: A4; margin: 18mm 16mm; }
+  * { box-sizing: border-box; }
+  body {
+    font-family: -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+    color: #1f2937; font-size: 11pt; line-height: 1.55; margin: 0;
+  }
+  .cover {
+    background: linear-gradient(135deg, #1e40af, #2563eb);
+    color: #fff; padding: 28px 30px; border-radius: 12px; margin-bottom: 26px;
+  }
+  .cover h1 { margin: 0 0 6px; font-size: 24pt; }
+  .cover p { margin: 2px 0; opacity: .92; font-size: 11pt; }
+  .cover .meta { margin-top: 14px; font-size: 10pt; opacity: .9; }
+  h2 {
+    color: #1e3a8a; font-size: 15pt; margin: 26px 0 8px;
+    padding-bottom: 5px; border-bottom: 2px solid #dbeafe;
+  }
+  h2 .kbd-inline { font-size: 10pt; }
+  p { margin: 8px 0; }
+  table {
+    width: 100%; border-collapse: collapse; margin: 12px 0; font-size: 10pt;
+  }
+  th, td { border: 1px solid #e5e7eb; padding: 7px 9px; text-align: left; vertical-align: top; }
+  th { background: #eff6ff; color: #1e3a8a; }
+  tr:nth-child(even) td { background: #f9fafb; }
+  blockquote {
+    margin: 12px 0; padding: 10px 14px; background: #fefce8;
+    border-left: 4px solid #f59e0b; border-radius: 0 6px 6px 0; font-size: 10.5pt;
+  }
+  blockquote.ok { background: #ecfdf5; border-left-color: #10b981; }
+  ol, ul { margin: 8px 0; padding-left: 22px; }
+  li { margin: 4px 0; }
+  code, .kbd {
+    font-family: "Consolas", monospace; background: #f3f4f6;
+    padding: 1px 5px; border-radius: 4px; font-size: 9.5pt;
+  }
+  .kbd {
+    background: #1f2937; color: #fff; font-weight: 600;
+    padding: 2px 8px; border-radius: 5px;
+  }
+  h3 { color:#1e3a8a; font-size:12pt; margin:16px 0 4px; }
+  .avoid-break { page-break-inside: avoid; }
+  hr { border: none; border-top: 1px solid #e5e7eb; margin: 22px 0; }
+  footer { margin-top: 30px; font-size: 9pt; color: #6b7280; text-align: center; font-style: italic; }
+</style>
+</head>
+<body>
+
+<div class="cover">
+  <h1>Guia do Vendedor</h1>
+  <p><strong>CRM Adiblock</strong> — como usar o sistema no dia a dia, do primeiro contato ao pedido faturado.</p>
+  <div class="meta">
+    Acesso: https://crm-adiblock.vercel.app/ &nbsp;·&nbsp; Login: seu e-mail corporativo &nbsp;·&nbsp; Perfil: vendedor
+  </div>
+  <div class="meta" style="margin-top:8px">
+    Atualizado em 14/08/2026 &nbsp;·&nbsp; Novidades: editar pedido fechado (7), Pedido Comercial (6), mover card no celular (4), recuperar senha (10)
+  </div>
+</div>
+
+<h2>1. O vocabulário do sistema</h2>
+<p>Tudo no CRM gira em torno de 4 entidades. Entenda-as antes de começar:</p>
+<table class="avoid-break">
+  <tr><th>Termo</th><th>O que é</th><th>Exemplo</th></tr>
+  <tr><td><strong>Empresa</strong></td><td>O cliente B2B (CNPJ)</td><td>"Construtora XYZ Ltda"</td></tr>
+  <tr><td><strong>Contato</strong></td><td>A pessoa dentro da empresa</td><td>"João, comprador"</td></tr>
+  <tr><td><strong>Oportunidade</strong></td><td>Uma negociação de venda em andamento</td><td>"Aditivo p/ obra do viaduto"</td></tr>
+  <tr><td><strong>Proposta</strong></td><td>O documento comercial com preços</td><td>"Proposta nº 042/2026"</td></tr>
+</table>
+<blockquote><strong>Regra mental:</strong> uma <strong>empresa</strong> tem vários <strong>contatos</strong> e várias <strong>oportunidades</strong>. Uma <strong>oportunidade</strong> gera uma ou mais <strong>propostas</strong>. Nunca crie negociação solta — sempre vinculada a uma empresa.</blockquote>
+
+<h2>2. Rotina diária — comece pela aba <em>Hoje</em> <span class="kbd-inline"><span class="kbd">T</span></span></h2>
+<p>É a sua tela inicial e o coração do trabalho. Ela responde: <strong>"o que eu preciso fazer agora?"</strong></p>
+<ul>
+  <li><strong>Retornos agendados</strong> (callbacks) que vencem hoje — com hora.</li>
+  <li><strong>Tarefas</strong> do dia.</li>
+  <li><strong>Sininho 🔔</strong> com alertas e pendências.</li>
+</ul>
+<p>Ações rápidas em cada item: 💬 <strong>WhatsApp</strong> · 📞 <strong>Ligar</strong> · 📝 <strong>Registrar</strong> (lança a interação sem sair da tela).</p>
+<blockquote class="ok"><strong>✅ Disciplina nº 1:</strong> todo dia abre no "Hoje" e zera a lista. Se um retorno venceu e você não falou com o cliente, <strong>reagende</strong> — nunca deixe vencido e esquecido.</blockquote>
+
+<h2>3. Empresas e contatos <span class="kbd-inline"><span class="kbd">C</span></span></h2>
+<ol>
+  <li><strong>Busque antes de criar</strong> — evite empresa duplicada.</li>
+  <li>Cadastre a empresa e depois adicione os <strong>contatos</strong> (quem decide, quem compra).</li>
+  <li>Abra o <strong>perfil da empresa</strong> para ver tudo num lugar só: contatos, oportunidades, histórico e propostas.</li>
+</ol>
+<p>O sistema classifica a empresa automaticamente por <strong>tier</strong> (você não define na mão): <strong>Lead</strong> (sem compra) → <strong>Cliente / Conta</strong> (conforme oportunidades ganhas).</p>
+
+<h2>4. Conduzindo a venda — o <em>Pipeline</em> (Kanban)</h2>
+<p>Cada oportunidade caminha por estágios. Sua missão é <strong>mover os cards para frente</strong>.</p>
+<table class="avoid-break">
+  <tr><th>Estágio</th><th>Significa</th><th>Chance ponderada</th></tr>
+  <tr><td><strong>Lead</strong></td><td>Negociação recém-aberta</td><td>10%</td></tr>
+  <tr><td><strong>Qualificado</strong></td><td>Interesse e fit confirmados</td><td>30%</td></tr>
+  <tr><td><strong>Proposta enviada</strong></td><td>Proposta na mão do cliente</td><td>60%</td></tr>
+  <tr><td><strong>Em negociação</strong></td><td>Ajuste de preço/condições</td><td>80%</td></tr>
+  <tr><td><strong>Ganha</strong></td><td>Cliente fechou</td><td>100%</td></tr>
+  <tr><td><strong>Perdida</strong></td><td>Não fechou</td><td>0%</td></tr>
+</table>
+<p><strong>Como mover um card:</strong></p>
+<ul>
+  <li><strong>No computador:</strong> arraste o card de uma coluna para a outra.</li>
+  <li><strong>No celular:</strong> arrastar não funciona em tela de toque. Use o botão <strong>⇄ Mover</strong> no rodapé do card e escolha o estágio na lista.</li>
+</ul>
+<p>Regras que o sistema cobra de você:</p>
+<ul>
+  <li><strong>Próximo passo é obrigatório.</strong> Toda oportunidade ativa precisa do próximo passo com data/hora. Sem ele, vira <strong>órfã</strong> e ganha um <strong>badge de alerta</strong>.</li>
+  <li><strong>Ao perder, informe o motivo.</strong> Marcar como perdida exige o <strong>motivo da perda</strong> — isso alimenta as análises da equipe.</li>
+</ul>
+<blockquote class="ok"><strong>✅ Disciplina nº 2:</strong> card sem próximo passo = negociação esquecida. Trate o badge de órfã como prioridade.</blockquote>
+<p><strong>Registrando interações:</strong> toda ligação, visita ou e-mail relevante vira uma <strong>interação</strong> na oportunidade. É o histórico que protege você e dá memória ao negócio. Ao registrar, já agende o <strong>próximo retorno</strong> (com hora).</p>
+
+<h2>5. Gerando a <em>Proposta Comercial</em> <span class="kbd-inline"><span class="kbd">P</span></span></h2>
+<p>A proposta é um <strong>documento legal</strong>. Pontos críticos:</p>
+<ul>
+  <li>Preços, produtos e valores ficam <strong>congelados</strong> no momento da geração. Se o catálogo mudar depois, a proposta antiga <strong>mantém os valores originais</strong> — isso é proteção, não erro. Para mudar o que foi combinado existe um caminho próprio, que <strong>guarda a versão anterior</strong> (seção 7).</li>
+  <li>A numeração é <strong>automática e sequencial por ano</strong> — não invente número.</li>
+  <li>Estados: <code>em andamento</code> (enviada) → <code>pedido</code> (cliente fechou) → <code>expedido</code> (saiu com NF) → <code>cancelada</code> (caiu).</li>
+</ul>
+<blockquote><strong>⚠️ Não confunda os documentos imprimíveis.</strong> São etapas diferentes, não versões do mesmo papel:
+<table class="avoid-break" style="margin-top:8px">
+  <tr><th>Documento</th><th>Para quem</th><th>Serve para</th><th>Tem preço?</th></tr>
+  <tr><td><strong>Proposta Comercial</strong></td><td>Cliente</td><td><strong>Ofertar</strong></td><td><strong>Sim</strong></td></tr>
+  <tr><td><strong>Pedido de Produção</strong></td><td>Fábrica</td><td><strong>Instruir</strong> a produção</td><td><strong>Não</strong> (só produto/qtd/peso)</td></tr>
+  <tr><td><strong>Pedido Comercial</strong></td><td>Cliente</td><td><strong>Confirmar</strong> o pedido fechado</td><td><strong>Sim</strong></td></tr>
+  <tr><td><strong>Relatório Semanal</strong></td><td>Interno</td><td>Acompanhar</td><td>—</td></tr>
+</table>
+O <strong>Pedido de Produção</strong> vai para a fábrica e <strong>nunca mostra valores</strong>.</blockquote>
+
+<h2>6. Quando o cliente fecha — virando <em>Pedido</em></h2>
+<ol>
+  <li>Mude a proposta para o status <code>pedido</code>. O sistema atribui um <strong>número de pedido próprio</strong>, diferente do número da proposta.</li>
+  <li>Gere o <strong>📋 Pedido de Produção</strong> para a fábrica (sem preços).</li>
+  <li>Gere o <strong>📄 Pedido Comercial</strong> para o cliente — é a confirmação formal.</li>
+  <li>Conforme avança, registre <code>expedido</code> com <strong>NF + transportadora</strong>.</li>
+</ol>
+<p>A oportunidade correspondente vai para <strong>Ganha</strong> — e aí conta para o seu ranking e para o tier do cliente.</p>
+
+<h3>O nº da OC do cliente</h3>
+<p>Ao gerar o Pedido Comercial o sistema pede o <strong>número da ordem de compra do cliente</strong> — o número que <strong>ele</strong> gerou no sistema <strong>dele</strong>.</p>
+<p><strong>Por que isso importa:</strong> é por esse número que o cliente cobra, confere e paga. Quando ele liga dizendo <em>"estou falando do pedido 4500123789"</em>, esse é o número que ele tem na mão — o nosso ele não sabe de cor.</p>
+<p>Com a OC preenchida, ela aparece no card da aba Propostas e <strong>você acha o pedido pela busca digitando o número do cliente</strong> (<span class="kbd">Ctrl</span>+<span class="kbd">K</span>).</p>
+<blockquote class="ok"><strong>✅ Disciplina nº 3:</strong> pediu a OC ao cliente, lançou na hora. Depois ninguém lembra, e a cobrança trava.</blockquote>
+<p>Também são registrados aqui o <strong>local de entrega</strong> (já vem preenchido com a obra da oportunidade, mas você pode trocar), a <strong>transportadora</strong> e a <strong>previsão de entrega</strong>.</p>
+
+<h2>7. Quando o cliente muda de ideia — <em>revisão do pedido</em></h2>
+<p>Cliente pede desconto ao trocar a forma de pagamento. Cliente pede para acrescentar mais um material no pedido que já está fechado. Isso é rotina.</p>
+<p><strong>Antes</strong> a saída era cancelar e refazer com outro número — e o cliente ficava com um número na mão enquanto o CRM tinha outro. <strong>Agora não.</strong></p>
+<p><strong>Como fazer:</strong> abra o pedido e clique em <strong>✏ Editar</strong>. Você pode:</p>
+<ul>
+  <li>alterar <strong>quantidade, preço e IPI</strong> de cada item;</li>
+  <li><strong>remover</strong> um produto do pedido;</li>
+  <li><strong>acrescentar</strong> produto (escolhendo do catálogo, ou digitando o nome se ainda não estiver cadastrado);</li>
+  <li>mudar <strong>prazo de pagamento, frete, validade e observações</strong>.</li>
+</ul>
+<p>Enquanto você mexe, o <strong>total recalcula na hora</strong> e aparece quanto mudou em relação à versão atual — dá para ver o efeito do desconto <strong>antes de salvar</strong>, com o cliente ainda no telefone.</p>
+
+<h3>O que acontece ao salvar</h3>
+<p>O pedido <strong>não é sobrescrito</strong>: nasce a <strong>revisão 2</strong>. O <code>0336-26</code> continua sendo <code>0336-26</code>, e passa a se chamar <code>0336-26 rev. 2</code>. A revisão 1 fica guardada inteira e você consulta quando quiser, clicando no selo <strong>rev. 2</strong> no topo.</p>
+<p>A revisão sai impressa nos documentos. Sem isso, duas versões diferentes do mesmo pedido circulariam com o mesmo número e ninguém saberia qual o cliente tem.</p>
+
+<h3>O motivo é obrigatório</h3>
+<p>O sistema exige que você escreva <strong>por que</strong> o pedido mudou. Escreva de verdade:</p>
+<ul>
+  <li>✅ <em>"cliente trocou 30DD por 45DD e pediu 5% de desconto"</em></li>
+  <li>❌ <em>"ajuste"</em></li>
+</ul>
+<p>É esse campo que responde <em>"por que este pedido saiu mais barato?"</em> daqui a seis meses, quando ninguém lembrar da conversa.</p>
+
+<blockquote><strong>Duas regras:</strong>
+<ul style="margin-top:6px">
+  <li><strong>Pedido já expedido não pode ser editado.</strong> A NF foi emitida; mudar o pedido depois disso descasa do fiscal. Se precisar, fale com o Igor.</li>
+  <li><strong>Revisou um pedido que já foi para a fábrica? Reenvie o Pedido de Produção.</strong> O sistema avisa na hora, mas quem reenvia é você — a fábrica está com a versão antiga e vai produzir errado.</li>
+</ul></blockquote>
+
+<h2>8. Não deixar cliente esfriar — <em>Radar de Reativação</em> <span class="kbd-inline"><span class="kbd">R</span></span></h2>
+<p>O sistema lista automaticamente os <strong>clientes dormentes</strong> priorizados — quem comprou e sumiu. Use o Radar <strong>semanalmente</strong> para retomar contato antes que o cliente vá para o concorrente.</p>
+<p>A mensagem de WhatsApp do Radar aceita os marcadores <code>{nome_contato}</code> e <code>{empresa}</code>, preenchidos automaticamente para cada cliente.</p>
+
+<h2>9. Acompanhando seus números — <em>Dashboard</em> <span class="kbd-inline"><span class="kbd">D</span></span></h2>
+<ul>
+  <li>Cards <strong>interativos</strong>: clique em qualquer número para ver os detalhes (drill-down).</li>
+  <li>Acompanhe seu funil, conversão e ranking na aba <strong>Equipe</strong>.</li>
+  <li>O admin acompanha a <strong>adoção por vendedor</strong> — usar o sistema corretamente faz parte do trabalho, não é opcional.</li>
+</ul>
+
+<h2>10. Acesso, senha e celular</h2>
+<p><strong>Esqueceu a senha?</strong> Na tela de login, clique em <strong>"Esqueci minha senha"</strong>, informe seu e-mail corporativo e o link de redefinição chega em alguns minutos. Não precisa pedir para ninguém.</p>
+<ul>
+  <li>O link <strong>vale uma vez só</strong>. Se não chegar, confira o <strong>spam</strong>.</li>
+  <li>Ao abrir o link você escolhe a nova senha (mínimo 8 caracteres) e já entra.</li>
+</ul>
+<p><strong>Travou em "Entrando..."?</strong> Use o link <strong>"Limpar sessão e tentar de novo"</strong>, logo abaixo do formulário.</p>
+<p><strong>No celular:</strong> o sistema funciona no telefone. As abas ficam numa faixa própria que <strong>desliza para o lado</strong> quando não cabem todas na tela.</p>
+
+<h2>11. Os 8 hábitos de quem usa bem o CRM</h2>
+<ol>
+  <li><strong>Comece pelo "Hoje"</strong> e zere os retornos do dia.</li>
+  <li><strong>Toda conversa vira interação</strong> registrada.</li>
+  <li><strong>Toda oportunidade tem próximo passo</strong> com data.</li>
+  <li><strong>Busque antes de cadastrar</strong> (sem duplicatas).</li>
+  <li><strong>Documento certo para cada público</strong> (proposta ≠ pedido de produção).</li>
+  <li><strong>Peça e lance a OC do cliente</strong> assim que o pedido fechar.</li>
+  <li><strong>Mudou o pedido? Revise no sistema</strong> e escreva o motivo de verdade.</li>
+  <li><strong>Radar semanal</strong> para reativar clientes parados.</li>
+</ol>
+
+<h2>12. Atalhos de teclado</h2>
+<table class="avoid-break">
+  <tr><th>Tecla</th><th>Vai para</th></tr>
+  <tr><td><span class="kbd">T</span></td><td>Hoje / Agenda</td></tr>
+  <tr><td><span class="kbd">C</span></td><td>Empresas</td></tr>
+  <tr><td><span class="kbd">P</span></td><td>Propostas</td></tr>
+  <tr><td><span class="kbd">R</span></td><td>Radar de Reativação</td></tr>
+  <tr><td><span class="kbd">D</span></td><td>Dashboard</td></tr>
+  <tr><td><span class="kbd">Ctrl</span>+<span class="kbd">K</span></td><td>Busca (empresa, contato, proposta, nº de pedido, nº de OC)</td></tr>
+</table>
+<p>Dica: pressione <span class="kbd">?</span> dentro do app para abrir a tabela de atalhos.</p>
+
+<footer>CRM Adiblock — guia interno da equipe comercial.</footer>
+
+</body>
+</html>

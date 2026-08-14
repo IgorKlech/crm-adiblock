@@ -8,7 +8,6 @@
       ]
     },
     {
-      "//": "Fontes sao imutaveis: o no-store acima faria o navegador rebaixar 100KB de Manrope a cada carregamento. Esta regra vem depois de proposito — a ultima que casa vence.",
       "source": "/assets/fonts/(.*)",
       "headers": [
         { "key": "Cache-Control", "value": "public, max-age=31536000, immutable" }

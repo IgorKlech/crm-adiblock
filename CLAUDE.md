@@ -545,6 +545,13 @@ Técnico:
 
 ## 13. Problemas conhecidos e soluções
 
+> ⚠ **Push não é deploy.** Um `git push` aceito só garante que o GitHub recebeu.
+> A Vercel constrói **sempre o commit do topo** — se esse build falhar, a produção
+> congela no último deploy bom e *todos* os commits desde então ficam de fora,
+> mesmo os que não têm nada a ver com a falha. Depois de subir mudança visível,
+> confirme buscando na produção uma string que **só exista na versão nova**
+> (`curl https://crm-adiblock.vercel.app/css/app.css | grep <marcador>`).
+
 > ⚠ **Verificar CSS também, não só JS e HTML.** Um comentário mal fechado no
 > `app.css` não gera erro em lugar nenhum: apaga silenciosamente a regra
 > seguinte. Em 14/08/2026 isso derrubou a navbar em produção e passou por duas
@@ -560,6 +567,7 @@ Técnico:
 | audit_log bloqueava DELETE de empresa | FK constraint com ON DELETE RESTRICT implícito | ALTER TABLE DROP CONSTRAINT audit_log_company_id_fkey |
 | TOKEN_REFRESHED empilhava setInterval | setInterval sem clearInterval prévio | window._bellTimer com clear antes de recriar |
 | Migration falhou "invalid syntax for timestamptz" | coluna já era timestamptz, USING tentava concatenar de novo | DO $$ com check de data_type antes do ALTER |
+| Deploy parou de sair sem erro visível no app; produção congelada em um commit antigo | `vercel.json` com uma chave `"//"` de comentário — JSON válido, mas o schema da Vercel só aceita `source`/`headers`/`has`/`missing` em cada regra, e propriedade extra **rejeita o deploy inteiro** | tirar a chave; **JSON não tem comentário** — a explicação vai no CLAUDE.md ou no commit |
 | Abas da navbar empilhadas em coluna, vazando sobre a página | comentário CSS fechado cedo demais (`*/` no meio), o parser descartou até a próxima chave e levou junto `#tabs{display:flex}` | frase movida para dentro do comentário — e passou a haver checagem de CSS, não só de JS/HTML |
 
 ---

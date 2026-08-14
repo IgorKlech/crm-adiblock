@@ -467,6 +467,13 @@ Técnico:
 
 ## 13. Problemas conhecidos e soluções
 
+> ⚠ **Verificar CSS também, não só JS e HTML.** Um comentário mal fechado no
+> `app.css` não gera erro em lugar nenhum: apaga silenciosamente a regra
+> seguinte. Em 14/08/2026 isso derrubou a navbar em produção e passou por duas
+> rodadas de verificação que só olhavam sintaxe de JS e balanceamento de tags.
+> Checar: `/*` e `*/` em número igual, chaves balanceadas, nenhum texto solto
+> fora de regra.
+
 | Problema | Causa | Solução aplicada |
 |---|---|---|
 | Alert "login demorando" ao ficar idle | TOKEN_REFRESHED tratado como SIGNED_IN | Flag APP_INICIADO + ignorar TOKEN_REFRESHED |
@@ -475,6 +482,7 @@ Técnico:
 | audit_log bloqueava DELETE de empresa | FK constraint com ON DELETE RESTRICT implícito | ALTER TABLE DROP CONSTRAINT audit_log_company_id_fkey |
 | TOKEN_REFRESHED empilhava setInterval | setInterval sem clearInterval prévio | window._bellTimer com clear antes de recriar |
 | Migration falhou "invalid syntax for timestamptz" | coluna já era timestamptz, USING tentava concatenar de novo | DO $$ com check de data_type antes do ALTER |
+| Abas da navbar empilhadas em coluna, vazando sobre a página | comentário CSS fechado cedo demais (`*/` no meio), o parser descartou até a próxima chave e levou junto `#tabs{display:flex}` | frase movida para dentro do comentário — e passou a haver checagem de CSS, não só de JS/HTML |
 
 ---
 

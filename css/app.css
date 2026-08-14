@@ -1,23 +1,51 @@
+/* ==========================================================================
+   Fonte Manrope — self-hosted, os MESMOS arquivos do site adiblock.online.
+   Local e nao CDN por dois motivos: e a mesma decisao do site (LGPD, sem
+   enviar IP pro Google), e este projeto ja aprendeu na pratica que depender
+   de CDN derruba o app quando ele cai (ver CLAUDE.md, secao 2).
+   ========================================================================== */
+@font-face{font-family:"Manrope";font-style:normal;font-weight:500;font-display:swap;src:url("../assets/fonts/manrope-500.woff2") format("woff2")}
+@font-face{font-family:"Manrope";font-style:normal;font-weight:600;font-display:swap;src:url("../assets/fonts/manrope-600.woff2") format("woff2")}
+@font-face{font-family:"Manrope";font-style:normal;font-weight:700;font-display:swap;src:url("../assets/fonts/manrope-700.woff2") format("woff2")}
+@font-face{font-family:"Manrope";font-style:normal;font-weight:800;font-display:swap;src:url("../assets/fonts/manrope-800.woff2") format("woff2")}
+
+/* ==========================================================================
+   Identidade visual alinhada ao site adiblock.online (2026-08-14).
+   Os valores vem do design system do site ("site adiblock"/css/styles.css).
+   O que veio: fonte, paleta, forma (raio), sombra tingida de azul e o easing.
+   O que NAO veio: os TAMANHOS. O site tem corpo de 17px e line-height 1.65 —
+   certo pra uma pagina lida uma vez, errado pra uma tabela de empresas que o
+   vendedor encara o dia inteiro (mostraria metade das linhas). A densidade
+   aqui continua a de aplicacao; a identidade e que virou a mesma.
+   ========================================================================== */
 :root{
-  --bg:#f8fafc;
+  /* Escala de azuis da marca (nomes iguais aos do site, pra conferencia) */
+  --blue-950:#061428; --blue-900:#0a1f3c; --blue-800:#0f2c54;
+  --blue-700:#143a6e; --blue-600:#1b4f96; --blue-500:#2563b8;
+  --blue-100:#dbe7f7; --blue-50:#eef4fc;
+  /* Amarelo da marca. O CRM nao tinha cor de acento nenhuma ate aqui — e o
+     ganho de identidade mais visivel da mudanca. */
+  --ac:#ffd200; --ac-h:#f2c200; --ac-tx:#14204a; --ac-glow:rgba(255,210,0,.28);
+
+  --bg:#f5f8fc;      /* --bg-soft do site */
   --sur:#ffffff;
-  --bdr:#e2e8f0;
-  --bdr2:#cbd5e1;
-  --nb:#0f172a;
-  --p:#2563eb;
-  --ph:#1d4ed8;
-  --ps:#eff6ff;
-  --tx:#0f172a;
-  --tx2:#475569;
-  --mt:#94a3b8;
-  --mt2:#cbd5e1;
+  --bdr:#e2e8f0;     /* --line */
+  --bdr2:#cbd6e4;    /* --line-strong */
+  --nb:#0f2c54;      /* navbar = azul da marca, nao mais o cinza-azulado neutro */
+  --p:#143a6e;       /* mesmo azul do .btn padrao do site */
+  --ph:#0f2c54;
+  --ps:#eef4fc;      /* --blue-50 */
+  --tx:#0c1826;      /* --ink */
+  --tx2:#35485c;     /* --ink-soft */
+  --mt:#6a7c90;      /* --muted */
+  --mt2:#cbd6e4;
   --ok:#059669;--ok2:#d1fae5;
   --er:#dc2626;--er2:#fee2e2;
   --wr:#d97706;--wr2:#fef3c7;
   /* Sprint 9.3 (B-02): par de TEXTO pra cada fundo suave acima.
      Regra: fundo --xx2 so pode receber texto --xx-tx. Nunca hex fixo — no tema
      escuro o fundo vira quase preto e o texto escuro fixo some. */
-  --ok-tx:#166534;--er-tx:#991b1b;--wr-tx:#92400e;--p-tx:#1d4ed8;
+  --ok-tx:#166534;--er-tx:#991b1b;--wr-tx:#92400e;--p-tx:#1f3fa0;/* --accent-700 do site */
   /* Sprint 9.3 (B-02): estagios do funil e classificacoes tem linguagem visual
      propria (progressao frio -> quente) que os 4 tokens semanticos acima nao
      cobrem sem colidir. Par bg/tx dedicado pra cada um. */
@@ -39,39 +67,48 @@
   --fs-lg:16px;    /* titulo de card, h3 de modal */
   --fs-xl:20px;    /* titulo de pagina, numero destacado */
   --fs-2xl:28px;   /* numero-heroi do dashboard */
-  --sh:0 1px 3px rgba(0,0,0,.06),0 1px 2px rgba(0,0,0,.04);
-  --shm:0 4px 12px rgba(0,0,0,.08),0 2px 4px rgba(0,0,0,.04);
-  --shl:0 20px 60px rgba(0,0,0,.10),0 4px 16px rgba(0,0,0,.06);
-  --r:10px;--rs:6px;--rl:14px;
+  /* Sombra tingida de AZUL, nao preto neutro — e o que o site usa. Sombra
+     preta sobre fundo azulado suja; a azul afunda o elemento no mesmo tom. */
+  --sh:0 1px 2px rgba(9,30,66,.08),0 2px 6px rgba(9,30,66,.06);
+  --shm:0 8px 24px rgba(9,30,66,.10);
+  --shl:0 24px 60px rgba(9,30,66,.18);
+  --ring:0 0 0 3px var(--ac-glow);   /* foco na cor da marca */
+  /* Formas mais suaves, na direcao do site (14 / 22 / pilula). Nao vou ate
+     la: card de lista com 22px de raio infla numa tela densa. */
+  --r:14px;--rs:10px;--rl:20px;--rp:999px;
+  --ease:cubic-bezier(.22,1,.36,1);  /* mesmo easing do site */
 }
+/* O site nao tem tema escuro. Este aqui e DERIVADO da escala de azuis dele:
+   o fundo e o --blue-950 e a superficie e o --blue-900, entao o escuro do CRM
+   continua sendo a mesma marca, e nao um cinza qualquer sem parentesco. */
 [data-theme="dark"]{
-  --bg:#0f172a;
-  --sur:#1e293b;
-  --bdr:#334155;
-  --bdr2:#475569;
-  --nb:#020617;
-  --p:#60a5fa;
-  --ph:#93c5fd;
-  --ps:rgba(96,165,250,.12);
-  --tx:#f1f5f9;
-  --tx2:#cbd5e1;
-  --mt:#94a3b8;
-  --mt2:#64748b;
+  --bg:#061428;      /* --blue-950 */
+  --sur:#0a1f3c;     /* --blue-900 */
+  --bdr:#16345c;
+  --bdr2:#1b4f96;    /* --blue-600 */
+  --nb:#030d1c;      /* mais escuro que o fundo: a navbar ancora a tela */
+  --p:#8fb8f0;       /* azul da marca clareado o bastante pra ler sobre navy */
+  --ph:#b9d3f8;
+  --ps:rgba(143,184,240,.14);
+  --tx:#eaf1fa;
+  --tx2:#b9cbe0;
+  --mt:#8aa2bd;
+  --mt2:#4a6180;
   --ok:#10b981;--ok2:rgba(16,185,129,.12);
   --er:#f87171;--er2:rgba(248,113,113,.15);
   --wr:#fbbf24;--wr2:rgba(251,191,36,.15);
   /* Sprint 9.3 (B-02): no escuro os fundos --xx2 sao veus translucidos sobre
      superficie escura, entao o texto tem que ser CLARO. */
-  --ok-tx:#6ee7b7;--er-tx:#fca5a5;--wr-tx:#fcd34d;--p-tx:#93c5fd;
+  --ok-tx:#6ee7b7;--er-tx:#fca5a5;--wr-tx:#fcd34d;--p-tx:#b9d3f8;
   /* Mesma progressao frio -> quente, agora como veu translucido + texto claro. */
   --est1-bg:rgba(148,163,184,.16);--est1-tx:#cbd5e1;
-  --est2-bg:rgba(96,165,250,.16);--est2-tx:#93c5fd;
+  --est2-bg:rgba(143,184,240,.16);--est2-tx:#b9d3f8;
   --est3-bg:rgba(251,191,36,.16);--est3-tx:#fcd34d;
   --est4-bg:rgba(249,115,22,.18);--est4-tx:#fdba74;
   --pnk-bg:rgba(244,114,182,.16);--pnk-tx:#f9a8d4;
-  --sh:0 1px 3px rgba(0,0,0,.4),0 1px 2px rgba(0,0,0,.3);
-  --shm:0 4px 12px rgba(0,0,0,.45),0 2px 4px rgba(0,0,0,.3);
-  --shl:0 20px 60px rgba(0,0,0,.5),0 4px 16px rgba(0,0,0,.35);
+  --sh:0 1px 2px rgba(0,0,0,.45),0 2px 6px rgba(0,0,0,.35);
+  --shm:0 8px 24px rgba(0,0,0,.5);
+  --shl:0 24px 60px rgba(0,0,0,.6);
 }
 /* Botão de toggle de tema */
 .theme-toggle{background:none;border:1px solid var(--bdr);color:var(--tx);width:34px;height:34px;border-radius:var(--rs);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:16px;transition:all .15s}
@@ -85,7 +122,12 @@
 .kbd-item{display:flex;justify-content:space-between;align-items:center;font-size:var(--fs-md);color:var(--tx)}
 .kbd-item kbd{background:var(--bg);border:1px solid var(--bdr2);border-bottom-width:2px;border-radius:var(--rs);padding:3px 8px;font-family:ui-monospace,Consolas,monospace;font-size:var(--fs-xs);color:var(--tx2);min-width:24px;text-align:center}
 *{box-sizing:border-box;margin:0;padding:0}
-body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--tx);font-size:var(--fs-base);line-height:1.5;-webkit-font-smoothing:antialiased;min-height:100vh}
+body{font-family:"Manrope","Segoe UI",system-ui,-apple-system,Roboto,Arial,sans-serif;background:var(--bg);color:var(--tx);font-size:var(--fs-base);line-height:1.5;-webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility;min-height:100vh}
+/* Titulo com o mesmo tratamento do site: peso 800 e letter-spacing negativo.
+   E o que faz o texto "fechar" e parecer desenhado, nao so grande. */
+h1,h2,h3,h4{font-weight:800;letter-spacing:-.02em;line-height:1.2}
+/* Foco visivel na cor da marca, em tudo que recebe teclado */
+:focus-visible{outline:none;box-shadow:var(--ring)}
 ::-webkit-scrollbar{width:6px;height:6px}
 ::-webkit-scrollbar-track{background:transparent}
 ::-webkit-scrollbar-thumb{background:var(--mt2);border-radius:99px}
@@ -122,21 +164,30 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--tx);font-si
 .fa{display:flex;gap:8px;justify-content:flex-end;margin-top:20px;padding-top:16px;border-top:1px solid var(--bdr)}
 .em{color:var(--er);font-size:var(--fs-sm);min-height:16px;margin-top:4px}
 
-/* BUTTONS */
-.btn{display:inline-flex;align-items:center;gap:6px;padding:8px 16px;border:1px solid transparent;border-radius:var(--rs);font-size:var(--fs-md);font-weight:500;font-family:inherit;cursor:pointer;transition:all .15s;white-space:nowrap}
+/* BUTTONS — forma do site: pilula, peso 700 e lift de 2px no hover.
+   O lift e a assinatura do movimento la, e e o que faz o botao responder ao
+   mouse em vez de so trocar de cor. Peso 700 (nao 500) porque a Manrope tem
+   um 700 largo, desenhado pra isso. */
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;padding:8px 18px;border:1px solid transparent;border-radius:var(--rp);font-size:var(--fs-md);font-weight:700;font-family:inherit;cursor:pointer;white-space:nowrap;box-shadow:var(--sh);transition:transform .2s var(--ease),box-shadow .2s var(--ease),background .2s var(--ease),color .2s var(--ease),border-color .2s var(--ease)}
+.btn:hover{transform:translateY(-2px);box-shadow:var(--shm)}
+.btn:active{transform:translateY(0)}
 .bp{background:var(--p);color:#fff;border-color:var(--p)}
 .bp:hover{background:var(--ph);border-color:var(--ph)}
-.bp:disabled{opacity:.5;cursor:not-allowed}
-.bg{background:var(--sur);color:var(--tx2);border-color:var(--bdr)}
-.bg:hover{background:var(--bg);border-color:var(--bdr2);color:var(--tx)}
+.btn:disabled,.bp:disabled{opacity:.5;cursor:not-allowed;transform:none;box-shadow:var(--sh)}
+.bg{background:var(--sur);color:var(--tx2);border-color:var(--bdr2)}
+.bg:hover{background:var(--sur);border-color:var(--p);color:var(--p)}
+/* Acento amarelo: reservado pra acao principal de conversao, como no site.
+   Se tudo virar amarelo, nada e destaque. */
+.bac{background:var(--ac);color:var(--ac-tx);border-color:var(--ac)}
+.bac:hover{background:var(--ac-h);border-color:var(--ac-h)}
 .bd{background:var(--er);color:#fff;border-color:var(--er)}
 .bd:hover{background:#b91c1c}
-.bod{background:var(--sur);color:var(--er);border-color:var(--bdr)}
+.bod{background:var(--sur);color:var(--er);border-color:var(--bdr2)}
 .bod:hover{background:var(--er2);border-color:var(--er)}
-.bn{background:rgba(255,255,255,.1);color:rgba(255,255,255,.9);border:1px solid rgba(255,255,255,.2);padding:7px 14px;border-radius:var(--rs);font-size:var(--fs-md);font-weight:500;cursor:pointer;font-family:inherit;transition:all .15s}
-.bn:hover{background:rgba(255,255,255,.2)}
-.sm{padding:5px 12px;font-size:var(--fs-sm)}
-.bl{width:100%;justify-content:center;padding:10px}
+.bn{background:rgba(255,255,255,.12);color:#fff;border:1px solid rgba(255,255,255,.22);padding:7px 16px;border-radius:var(--rp);font-size:var(--fs-md);font-weight:700;cursor:pointer;font-family:inherit;transition:all .2s var(--ease)}
+.bn:hover{background:rgba(255,255,255,.22)}
+.sm{padding:5px 14px;font-size:var(--fs-sm)}
+.bl{width:100%;justify-content:center;padding:11px}
 
 /* APP */
 #app{display:none;min-height:100vh;flex-direction:column}

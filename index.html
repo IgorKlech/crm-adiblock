@@ -10,8 +10,11 @@
      outras dez abertas o dia inteiro. -->
 <link rel="icon" href="logo.png">
 <link rel="apple-touch-icon" href="logo.png">
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<!-- A Manrope e servida LOCALMENTE (@font-face em css/app.css, arquivos em
+     assets/fonts/) — os mesmos do site adiblock.online. Saiu o Google Fonts:
+     uma dependencia de CDN a menos, e sem mandar o IP do usuario pro Google. -->
+<link rel="preload" href="assets/fonts/manrope-600.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="assets/fonts/manrope-700.woff2" as="font" type="font/woff2" crossorigin>
 <!-- supabase-js: arquivo LOCAL (mesma origem do Vercel) como fonte primaria.
      Antes vinha so do jsdelivr; quando o CDN cai/e bloqueado/fica lento, o app
      inteiro ficava em TELA PRETA (o script bloqueante segurava a renderizacao).

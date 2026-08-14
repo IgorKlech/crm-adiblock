@@ -138,7 +138,7 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--tx);font-si
    no celular — a barra passava de 550px num viewport de 390 e TUDO ficava
    deslocado, inclusive os modais em bottom-sheet. Agora a faixa desliza.
    `margin-right:auto` mantem as abas coladas na logo (como antes), empurrando
-   a .nbr pra direita agora que #tabs e filho direto da navbar. */
+   a .nbr pra direita agora que #tabs e filho direto da navbar.
    O `margin-left` repoe o respiro que o `gap:14px` da .nbl dava antes. */
 #tabs{display:flex;gap:1px;min-width:0;margin-left:14px;margin-right:auto;overflow-x:auto;scrollbar-width:none;-ms-overflow-style:none}
 #tabs::-webkit-scrollbar{display:none}

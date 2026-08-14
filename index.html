@@ -8,8 +8,8 @@
 <title>Controle Comercial — Adiblock</title>
 <!-- Sprint 9.3 (A-03): sem isso o CRM aparece como aba em branco no meio de
      outras dez abertas o dia inteiro. -->
-<link rel="icon" href="logo.png">
-<link rel="apple-touch-icon" href="logo.png">
+<link rel="icon" href="assets/img/favicon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="assets/img/favicon.svg">
 <!-- A Manrope e servida LOCALMENTE (@font-face em css/app.css, arquivos em
      assets/fonts/) — os mesmos do site adiblock.online. Saiu o Google Fonts:
      uma dependencia de CDN a menos, e sem mandar o IP do usuario pro Google. -->
@@ -36,7 +36,7 @@
   <!-- Cartao 1: entrar -->
   <div class="lc" id="lc-login">
     <div class="ll">
-      <div class="li"><img src="logo.png" alt="Adiblock"></div>
+      <div class="li"><img class="logo-claro" src="assets/img/logo-adiblock.svg" alt="Adiblock"><img class="logo-escuro" src="assets/img/logo-adiblock-light.svg" alt="" aria-hidden="true"></div>
       <h1>CRM Adiblock</h1>
       <p>Gestão comercial inteligente</p>
     </div>
@@ -57,7 +57,7 @@
   <!-- Cartao 2: pedir link de redefinicao (Sprint 9.3 / B-01) -->
   <div class="lc" id="lc-forgot" style="display:none">
     <div class="ll">
-      <div class="li"><img src="logo.png" alt="Adiblock"></div>
+      <div class="li"><img class="logo-claro" src="assets/img/logo-adiblock.svg" alt="Adiblock"><img class="logo-escuro" src="assets/img/logo-adiblock-light.svg" alt="" aria-hidden="true"></div>
       <h1>Recuperar acesso</h1>
       <p>Enviamos um link de redefinição para o seu email</p>
     </div>
@@ -74,7 +74,7 @@
   <!-- Cartao 3: definir nova senha (chegou pelo link do email) -->
   <div class="lc" id="lc-newpass" style="display:none">
     <div class="ll">
-      <div class="li"><img src="logo.png" alt="Adiblock"></div>
+      <div class="li"><img class="logo-claro" src="assets/img/logo-adiblock.svg" alt="Adiblock"><img class="logo-escuro" src="assets/img/logo-adiblock-light.svg" alt="" aria-hidden="true"></div>
       <h1>Nova senha</h1>
       <p>Escolha uma senha de pelo menos 8 caracteres</p>
     </div>
@@ -98,9 +98,10 @@
   <nav id="nb">
     <div class="nbl">
       <div class="br">
-        <div style="background:#fff;border-radius:8px;padding:3px 8px;display:flex;align-items:center;height:38px">
-          <img src="logo.png" alt="Adiblock" style="height:30px;width:auto;display:block">
-        </div>
+        <!-- Versao reversa da logo: a navbar agora E o azul da marca, entao a
+             placa branca que existia aqui virou ruido — a logo se assenta
+             direto no fundo, como no site. -->
+        <img class="nb-logo" src="assets/img/logo-adiblock-compact-light.svg" alt="Adiblock">
         <span class="bn2"><strong>Controle Comercial</strong></span>
       </div>
     </div>
@@ -3523,7 +3524,7 @@ function renderPedidoComercial(prop) {
   document.getElementById('pcom-body').innerHTML = `<div class="cot-body">
     <div class="cot-header">
       <div class="cot-logo-wrap">
-        <img src="logo.png" alt="Adiblock">
+        <img src="assets/img/logo-adiblock.svg" alt="Adiblock">
         <div>
           <div class="cot-title">Adiblock — Aditivos para Concretos</div>
           <div class="cot-h1">Pedido Comercial</div>
@@ -3675,7 +3676,7 @@ function renderPedidoProducao(prop, solicitante, obsProd) {
   document.getElementById('prod-body').innerHTML = `<div class="cot-body">
     <div class="cot-header">
       <div class="cot-logo-wrap">
-        <img src="logo.png" alt="Adiblock">
+        <img src="assets/img/logo-adiblock.svg" alt="Adiblock">
         <div>
           <div class="cot-title">Adiblock — Aditivos para Concretos</div>
           <div class="cot-h1">Pedido de Produção</div>
@@ -4932,7 +4933,7 @@ function renderCotacao(prop) {
   const pagina1 = `<div class="cot-body cot-page-break">
     <div class="cot-header">
       <div class="cot-logo-wrap">
-        <img src="logo.png" alt="Adiblock">
+        <img src="assets/img/logo-adiblock.svg" alt="Adiblock">
         <div>
           <div class="cot-title">Adiblock — Aditivos para Concretos</div>
           <div class="cot-h1">Proposta Comercial</div>
@@ -5138,7 +5139,7 @@ async function gerarRelatorio() {
     corpo.innerHTML = `
       <div class="rel-cover">
         <div class="rel-logo" style="background:transparent;padding:0;width:auto;height:auto;border-radius:0">
-          <img src="logo.png" alt="Adiblock" style="height:56px;width:auto">
+          <img src="assets/img/logo-adiblock.svg" alt="Adiblock" style="height:56px;width:auto">
         </div>
         <h1>Relatório Semanal — Controle Comercial Adiblock</h1>
         <p>${fmtPer(inicioSemana)} até ${fmtPer(agora)} &nbsp;•&nbsp; Gerado em ${fmtPer(agora)}</p>

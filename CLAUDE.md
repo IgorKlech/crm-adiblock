@@ -226,6 +226,50 @@ faz uma interface parecer "não clean", mesmo quando as cores estão certas.
 > `.es-ico`, `.eq-av`, `.pf-av`, `.ua`, `.drill-av`, `.rel-logo`, `.prod-del`,
 > `.mx`, `.coi`, `.sic`, `.bell-ic`, `.theme-toggle`, `.kb-move-btn`.
 
+### Identidade visual — alinhada ao site adiblock.online (2026-08-14)
+
+O CRM e o site institucional usam **o mesmo design system**. A fonte de verdade
+é `../site adiblock/css/styles.css`; ao mexer em cor, fonte ou forma aqui,
+confira lá primeiro. Os tokens `--blue-*` e `--ac*` carregam os nomes do site
+de propósito, para a comparação ser direta.
+
+| | Valor | Origem |
+|---|---|---|
+| Fonte | **Manrope** 500/600/700/800, self-hosted em `assets/fonts/` | mesmos `.woff2` do site |
+| Azul | `--blue-950` a `--blue-50`; navbar e `--p` no `#0f2c54`/`#143a6e` | escala do site |
+| Acento | `--ac: #ffd200` (amarelo da marca) | site |
+| Forma | botão **pílula**, card `--rl` 20px | site usa 22px no card |
+| Sombra | tingida de azul `rgba(9,30,66,…)` | site |
+| Movimento | `--ease: cubic-bezier(.22,1,.36,1)`, lift de 2px no `:hover` | site |
+
+> ⚠ **O que NÃO se copia do site: os tamanhos.** Lá o corpo é 17px com
+> `line-height` 1.65 — correto para uma página lida uma vez, errado para uma
+> tabela que o vendedor encara o dia inteiro (mostraria metade das linhas).
+> A **identidade** é compartilhada; a **densidade** é de aplicação.
+
+> **Amarelo é para a ação principal** (classe `.bac`). Se tudo virar amarelo,
+> nada é destaque — é assim que o site usa.
+
+**Tema escuro é derivado, não copiado**: o site não tem. O fundo é `--blue-950`
+e a superfície `--blue-900`, para o escuro continuar sendo a mesma marca.
+
+### Logos (`assets/img/`)
+
+| Arquivo | Onde | Por quê |
+|---|---|---|
+| `logo-adiblock.svg` | login (tema claro), proposta, pedido de produção, pedido comercial, capa do relatório | versão escura, sobre fundo branco |
+| `logo-adiblock-light.svg` | login (tema escuro) | versão reversa |
+| `logo-adiblock-compact-light.svg` | navbar | **sem a tagline** |
+| `favicon.svg` | aba do navegador | vetor, escala em qualquer densidade |
+
+A variante **compacta** existe porque na navbar sobram ~38px de altura: na logo
+completa, a tagline "ADITIVOS PARA CONCRETO" (11.5px no SVG) cairia para ~4px e
+viraria mancha. Nos documentos impressos a logo completa é usada a **46px** — a
+mesma altura que o site usa na própria navbar, o piso onde a tagline ainda lê.
+
+No login a logo troca com o tema (`.logo-claro` / `.logo-escuro`): o cartão é
+branco no claro e azul-escuro no escuro, então uma versão só sumiria numa delas.
+
 ### Raio e sombra
 
 Raio sai sempre de `--rs` (6px) / `--r` (10px) / `--rl` (14px) / `99px` (pílula).
@@ -540,7 +584,10 @@ crm-adiblock/
 ├── .github/workflows/
 │   └── backup.yml      ← backup diário automático (Sprint 7.5)
 ├── vercel.json         ← headers Cache-Control: no-store
-├── logo.png            ← logo Adiblock (usada nas propostas)
+├── assets/
+│   ├── fonts/          ← Manrope self-hosted (woff2 500/600/700/800)
+│   └── img/            ← logos SVG e favicon (vindos do site adiblock.online)
+├── logo.png            ← ÓRFÃO desde 14/08/2026 (substituída pelas SVG)
 ├── app.js              ← ÓRFÃO (não referenciado) — APAGAR ao concluir Sprint 8.1
 ├── style.css           ← ÓRFÃO (não referenciado) — APAGAR ao concluir Sprint 8.1
 └── .claude/

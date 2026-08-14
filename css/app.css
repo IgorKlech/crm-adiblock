@@ -138,8 +138,17 @@ h1,h2,h3,h4{font-weight:800;letter-spacing:-.02em;line-height:1.2}
 .ll{text-align:center;margin-bottom:32px}
 /* Sprint 9.3 (A-02): logo real da Adiblock em vez do quadrado com a letra "A".
    Placa branca porque a logo e colorida e o cartao fica escuro no tema dark. */
-.li{display:inline-flex;align-items:center;justify-content:center;height:52px;padding:6px 14px;border-radius:var(--rl);background:#fff;box-shadow:var(--sh);margin-bottom:16px}
-.li img{height:36px;width:auto;display:block}
+/* Logo do login. A placa branca saiu: a logo SVG ja traz a propria placa no
+   simbolo, entao a de tras virava uma caixa dentro da outra. */
+.li{display:inline-flex;align-items:center;justify-content:center;margin-bottom:18px}
+.li img{height:46px;width:auto;display:block}
+/* Par claro/escuro: o cartao de login e branco no tema claro e azul-escuro no
+   escuro — uma versao so da logo ficaria invisivel numa das duas. */
+.logo-escuro{display:none}
+[data-theme="dark"] .logo-claro{display:none}
+[data-theme="dark"] .logo-escuro{display:block}
+/* Logo da navbar: versao reversa, assentada direto no azul da marca */
+.nb-logo{height:30px;width:auto;display:block;flex-shrink:0}
 .ll h1{font-size:var(--fs-xl);font-weight:700;color:var(--tx);margin-bottom:4px}
 .ll p{font-size:var(--fs-md);color:var(--mt)}
 /* Sprint 9.3 (B-01): links de recuperacao de senha na tela de login.
@@ -1074,7 +1083,9 @@ body.role-leitor .read-only-banner{display:block}
 .cot-body{max-width:880px;margin:24px auto;padding:24px 32px;background:#fff;border:1px solid var(--bdr);border-radius:var(--r)}
 .cot-header{display:flex;justify-content:space-between;align-items:flex-start;border-bottom:2px solid var(--p);padding-bottom:10px;margin-bottom:14px;gap:16px}
 .cot-logo-wrap{display:flex;align-items:center;gap:10px;flex-shrink:0}
-.cot-logo-wrap img{height:40px;width:auto}
+/* 46px e a mesma altura que o site usa na propria navbar — abaixo disso a
+   tagline "ADITIVOS PARA CONCRETO" (11.5px no SVG) vira mancha. */
+.cot-logo-wrap img{height:46px;width:auto}
 .cot-title{font-size:var(--fs-2xs);color:var(--mt);font-weight:600;letter-spacing:.08em;text-transform:uppercase}
 .cot-h1{font-size:var(--fs-xl);font-weight:700;color:var(--tx);margin-top:2px;line-height:1.2}
 .cot-meta{text-align:right;font-size:var(--fs-sm);color:var(--mt);line-height:1.6;white-space:nowrap}

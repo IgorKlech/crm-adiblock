@@ -202,6 +202,40 @@ Variáveis em `:root` — nunca usar cores hardcoded fora delas:
 
 Tema dark: `[data-theme="dark"]` com override de todas as variáveis.
 
+### Escala tipográfica (2026-08-14) — não escrever `font-size` em px
+
+Eram **18** tamanhos de fonte, incluindo `10.5`, `11.5` e `12.5px`. Nada assentava
+numa grade e elementos vizinhos tinham tamanhos diferentes sem motivo — é isso que
+faz uma interface parecer "não clean", mesmo quando as cores estão certas.
+
+```css
+--fs-2xs:10px   /* badge uppercase minúsculo */
+--fs-xs:11px    /* label, meta densa */
+--fs-sm:12px    /* secundário */
+--fs-md:13px    /* corpo de tabela e card */
+--fs-base:14px  /* corpo */
+--fs-lg:16px    /* título de card, h3 de modal */
+--fs-xl:20px    /* título de página, número destacado */
+--fs-2xl:28px   /* número-herói do dashboard */
+```
+
+> **A escala vale para TEXTO. Glifo não é texto.** Avatar com iniciais, emoji de
+> empty state, ✕ de fechar e ícone de botão têm tamanho por outro motivo (caber
+> num círculo, ser alvo de toque). Esses continuam em px, de propósito — passar a
+> régua neles é o que quebra layout em varredura mecânica. Os que estão fora:
+> `.es-ico`, `.eq-av`, `.pf-av`, `.ua`, `.drill-av`, `.rel-logo`, `.prod-del`,
+> `.mx`, `.coi`, `.sic`, `.bell-ic`, `.theme-toggle`, `.kb-move-btn`.
+
+### Raio e sombra
+
+Raio sai sempre de `--rs` (6px) / `--r` (10px) / `--rl` (14px) / `99px` (pílula).
+Nada de valor avulso — havia 8 (`3,4,5,6,7,8,12px`).
+
+**Sombra segue uma regra só:** card **chapado** na página usa borda **ou** sombra,
+nunca as duas — as duas juntas pesam. Elemento **flutuante** (modal, popover) usa
+as duas, porque precisa descolar do fundo. Cards clicáveis ganham a sombra no
+`:hover`, o que torna o hover um estado de verdade em vez de um aumento sutil.
+
 ---
 
 ## 6. Estrutura de navegação

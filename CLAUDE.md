@@ -256,6 +256,30 @@ onAuthStateChange:
 
 **`limparSessao()`** — limpa todas as chaves `sb-*` do localStorage/sessionStorage. Não toca em `crm_theme`, `crm_metas`, `crm_visoes`.
 
+### Recuperação de senha (Sprint 9.3 / B-01)
+
+```
+link do email (#type=recovery no hash)
+     ↓
+MODO_RECUPERACAO = true   ← lido do hash de forma SÍNCRONA, no topo do script
+     ↓
+boot NÃO abre o app  +  onAuthStateChange desvia pra showNovaSenha()
+     ↓
+updateUser({password}) → MODO_RECUPERACAO = false → replaceState → showApp()
+```
+
+**`MODO_RECUPERACAO`** é `let`, não `const`: precisa ser desligada assim que a
+senha for trocada, senão o `TOKEN_REFRESHED` seguinte joga o usuário de volta na
+tela de nova senha. A leitura tem que ser síncrona porque o supabase-js consome
+e **apaga** o hash assim que inicializa — quem ler depois não acha nada.
+
+> ⚠ **Depende de configuração no Supabase, não só do código.** Em
+> *Authentication → URL Configuration*, a lista de **Redirect URLs** precisa
+> conter `https://crm-adiblock.vercel.app/` (e `http://localhost:3000/` para
+> testes locais). O `resetPasswordForEmail` manda `redirectTo: origin + pathname`;
+> URL fora da lista é recusada e o link do email não funciona. O template
+> *Reset Password* tem que usar `{{ .ConfirmationURL }}`.
+
 ---
 
 ## 8. Documentos imprimíveis

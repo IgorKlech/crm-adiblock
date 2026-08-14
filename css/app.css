@@ -14,6 +14,18 @@
   --ok:#059669;--ok2:#d1fae5;
   --er:#dc2626;--er2:#fee2e2;
   --wr:#d97706;--wr2:#fef3c7;
+  /* Sprint 9.3 (B-02): par de TEXTO pra cada fundo suave acima.
+     Regra: fundo --xx2 so pode receber texto --xx-tx. Nunca hex fixo — no tema
+     escuro o fundo vira quase preto e o texto escuro fixo some. */
+  --ok-tx:#166534;--er-tx:#991b1b;--wr-tx:#92400e;--p-tx:#1d4ed8;
+  /* Sprint 9.3 (B-02): estagios do funil e classificacoes tem linguagem visual
+     propria (progressao frio -> quente) que os 4 tokens semanticos acima nao
+     cobrem sem colidir. Par bg/tx dedicado pra cada um. */
+  --est1-bg:#f3f4f6;--est1-tx:#4b5563;  /* neutro  — lead / inativo */
+  --est2-bg:#dbeafe;--est2-tx:#1e40af;  /* frio    — qualificado / prospect */
+  --est3-bg:#fef3c7;--est3-tx:#92400e;  /* morno   — proposta enviada */
+  --est4-bg:#fed7aa;--est4-tx:#9a3412;  /* quente  — em negociacao */
+  --pnk-bg:#fce7f3;--pnk-tx:#9d174d;    /* indicacao */
   --sh:0 1px 3px rgba(0,0,0,.06),0 1px 2px rgba(0,0,0,.04);
   --shm:0 4px 12px rgba(0,0,0,.08),0 2px 4px rgba(0,0,0,.04);
   --shl:0 20px 60px rgba(0,0,0,.10),0 4px 16px rgba(0,0,0,.06);
@@ -35,6 +47,15 @@
   --ok:#10b981;--ok2:rgba(16,185,129,.12);
   --er:#f87171;--er2:rgba(248,113,113,.15);
   --wr:#fbbf24;--wr2:rgba(251,191,36,.15);
+  /* Sprint 9.3 (B-02): no escuro os fundos --xx2 sao veus translucidos sobre
+     superficie escura, entao o texto tem que ser CLARO. */
+  --ok-tx:#6ee7b7;--er-tx:#fca5a5;--wr-tx:#fcd34d;--p-tx:#93c5fd;
+  /* Mesma progressao frio -> quente, agora como veu translucido + texto claro. */
+  --est1-bg:rgba(148,163,184,.16);--est1-tx:#cbd5e1;
+  --est2-bg:rgba(96,165,250,.16);--est2-tx:#93c5fd;
+  --est3-bg:rgba(251,191,36,.16);--est3-tx:#fcd34d;
+  --est4-bg:rgba(249,115,22,.18);--est4-tx:#fdba74;
+  --pnk-bg:rgba(244,114,182,.16);--pnk-tx:#f9a8d4;
   --sh:0 1px 3px rgba(0,0,0,.4),0 1px 2px rgba(0,0,0,.3);
   --shm:0 4px 12px rgba(0,0,0,.45),0 2px 4px rgba(0,0,0,.3);
   --shl:0 20px 60px rgba(0,0,0,.5),0 4px 16px rgba(0,0,0,.35);
@@ -60,9 +81,21 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--tx);font-si
 #ls{display:flex;align-items:center;justify-content:center;min-height:100vh;background:var(--bg);padding:20px}
 .lc{background:var(--sur);border-radius:var(--rl);padding:48px 44px;width:100%;max-width:420px;box-shadow:var(--shl);border:1px solid var(--bdr)}
 .ll{text-align:center;margin-bottom:32px}
-.li{width:52px;height:52px;border-radius:12px;background:var(--p);color:#fff;font-size:20px;font-weight:800;display:flex;align-items:center;justify-content:center;margin:0 auto 16px}
+/* Sprint 9.3 (A-02): logo real da Adiblock em vez do quadrado com a letra "A".
+   Placa branca porque a logo e colorida e o cartao fica escuro no tema dark. */
+.li{display:inline-flex;align-items:center;justify-content:center;height:52px;padding:6px 14px;border-radius:12px;background:#fff;box-shadow:var(--sh);margin-bottom:16px}
+.li img{height:36px;width:auto;display:block}
 .ll h1{font-size:22px;font-weight:700;color:var(--tx);margin-bottom:4px}
 .ll p{font-size:13px;color:var(--mt)}
+/* Sprint 9.3 (B-01): links de recuperacao de senha na tela de login.
+   <button> em vez de <a href="#"> pra nao sujar a URL nem rolar a pagina. */
+.lc-alt{text-align:center;margin-top:16px;padding-top:14px;border-top:1px solid var(--bdr)}
+.lc-help{text-align:center;margin-top:12px;font-size:12px;color:var(--mt);line-height:1.6}
+.lc-link{background:none;border:none;padding:2px 4px;font-family:inherit;font-size:13px;font-weight:600;color:var(--p);cursor:pointer;border-radius:var(--rs)}
+.lc-help .lc-link{font-size:12px}
+.lc-link:hover{text-decoration:underline}
+.lc-link:focus-visible{outline:2px solid var(--p);outline-offset:2px}
+.lc-ok{background:var(--ok2);color:var(--ok-tx);border:1px solid var(--ok);border-radius:var(--rs);padding:12px 14px;font-size:13px;line-height:1.5;margin-top:14px}
 
 /* FORMS */
 .fg{margin-bottom:14px}
@@ -101,7 +134,16 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--tx);font-si
 .br{display:flex;align-items:center;gap:10px;flex-shrink:0}
 .bi{width:28px;height:28px;border-radius:7px;background:var(--p);color:#fff;font-size:13px;font-weight:800;display:flex;align-items:center;justify-content:center}
 .bn2{color:rgba(255,255,255,.7);font-size:15px;font-weight:400}.bn2 strong{color:#fff;font-weight:700}
-#tabs{display:flex;gap:1px}
+/* Sprint 9.3 (E-01, antecipado): com 7 abas o #tabs esticava a pagina inteira
+   no celular — a barra passava de 550px num viewport de 390 e TUDO ficava
+   deslocado, inclusive os modais em bottom-sheet. Agora a faixa desliza.
+   `margin-right:auto` mantem as abas coladas na logo (como antes), empurrando
+   a .nbr pra direita agora que #tabs e filho direto da navbar. */
+   O `margin-left` repoe o respiro que o `gap:14px` da .nbl dava antes. */
+#tabs{display:flex;gap:1px;min-width:0;margin-left:14px;margin-right:auto;overflow-x:auto;scrollbar-width:none;-ms-overflow-style:none}
+#tabs::-webkit-scrollbar{display:none}
+/* Aba nao encolhe: com overflow-x, encolher so espremeria o texto ate ilegivel */
+.tb{flex:none}
 .tb{display:flex;align-items:center;gap:5px;padding:7px 10px;background:transparent;border:none;color:rgba(255,255,255,.55);font-size:13px;font-weight:400;font-family:inherit;cursor:pointer;border-radius:var(--rs);transition:all .15s;white-space:nowrap}
 .tb svg{width:14px;height:14px}
 .tb:hover{background:rgba(255,255,255,.08);color:rgba(255,255,255,.85)}
@@ -151,8 +193,10 @@ thead th.sa-asc .sa,thead th.sa-desc .sa{opacity:1;color:var(--p)}
 tbody tr{border-bottom:1px solid var(--bdr);transition:background .1s}
 tbody tr:last-child{border-bottom:none}
 tbody tr:hover{background:var(--ps)}
-tbody tr.ov{background:#fff5f5}
-tbody tr.ov:hover{background:#fee2e2}
+/* Sprint 9.3 (B-02): linha de retorno vencido. Era #fff5f5 fixo — no tema
+   escuro virava uma faixa quase branca com texto claro em cima, ilegivel. */
+tbody tr.ov{background:var(--er2)}
+tbody tr.ov:hover{background:var(--er2);box-shadow:inset 3px 0 0 var(--er)}
 tbody td{padding:11px 14px;font-size:13px;color:var(--tx2);vertical-align:middle}
 td strong{color:var(--tx);font-weight:600}
 .pi{font-size:11px;color:var(--mt);margin-top:2px}
@@ -163,10 +207,10 @@ td strong{color:var(--tx);font-weight:600}
 /* BADGES */
 .badge{display:inline-flex;align-items:center;gap:4px;padding:3px 9px;border-radius:99px;font-size:11px;font-weight:500;white-space:nowrap}
 .badge::before{content:'';width:5px;height:5px;border-radius:50%;background:currentColor;flex-shrink:0}
-.bp2{background:var(--wr2);color:#92400e}
-.bec{background:#dbeafe;color:#1d4ed8}
-.bc{background:var(--ok2);color:var(--ok)}
-.bnc{background:var(--er2);color:var(--er)}
+.bp2{background:var(--wr2);color:var(--wr-tx)}
+.bec{background:var(--ps);color:var(--p-tx)}
+.bc{background:var(--ok2);color:var(--ok-tx)}
+.bnc{background:var(--er2);color:var(--er-tx)}
 .bi2{background:var(--bg);color:var(--mt)}
 
 /* SELLER CHIP */
@@ -367,7 +411,7 @@ td strong{color:var(--tx);font-weight:600}
 .rri{display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid var(--bdr)}
 .rri:last-child{border-bottom:none;padding-bottom:0}
 .rp{width:26px;height:26px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;flex-shrink:0}
-.r1{background:#fef3c7;color:#92400e}.r2{background:var(--bg);color:var(--mt)}.r3{background:#fff7ed;color:#9a3412}
+.r1{background:var(--wr2);color:var(--wr-tx)}.r2{background:var(--bg);color:var(--mt)}.r3{background:var(--bg);color:var(--wr)}
 .rn{font-size:13px;font-weight:500;flex:1}
 .rb{flex:1}.rbr{height:5px;background:var(--bdr);border-radius:99px;overflow:hidden;margin-top:4px}
 .rbf{height:100%;background:var(--p);border-radius:99px;transition:width .5s ease}
@@ -443,7 +487,11 @@ td strong{color:var(--tx);font-weight:600}
 
 /* ── Responsivo Mobile ── */
 @media(max-width:768px){
-  #nb{padding:0 14px;height:52px}
+  /* Sprint 9.3 (E-01): navbar em duas linhas. Logo + acoes em cima, abas numa
+     faixa deslizante embaixo. Em 390px nao existe largura pra tudo na mesma
+     linha — antes as abas eram espremidas ate 0px e sumiam. */
+  #nb{padding:6px 14px 0;height:auto;flex-wrap:wrap;row-gap:2px}
+  #tabs{order:3;flex-basis:100%;margin-left:0;margin-right:0;padding-bottom:5px}
   .bn2{display:none}
   /* Sprint 7.3: tabs com label curto (11px) em vez de esconder o texto */
   .tb-full{display:none}
@@ -451,6 +499,17 @@ td strong{color:var(--tx);font-weight:600}
   .tb{padding:7px 9px;font-size:11px;gap:4px}
   .un{display:none}
   .ur{display:none}
+  /* ── Sprint 9.3 (E-01): a direita da navbar media 454px num viewport de 390 e,
+     como ela nao encolhe, empurrava a pagina inteira pra fora da tela (modais
+     inclusive) e espremia as abas ate sumirem. Aqui cai pra ~185px. ── */
+  .nbr{gap:6px}
+  /* "Busca" vira so o icone: o atalho Ctrl+K nao existe em celular mesmo */
+  #gs-btn{padding:6px 8px}
+  #gs-btn span{display:none}
+  /* Atalhos de teclado nao fazem sentido sem teclado */
+  #kbd-btn{display:none}
+  /* Status do vendedor e controle de mesa; o avatar continua abrindo o perfil */
+  .vs-wrap{display:none}
   #mc{padding:14px}
   .ph{flex-wrap:wrap;gap:10px}
   .ph h2{font-size:16px}
@@ -609,7 +668,7 @@ td strong{color:var(--tx);font-weight:600}
 /* ── Alertas de Inatividade ── */
 .inact-wrap{background:var(--sur);border-radius:var(--r);border:1px solid var(--bdr);box-shadow:var(--sh);margin-bottom:16px;overflow:hidden}
 .inact-header{display:flex;align-items:center;justify-content:space-between;padding:14px 18px;border-bottom:1px solid var(--bdr);background:var(--wr2)}
-.inact-title{font-size:13px;font-weight:700;color:#92400e;display:flex;align-items:center;gap:8px}
+.inact-title{font-size:13px;font-weight:700;color:var(--wr-tx);display:flex;align-items:center;gap:8px}
 .inact-badge{background:var(--wr);color:#fff;font-size:11px;font-weight:700;padding:2px 8px;border-radius:99px}
 .inact-body{padding:0}
 .inact-row{display:flex;align-items:center;justify-content:space-between;padding:11px 18px;border-bottom:1px solid var(--bdr);gap:12px}
@@ -641,13 +700,16 @@ td strong{color:var(--tx);font-weight:600}
 .rel-table th{background:var(--bg);padding:9px 14px;text-align:left;font-size:11px;font-weight:600;color:var(--mt);text-transform:uppercase;letter-spacing:.04em;border-bottom:1px solid var(--bdr)}
 .rel-table td{padding:9px 14px;font-size:13px;color:var(--tx2);border-bottom:1px solid var(--bdr)}
 .rel-table tr:last-child td{border-bottom:none}
-.rel-alert-box{background:var(--wr2);border:1px solid var(--wr);border-radius:var(--r);padding:14px 18px;font-size:13px;color:#92400e;display:flex;align-items:center;gap:10px}
-.rel-ok-box{background:var(--ok2);border:1px solid var(--ok);border-radius:var(--r);padding:14px 18px;font-size:13px;color:var(--ok);display:flex;align-items:center;gap:10px}
+.rel-alert-box{background:var(--wr2);border:1px solid var(--wr);border-radius:var(--r);padding:14px 18px;font-size:13px;color:var(--wr-tx);display:flex;align-items:center;gap:10px}
+.rel-ok-box{background:var(--ok2);border:1px solid var(--ok);border-radius:var(--r);padding:14px 18px;font-size:13px;color:var(--ok-tx);display:flex;align-items:center;gap:10px}
 .rel-footer{text-align:center;font-size:11px;color:var(--mt);margin-top:28px;padding-top:16px;border-top:1px solid var(--bdr)}
 
 /* ── Pipeline Kanban (Sprint 4.4) ── */
 #kb-board{display:grid;grid-template-columns:repeat(5,1fr);gap:12px;min-height:60vh;overflow-x:auto}
 @media(max-width:1100px){#kb-board{grid-template-columns:repeat(2,1fr)}}
+/* Sprint 9.3 (B-03): no celular 2 colunas x 200px minimos nao cabem em 390px —
+   o card ficava cortado e o botao "Mover" com ele. Uma coluna por vez. */
+@media(max-width:560px){#kb-board{grid-template-columns:1fr}.kb-col{min-width:0}}
 .kb-col{background:var(--bg);border:1px solid var(--bdr);border-radius:var(--rs);display:flex;flex-direction:column;min-width:200px}
 .kb-col-head{padding:10px 12px;border-bottom:1px solid var(--bdr);display:flex;justify-content:space-between;align-items:center;font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;color:var(--tx);background:var(--sur);border-top-left-radius:var(--rs);border-top-right-radius:var(--rs)}
 .kb-col-head .kb-col-count{background:var(--p);color:#fff;font-size:10px;padding:2px 7px;border-radius:99px;font-weight:700}
@@ -663,6 +725,28 @@ td strong{color:var(--tx);font-weight:600}
 .kb-card-vend{font-size:10px;color:var(--mt2);margin-top:4px}
 .kb-col-total{font-size:11px;color:var(--mt);font-weight:500;padding:6px 12px;background:var(--sur);border-top:1px solid var(--bdr);text-align:right;border-bottom-left-radius:var(--rs);border-bottom-right-radius:var(--rs)}
 .kb-col-total b{color:var(--p)}
+/* Sprint 9.3 (B-03): botao "Mover" no card — caminho que funciona em toque,
+   ja que o drag-and-drop HTML5 nao existe em tela sensivel ao toque. */
+.kb-move-btn{margin-top:8px;width:100%;padding:6px 8px;border:1px solid var(--bdr);border-radius:var(--rs);background:var(--bg);color:var(--tx2);font-family:inherit;font-size:11px;font-weight:600;cursor:pointer;transition:all .12s}
+.kb-move-btn:hover{border-color:var(--p);color:var(--p);background:var(--ps)}
+.kb-move-btn:focus-visible{outline:2px solid var(--p);outline-offset:1px}
+@media(max-width:768px){
+  /* No celular arrastar nao e opcao: o botao vira o alvo principal. */
+  .kb-move-btn{min-height:44px;font-size:13px}
+  .kb-card{cursor:pointer}
+}
+/* Só acima do breakpoint de bottom-sheet (480px). Sem o @media esta regra vence
+   o `.md{max-width:100%}` do modo celular por vir depois no arquivo. */
+@media(min-width:481px){.kb-move-md{max-width:420px}}
+.kb-move-info{padding:0 0 14px;border-bottom:1px solid var(--bdr);margin-bottom:14px}
+.kb-move-emp{font-size:12px;color:var(--mt);font-weight:500}
+.kb-move-tit{font-size:15px;font-weight:600;color:var(--tx);margin-top:2px;line-height:1.3}
+.kb-move-opts{display:flex;flex-direction:column;gap:8px}
+.kb-move-opt{display:flex;align-items:center;justify-content:space-between;gap:10px;width:100%;min-height:46px;padding:10px 14px;border:1.5px solid var(--bdr);border-radius:var(--rs);background:var(--sur);font-family:inherit;cursor:pointer;text-align:left;transition:all .12s}
+.kb-move-opt:hover:not([disabled]){border-color:var(--p);background:var(--ps)}
+.kb-move-opt:focus-visible{outline:2px solid var(--p);outline-offset:2px}
+.kb-move-opt[disabled]{cursor:default;opacity:.6;background:var(--bg)}
+.kb-move-now{font-size:11px;color:var(--mt);font-weight:600}
 .kb-col-lead .kb-col-head{border-top:3px solid #6c7a89}
 .kb-col-qualificado .kb-col-head{border-top:3px solid #5b7fdb}
 .kb-col-proposta_enviada .kb-col-head{border-top:3px solid #d97706}
@@ -670,15 +754,15 @@ td strong{color:var(--tx);font-weight:600}
 .kb-col-ganha .kb-col-head{border-top:3px solid #38a169}
 
 /* ── Equipe (Sprint 4.3) ── */
-.eq-info{padding:12px 16px;background:#fef3c7;border:1px solid #fbbf24;color:#78350f;border-radius:var(--rs);font-size:12.5px;line-height:1.5;margin-bottom:18px}
+.eq-info{padding:12px 16px;background:var(--wr2);border:1px solid var(--wr);color:var(--wr-tx);border-radius:var(--rs);font-size:12.5px;line-height:1.5;margin-bottom:18px}
 .eq-card{background:var(--sur);border:1px solid var(--bdr);border-radius:var(--rs);padding:14px 18px;margin-bottom:10px;display:flex;justify-content:space-between;align-items:center;gap:12px}
 .eq-av{width:44px;height:44px;border-radius:50%;color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:17px;flex-shrink:0}
 .eq-info-main{flex:1;min-width:0}
 .eq-info-main .eq-nome{font-size:14px;font-weight:600;color:var(--tx)}
 .eq-info-main .eq-meta{font-size:12px;color:var(--mt);margin-top:3px;line-height:1.5}
 .eq-info-main .eq-role{display:inline-block;font-size:9px;font-weight:700;padding:2px 7px;border-radius:99px;text-transform:uppercase;letter-spacing:.05em;margin-left:6px}
-.eq-role.admin{background:#fef3c7;color:#92400e}
-.eq-role.vendedor{background:#dbeafe;color:#1e40af}
+.eq-role.admin{background:var(--est3-bg);color:var(--est3-tx)}
+.eq-role.vendedor{background:var(--est2-bg);color:var(--est2-tx)}
 
 /* ── Listas de contatos / oportunidades no perfil (Sprint 3.3) ── */
 .pf-list-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px}
@@ -687,7 +771,7 @@ td strong{color:var(--tx);font-weight:600}
 .pf-card:hover{border-color:var(--bdr2)}
 .pf-card-main{flex:1;min-width:0}
 .pf-card-title{font-size:14px;font-weight:600;color:var(--tx);margin-bottom:4px}
-.pf-card-title .pf-badge-princ{background:#fef3c7;color:#92400e;font-size:9px;font-weight:700;padding:2px 6px;border-radius:99px;margin-left:6px;vertical-align:middle;text-transform:uppercase;letter-spacing:.04em}
+.pf-card-title .pf-badge-princ{background:var(--est3-bg);color:var(--est3-tx);font-size:9px;font-weight:700;padding:2px 6px;border-radius:99px;margin-left:6px;vertical-align:middle;text-transform:uppercase;letter-spacing:.04em}
 .pf-card-sub{font-size:12px;color:var(--mt);line-height:1.5}
 .pf-card-sub b{color:var(--tx);font-weight:500}
 .pf-card-actions{display:flex;gap:4px;flex-shrink:0}
@@ -741,8 +825,8 @@ td strong{color:var(--tx);font-weight:600}
 .al-head b{color:var(--tx);font-weight:600}
 .al-changes{font-size:11.5px;line-height:1.6;color:var(--tx2)}
 .al-changes b{color:var(--tx);font-weight:600}
-.al-from{color:#991b1b;text-decoration:line-through}
-.al-to{color:#166534}
+.al-from{color:var(--er-tx);text-decoration:line-through}
+.al-to{color:var(--ok-tx)}
 
 .pf-opp-card{cursor:default}
 .pf-opp-actions{display:flex;flex-wrap:wrap;gap:4px;margin-top:8px}
@@ -753,25 +837,25 @@ td strong{color:var(--tx);font-weight:600}
 
 /* ── Tier / Estágio badges (Sprint 3) ── */
 .tier-badge{display:inline-block;font-size:10px;font-weight:700;padding:3px 8px;border-radius:99px;text-transform:uppercase;letter-spacing:.05em}
-.tier-lead{background:#fee2e2;color:#991b1b}
-.tier-cliente{background:#dbeafe;color:#1e40af}
-.tier-conta{background:#dcfce7;color:#166534}
+.tier-lead{background:var(--er2);color:var(--er-tx)}
+.tier-cliente{background:var(--est2-bg);color:var(--est2-tx)}
+.tier-conta{background:var(--ok2);color:var(--ok-tx)}
 /* Classificação manual (Sprint 4.1) — sobrescreve o tier auto na display */
 .classif-badge{display:inline-block;font-size:10px;font-weight:700;padding:3px 8px;border-radius:99px;text-transform:uppercase;letter-spacing:.05em;border:1.5px solid transparent}
-.classif-lead_novo{background:#fef3c7;color:#92400e;border-color:#fbbf24}
-.classif-prospect{background:#e0e7ff;color:#3730a3;border-color:#818cf8}
-.classif-cliente_ativo{background:#dcfce7;color:#166534;border-color:#34d399}
-.classif-inativo{background:#f3f4f6;color:#4b5563;border-color:#9ca3af}
-.classif-indicacao{background:#fce7f3;color:#9d174d;border-color:#f472b6}
+.classif-lead_novo{background:var(--est3-bg);color:var(--est3-tx);border-color:var(--est3-tx)}
+.classif-prospect{background:var(--est2-bg);color:var(--est2-tx);border-color:var(--est2-tx)}
+.classif-cliente_ativo{background:var(--ok2);color:var(--ok-tx);border-color:var(--ok-tx)}
+.classif-inativo{background:var(--est1-bg);color:var(--est1-tx);border-color:var(--est1-tx)}
+.classif-indicacao{background:var(--pnk-bg);color:var(--pnk-tx);border-color:var(--pnk-tx)}
 .estagio-badge{display:inline-block;font-size:10px;font-weight:600;padding:3px 8px;border-radius:99px}
 /* Sprint 7.2: badge de oportunidade orfa (sem proximo passo) */
 .badge-orfa{display:inline-block;font-size:10px;font-weight:700;padding:2px 7px;border-radius:99px;background:var(--wr2);color:var(--wr);white-space:nowrap}
-.est-lead{background:#f3f4f6;color:#4b5563}
-.est-qualificado{background:#dbeafe;color:#1e40af}
-.est-proposta_enviada{background:#fef3c7;color:#92400e}
-.est-em_negociacao{background:#fed7aa;color:#9a3412}
-.est-ganha{background:#dcfce7;color:#166534}
-.est-perdida{background:#fee2e2;color:#991b1b}
+.est-lead{background:var(--est1-bg);color:var(--est1-tx)}
+.est-qualificado{background:var(--est2-bg);color:var(--est2-tx)}
+.est-proposta_enviada{background:var(--est3-bg);color:var(--est3-tx)}
+.est-em_negociacao{background:var(--est4-bg);color:var(--est4-tx)}
+.est-ganha{background:var(--ok2);color:var(--ok-tx)}
+.est-perdida{background:var(--er2);color:var(--er-tx)}
 .deprecated-msg{padding:18px;text-align:center;color:var(--mt);background:var(--bg);border:1px dashed var(--bdr2);border-radius:var(--rs);font-size:12px;line-height:1.5}
 
 /* ── Bulk actions ── */
@@ -785,8 +869,8 @@ tr.row-selected{background:var(--ps)!important}
 .lgpd-row{padding:10px 12px;background:var(--bg);border:1px solid var(--bdr);border-radius:8px}
 .lgpd-check{display:flex;align-items:flex-start;gap:8px;font-size:13px;color:var(--tx);cursor:pointer;line-height:1.4}
 .lgpd-check input{margin-top:2px;cursor:pointer;flex-shrink:0}
-.lgpd-badge{display:inline-block;background:#dcfce7;color:#166534;font-size:10px;font-weight:600;padding:2px 8px;border-radius:99px;text-transform:uppercase;letter-spacing:.04em}
-.lgpd-badge-pending{background:#fee2e2;color:#991b1b}
+.lgpd-badge{display:inline-block;background:var(--ok2);color:var(--ok-tx);font-size:10px;font-weight:600;padding:2px 8px;border-radius:99px;text-transform:uppercase;letter-spacing:.04em}
+.lgpd-badge-pending{background:var(--er2);color:var(--er-tx)}
 
 /* ── Roles (Sprint 5.1) — esconde controles de escrita pra usuário "leitor" ── */
 body.role-leitor .write-only{display:none!important}
@@ -800,18 +884,18 @@ body.role-leitor #pf-bulk-bar{display:none!important}
 /* Leitor não vê botões de excluir/editar inline (heuristica: classe bod = excluir, bp sm = editar dentro de ac2) */
 body.role-leitor .btn.bod{display:none!important}
 /* Banner discreto avisando modo leitura */
-.read-only-banner{display:none;position:fixed;bottom:14px;left:50%;transform:translateX(-50%);background:#fef3c7;border:1px solid #f59e0b;color:#78350f;padding:6px 14px;border-radius:99px;font-size:11px;font-weight:600;z-index:90;box-shadow:0 4px 12px rgba(0,0,0,.15)}
+.read-only-banner{display:none;position:fixed;bottom:14px;left:50%;transform:translateX(-50%);background:var(--est3-bg);border:1px solid var(--wr);color:var(--wr-tx);padding:6px 14px;border-radius:99px;font-size:11px;font-weight:600;z-index:90;box-shadow:var(--shm)}
 body.role-leitor .read-only-banner{display:block}
 
 /* ── Banner de aviso de schema desatualizado ── */
-#schema-banner{position:fixed;top:60px;left:50%;transform:translateX(-50%);z-index:400;background:#fef3c7;border:2px solid #f59e0b;border-radius:8px;padding:14px 18px;max-width:720px;width:calc(100% - 40px);box-shadow:0 10px 30px rgba(0,0,0,.18);font-size:13px;color:#78350f}
-.schema-banner-title{font-weight:700;font-size:14px;margin-bottom:6px;color:#92400e}
+#schema-banner{position:fixed;top:60px;left:50%;transform:translateX(-50%);z-index:400;background:var(--sur);border:2px solid var(--wr);border-radius:8px;padding:14px 18px;max-width:720px;width:calc(100% - 40px);box-shadow:var(--shl);font-size:13px;color:var(--tx2)}
+.schema-banner-title{font-weight:700;font-size:14px;margin-bottom:6px;color:var(--wr-tx)}
 .schema-banner-msg{margin-bottom:8px;line-height:1.5}
-.schema-banner-msg code{background:rgba(0,0,0,.08);padding:1px 6px;border-radius:4px;font-family:ui-monospace,Consolas,monospace;font-size:12px}
+.schema-banner-msg code{background:var(--bg);padding:1px 6px;border-radius:4px;font-family:ui-monospace,Consolas,monospace;font-size:12px}
 .schema-banner-list{list-style:none;padding:0;margin:0 0 12px 0;max-height:180px;overflow-y:auto;font-size:11.5px;line-height:1.5}
-.schema-banner-list li{padding:4px 0;border-bottom:1px dashed rgba(0,0,0,.12)}
+.schema-banner-list li{padding:4px 0;border-bottom:1px dashed var(--bdr)}
 .schema-banner-list li:last-child{border-bottom:none}
-.schema-banner-list code{font-family:ui-monospace,Consolas,monospace;font-size:11px;color:#7c2d12}
+.schema-banner-list code{font-family:ui-monospace,Consolas,monospace;font-size:11px;color:var(--wr-tx)}
 .schema-banner-close{background:#f59e0b;color:#fff;border:none;padding:6px 14px;border-radius:6px;cursor:pointer;font-size:12px;font-weight:600;font-family:inherit}
 .schema-banner-close:hover{background:#d97706}
 
@@ -881,7 +965,9 @@ body.role-leitor .read-only-banner{display:block}
 .cot-tab tfoot td{padding:10px 6px;font-weight:700;font-size:13px;background:var(--bg);border-top:2px solid var(--p)}
 .cot-tab tfoot td.cot-total-lbl{text-align:right;color:var(--mt);font-weight:600;font-size:11px;text-transform:uppercase;letter-spacing:.05em}
 .cot-tab tfoot td.cot-total-val{color:var(--p);text-align:right;font-size:14px;white-space:nowrap}
-.cot-obs{font-size:13px;line-height:1.6;color:var(--tx);white-space:pre-wrap;padding:10px 14px;background:#fff8e1;border-left:4px solid #f59e0b;border-radius:6px}
+/* Sprint 9.3 (B-02): o #cot-page usa var(--bg), entao segue o tema — o creme
+   fixo #fff8e1 com color:var(--tx) dava texto claro sobre creme no escuro. */
+.cot-obs{font-size:13px;line-height:1.6;color:var(--tx);white-space:pre-wrap;padding:10px 14px;background:var(--wr2);border-left:4px solid var(--wr);border-radius:6px}
 .cot-footer{text-align:center;font-size:11px;color:var(--mt);margin-top:28px;padding-top:14px;border-top:1px solid var(--bdr)}
 .cot-2col{display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-bottom:14px}
 .cot-info-list{font-size:12px;line-height:1.7;color:var(--tx)}

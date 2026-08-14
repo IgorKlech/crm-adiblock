@@ -300,6 +300,8 @@ Três documentos distintos — **nunca misturar ao imprimir**:
 | 8.1a/b | Modularização: extrai `css/app.css` e `js/format.js` (EM ANDAMENTO) | d126950 + 529c7c9 |
 | 8.2 | Radar de Reativação (clientes dormentes priorizados, atalho R) | 86a0064 |
 | 9.0 | Design doc multi-tenant (`docs/MULTI-TENANT.md`) — só documento | 8fc80dd |
+| 9.1 | Multi-tenant etapas D/F: NOT NULL + índices compostos + numeração por org, policies RLS por org | 404eb33 + 7b83512 |
+| 9.3 | Auditoria de UX: logo/favicon, recuperação de senha, cores do tema escuro, mover estágio sem arrastar, navbar mobile | (este) |
 
 ---
 
@@ -309,8 +311,9 @@ Três documentos distintos — **nunca misturar ao imprimir**:
   Faltam: `config.js`, `state.js`, `api.js`, `js/views/*`, `modals.js`, `main.js`,
   e apagar os órfãos `app.js`/`style.css`. Retomar com smoke test entre cada
   módulo (ordem de carga dos `<script src>` é crítica — globals compartilhados).
-- **Sprint 9.x (multi-tenant) é só design** ([docs/MULTI-TENANT.md](docs/MULTI-TENANT.md)).
-  Nenhuma migração escrita até aprovação do design.
+- **Sprint 9.1 (multi-tenant) saiu do papel**: as etapas D e F já foram aplicadas
+  (NOT NULL + índices compostos + numeração por org; policies RLS por org, com
+  ROLLBACK). O design segue em [docs/MULTI-TENANT.md](docs/MULTI-TENANT.md).
 
 ---
 

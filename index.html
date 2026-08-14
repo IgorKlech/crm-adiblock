@@ -6,6 +6,10 @@
 <meta http-equiv="Cache-Control" content="no-store, max-age=0">
 <meta http-equiv="Pragma" content="no-cache">
 <title>Controle Comercial — Adiblock</title>
+<!-- Sprint 9.3 (A-03): sem isso o CRM aparece como aba em branco no meio de
+     outras dez abertas o dia inteiro. -->
+<link rel="icon" href="logo.png">
+<link rel="apple-touch-icon" href="logo.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <!-- supabase-js: arquivo LOCAL (mesma origem do Vercel) como fonte primaria.
@@ -15,27 +19,75 @@
 <script src="js/vendor/supabase-js-2.39.3.min.js"></script>
 <script>if(typeof supabase==='undefined'){document.write('<scr'+'ipt src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.3"><\/scr'+'ipt>');}</script>
 <link rel="stylesheet" href="css/app.css">
+<!-- Sprint 9.3 (B-02): o tema salvo TEM que ser aplicado aqui, antes do <body>.
+     Antes so era aplicado no fim do script inline (depois do login e da navbar
+     ja terem sido pintados), entao quem usa modo escuro levava um flash branco
+     na tela a cada F5. Sincrono e sem depender de nada: so le o localStorage. -->
+<script>try{var _t=localStorage.getItem('crm_theme');if(_t==='dark'||_t==='light')document.documentElement.setAttribute('data-theme',_t);}catch(e){}</script>
 </head>
 <body>
 
 <!-- LOGIN -->
 <div id="ls">
-  <div class="lc">
+
+  <!-- Cartao 1: entrar -->
+  <div class="lc" id="lc-login">
     <div class="ll">
-      <div class="li">A</div>
+      <div class="li"><img src="logo.png" alt="Adiblock"></div>
       <h1>CRM Adiblock</h1>
       <p>Gestão comercial inteligente</p>
     </div>
     <form id="lf">
-      <div class="fg"><label>Email</label><input type="email" id="le" placeholder="seu@email.com" required autocomplete="email"></div>
-      <div class="fg"><label>Senha</label><input type="password" id="lp" placeholder="••••••••" required autocomplete="current-password"></div>
+      <div class="fg"><label for="le">Email</label><input type="email" id="le" placeholder="seu@email.com" required autocomplete="email"></div>
+      <div class="fg"><label for="lp">Senha</label><input type="password" id="lp" placeholder="••••••••" required autocomplete="current-password"></div>
       <p id="lerr" class="em"></p>
       <button type="submit" class="btn bp bl" id="lb" style="margin-top:8px">Entrar</button>
     </form>
-    <div style="text-align:center;margin-top:14px;font-size:12px;color:var(--mt)">
-      Travou em "Entrando..."? <a href="#" id="lrec" style="color:var(--p);text-decoration:none;font-weight:600">Limpar sessão e tentar de novo</a>
+    <div class="lc-alt">
+      <button type="button" class="lc-link" id="lfp">Esqueci minha senha</button>
+    </div>
+    <div class="lc-help">
+      Travou em "Entrando..."? <button type="button" class="lc-link" id="lrec">Limpar sessão e tentar de novo</button>
     </div>
   </div>
+
+  <!-- Cartao 2: pedir link de redefinicao (Sprint 9.3 / B-01) -->
+  <div class="lc" id="lc-forgot" style="display:none">
+    <div class="ll">
+      <div class="li"><img src="logo.png" alt="Adiblock"></div>
+      <h1>Recuperar acesso</h1>
+      <p>Enviamos um link de redefinição para o seu email</p>
+    </div>
+    <form id="fpf">
+      <div class="fg"><label for="fpe">Email</label><input type="email" id="fpe" placeholder="seu@email.com" required autocomplete="email"></div>
+      <p id="fperr" class="em"></p>
+      <button type="submit" class="btn bp bl" id="fpb" style="margin-top:8px">Enviar link</button>
+    </form>
+    <div class="lc-alt">
+      <button type="button" class="lc-link" id="fpvoltar">← Voltar para o login</button>
+    </div>
+  </div>
+
+  <!-- Cartao 3: definir nova senha (chegou pelo link do email) -->
+  <div class="lc" id="lc-newpass" style="display:none">
+    <div class="ll">
+      <div class="li"><img src="logo.png" alt="Adiblock"></div>
+      <h1>Nova senha</h1>
+      <p>Escolha uma senha de pelo menos 8 caracteres</p>
+    </div>
+    <form id="npf">
+      <!-- Sem minlength: o navegador bloquearia o submit com um balao nativo em
+           ingles, e a validacao em portugues abaixo do campo nunca apareceria. -->
+      <div class="fg"><label for="np1">Nova senha</label><input type="password" id="np1" placeholder="••••••••" required autocomplete="new-password"></div>
+      <div class="fg"><label for="np2">Repita a nova senha</label><input type="password" id="np2" placeholder="••••••••" required autocomplete="new-password"></div>
+      <p id="nperr" class="em"></p>
+      <button type="submit" class="btn bp bl" id="npb" style="margin-top:8px">Salvar e entrar</button>
+    </form>
+    <div class="lc-alt">
+      <button type="button" class="lc-link" id="npvoltar">Cancelar e voltar ao login</button>
+    </div>
+  </div>
+
 </div>
 
 <!-- APP -->
@@ -48,7 +100,12 @@
         </div>
         <span class="bn2"><strong>Controle Comercial</strong></span>
       </div>
-      <div id="tabs">
+    </div>
+    <!-- Sprint 9.3 (E-01): #tabs saiu de dentro da .nbl e virou filho direto da
+         navbar. Assim, no celular, ele ganha uma linha inteira pra si (order+
+         flex-basis) em vez de disputar largura com a logo e os botoes da
+         direita — antes ficava com 0px e a navegacao sumia. -->
+    <nav id="tabs" aria-label="Seções do sistema">
         <button class="tb ac" data-tab="td">
           <svg width="14" height="14" viewBox="0 0 20 20" fill="currentColor"><path d="M6 2a1 1 0 00-1 1v1H4a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-1V3a1 1 0 10-2 0v1H7V3a1 1 0 00-1-1zm0 5a1 1 0 000 2h8a1 1 0 100-2H6z"/></svg>
           <span class="tb-full">Hoje</span><span class="tb-short">Hoje</span>
@@ -77,8 +134,7 @@
           <svg width="14" height="14" viewBox="0 0 20 20" fill="currentColor"><path d="M13 6a3 3 0 11-6 0 3 3 0 016 0zM18 8a2 2 0 11-4 0 2 2 0 014 0zM14 15a4 4 0 00-8 0v3h8v-3zM6 8a2 2 0 11-4 0 2 2 0 014 0zM16 18v-3a5.972 5.972 0 00-.75-2.906A3.005 3.005 0 0119 15v3h-3zM4.75 12.094A5.973 5.973 0 004 15v3H1v-3a3 3 0 013.75-2.906z"/></svg>
           <span class="tb-full">Equipe</span><span class="tb-short">Equipe</span>
         </button>
-      </div>
-    </div>
+    </nav>
     <div class="nbr">
       <div class="bell-wrap" id="bell-wrap" onclick="toggleBell(event)" title="Retornos de hoje e atrasados">
         <span class="bell-ic">🔔</span>
@@ -86,7 +142,7 @@
         <div class="bell-pop" id="bell-pop"></div>
       </div>
       <button class="theme-toggle" id="theme-toggle" onclick="toggleTheme()" title="Alternar tema (Ctrl+Shift+L)">🌙</button>
-      <button class="theme-toggle" onclick="abrirAjudaAtalhos()" title="Atalhos de teclado (?)" style="margin-left:6px">⌨</button>
+      <button class="theme-toggle" id="kbd-btn" onclick="abrirAjudaAtalhos()" title="Atalhos de teclado (?)" aria-label="Atalhos de teclado" style="margin-left:6px">⌨</button>
       <div class="uc">
         <div class="ua" id="uav" onclick="abrConfig()" title="Minhas configurações" style="cursor:pointer">?</div>
         <div>
@@ -293,14 +349,14 @@
         <div class="sk ss sk-click" onclick="drillDashboard('compraram')" title="Ver quem comprou"><div class="sic sg2"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg></div><div><div class="sv" id="d2">-</div><div class="sl2">Compraram</div><div class="sprg"><div class="sprf sg" id="d2b" style="width:0%"></div></div></div></div>
         <div class="sk sw2 sk-click" onclick="drillDashboard('pendentes')" title="Ver leads pendentes"><div class="sic sy"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></div><div><div class="sv" id="d3">-</div><div class="sl2">Pendentes</div><div class="sprg"><div class="sprf sy" id="d3b" style="width:0%"></div></div></div></div>
         <div class="sk sd sk-click" onclick="drillDashboard('vencidos')" title="Ver retornos vencidos"><div class="sic sr"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg></div><div><div class="sv" id="d4">-</div><div class="sl2">Retornos Vencidos</div></div></div>
-        <div class="sk sk-pipe sk-click" onclick="drillDashboard('pipeline')" title="Ver oportunidades em aberto"><div class="sic" style="color:var(--ac)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/></svg></div><div><div class="sv" id="d5" style="font-size:18px;margin-top:4px">-</div><div class="sl2">Valor do Pipeline</div></div></div>
+        <div class="sk sk-pipe sk-click" onclick="drillDashboard('pipeline')" title="Ver oportunidades em aberto"><div class="sic sb2"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/></svg></div><div><div class="sv" id="d5" style="font-size:18px;margin-top:4px">-</div><div class="sl2">Valor do Pipeline</div></div></div>
         <div class="sk sw2 sk-click" onclick="drillDashboard('sempasso')" title="Oportunidades abertas sem próximo passo"><div class="sic sy"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg></div><div><div class="sv" id="d6">-</div><div class="sl2">Sem próximo passo</div></div></div>
       </div>
       <!-- Alertas de Inatividade -->
       <div id="inact-wrap" style="display:none" class="inact-wrap">
         <div class="inact-header">
           <div class="inact-title">⚠ Clientes sem contato há 7+ dias <span class="inact-badge" id="inact-badge">0</span></div>
-          <span style="font-size:12px;color:#92400e">Entre em contato para não perder esses leads</span>
+          <span style="font-size:12px;color:var(--wr-tx)">Entre em contato para não perder esses leads</span>
         </div>
         <div id="inact-body"></div>
       </div>
@@ -515,8 +571,8 @@
           </label>
           <div id="f-lgpd-info" style="font-size:11px;color:var(--mt);margin-top:6px"></div>
         </div>
-        <div id="f-lgpd-del-zone" style="display:none;margin-top:10px;padding:10px 12px;background:#fef2f2;border:1px solid #fca5a5;border-radius:8px">
-          <div style="font-size:12px;color:#991b1b;margin-bottom:6px"><b>⚠ Exclusão solicitada:</b> <span id="f-lgpd-del-info"></span></div>
+        <div id="f-lgpd-del-zone" style="display:none;margin-top:10px;padding:10px 12px;background:var(--er2);border:1px solid var(--er);border-radius:8px">
+          <div style="font-size:12px;color:var(--er-tx);margin-bottom:6px"><b>⚠ Exclusão solicitada:</b> <span id="f-lgpd-del-info"></span></div>
           <button type="button" class="btn bod sm" onclick="executarExclusaoLgpd()">Executar exclusão definitiva agora</button>
           <button type="button" class="btn bg sm" onclick="cancelarExclusaoLgpd()">Cancelar solicitação</button>
         </div>
@@ -986,19 +1042,30 @@ const SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJ
 if (typeof supabase === 'undefined' || !supabase.createClient) {
   document.body.innerHTML =
     '<div style="max-width:440px;margin:80px auto;padding:24px;font-family:Inter,system-ui,sans-serif;'
-    + 'text-align:center;color:#1f2937">'
+    // Sprint 9.3 (B-02): var(--tx)/var(--mt) e nao hex fixo — esta tela herda o
+    // fundo do tema salvo, e texto escuro fixo sumia no modo escuro.
+    + 'text-align:center;color:var(--tx)">'
     + '<div style="font-size:40px">⚠️</div>'
     + '<h2 style="margin:8px 0">Nao foi possivel carregar o sistema</h2>'
-    + '<p style="color:#6b7280;line-height:1.5">Uma biblioteca essencial nao carregou '
+    + '<p style="color:var(--mt);line-height:1.5">Uma biblioteca essencial nao carregou '
     + '(possivel queda de rede ou bloqueio por extensao/firewall). '
     + 'Verifique a conexao e tente recarregar.</p>'
     + '<button onclick="location.reload()" style="margin-top:12px;padding:10px 20px;'
-    + 'border:0;border-radius:8px;background:#1F4E78;color:#fff;font-weight:600;cursor:pointer">'
+    + 'border:0;border-radius:8px;background:var(--p);color:#fff;font-weight:600;cursor:pointer">'
     + 'Recarregar</button></div>';
   throw new Error('supabase-js nao carregou (local + CDN falharam)');
 }
 const { createClient } = supabase;
 const sb = createClient(SB_URL, SB_KEY);
+
+// Sprint 9.3 (B-01): o link de "redefinir senha" chega como #type=recovery na URL.
+// O supabase-js consome e APAGA esse hash assim que inicializa, e o evento
+// PASSWORD_RECOVERY corre junto com o boot — quem chegar primeiro ganha. Ler o
+// hash aqui, de forma sincrona, e a unica leitura confiavel: a partir dela o
+// boot e o onAuthStateChange sabem que nao devem abrir o app.
+// `let` e nao `const`: precisa ser desligada assim que a senha for trocada, se
+// nao o TOKEN_REFRESHED seguinte joga o usuario de volta na tela de nova senha.
+let MODO_RECUPERACAO = /[#&]type=recovery/.test(window.location.hash || '');
 
 // ── Token (lê sempre do localStorage — mais confiável) ────────────────────
 function getToken() {
@@ -2201,7 +2268,7 @@ async function renderDb() {
       fcCard.className = 'sk sk-pipe sk-click';
       fcCard.title = 'Ver oportunidades em aberto';
       fcCard.onclick = () => drillDashboard('pipeline');
-      fcCard.innerHTML = `<div class="sic" style="color:#10b981"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 3v18h18"/><path d="M18.7 8L13 13.5l-4-4L3 16"/></svg></div><div><div class="sv" id="d-forecast-v" style="font-size:18px;margin-top:4px">-</div><div class="sl2">Forecast Ponderado</div></div>`;
+      fcCard.innerHTML = `<div class="sic sg2"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 3v18h18"/><path d="M18.7 8L13 13.5l-4-4L3 16"/></svg></div><div><div class="sv" id="d-forecast-v" style="font-size:18px;margin-top:4px">-</div><div class="sl2">Forecast Ponderado</div></div>`;
       fcCard.id = 'd-forecast';
       sg.appendChild(fcCard);
     }
@@ -2942,6 +3009,8 @@ document.addEventListener('keydown', e => {
   }
   // ESC fecha modais
   if (e.key !== 'Escape') return;
+  // Sprint 9.3 (B-03): o modal de mover estagio vem primeiro por abrir por cima.
+  if (document.getElementById('kb-move-m')?.classList.contains('op')) { fecharMoverEstagio(); return; }
   if (document.getElementById('cm').classList.contains('op')) { fechaModal(); return; }
   if (document.getElementById('co').classList.contains('op')) { fechaConf(); return; }
   if (document.getElementById('sp').classList.contains('op')) { fechaPainel(); return; }
@@ -3795,6 +3864,9 @@ function renderKanban() {
             ${o.callback_date?`<span>📅 ${fDataHora(o.callback_date)}</span>`:''}
           </div>
           ${o.seller_name?`<div class="kb-card-vend">👤 ${escHtml(o.seller_name)}</div>`:''}
+          <button type="button" class="kb-move-btn write-only"
+                  onclick="event.stopPropagation();abrirMoverEstagio('${o.id}')"
+                  aria-label="Mover para outro estágio">⇄ Mover</button>
         </div>`).join('')
       : '<div style="color:var(--mt2);font-size:11px;text-align:center;padding:20px 0">— vazio —</div>';
     return `<div class="kb-col kb-col-${est}">
@@ -3823,18 +3895,53 @@ function renderKanban() {
       const fromEst = e.dataTransfer.getData('from-est');
       const toEst = body.dataset.est;
       if (!oppId || fromEst === toEst) return;
-      try {
-        await api('PATCH', 'opportunities', `id=eq.${oppId}`, { estagio: toEst });
-        toast('Estágio atualizado', `Movido para "${ESTAGIO_LBL[toEst]}"`, 'success');
-        CL = await fetchCl();
-        renderKanban();
-        renderCl();
-      } catch(err) {
-        console.error('kb drop:', err);
-        toast('Erro ao mover', err.message||'', 'warning');
-      }
+      // Sprint 9.3 (B-03): arrastar e o botao "Mover" usam o mesmo caminho.
+      await moverOppEstagio(oppId, toEst);
     });
   });
+}
+
+// ── Sprint 9.3 (B-03): mover estagio sem arrastar ─────────────────────────
+// O drag-and-drop HTML5 nao dispara em tela de toque, entao no celular a aba
+// Pipeline era so leitura. Este caminho funciona em toque, mouse e teclado.
+let KB_MOVE_ID = null;
+
+function abrirMoverEstagio(oppId) {
+  const o = todasOpps().find(x => x.id === oppId);
+  if (!o) return;
+  KB_MOVE_ID = oppId;
+  document.getElementById('kb-move-info').innerHTML =
+    `<div class="kb-move-emp">${escHtml(o.company_nome||'')}</div>`
+    + `<div class="kb-move-tit">${escHtml(o.titulo||'')}</div>`;
+  document.getElementById('kb-move-opts').innerHTML = KB_ESTAGIOS.map(est => {
+    const atual = est === o.estagio;
+    return `<button type="button" class="kb-move-opt" ${atual?'disabled':''}
+              onclick="moverOppEstagio('${oppId}','${est}')">
+              <span class="estagio-badge est-${est}">${escHtml(ESTAGIO_LBL[est])}</span>
+              ${atual?'<span class="kb-move-now">estágio atual</span>':''}
+            </button>`;
+  }).join('');
+  document.getElementById('kb-move-m').classList.add('op');
+  setTimeout(() => document.querySelector('#kb-move-opts .kb-move-opt:not([disabled])')?.focus(), 80);
+}
+
+function fecharMoverEstagio() {
+  document.getElementById('kb-move-m').classList.remove('op');
+  KB_MOVE_ID = null;
+}
+
+async function moverOppEstagio(oppId, toEst) {
+  try {
+    await api('PATCH', 'opportunities', `id=eq.${oppId}`, { estagio: toEst });
+    toast('Estágio atualizado', `Movido para "${ESTAGIO_LBL[toEst]}"`, 'success');
+    fecharMoverEstagio();
+    CL = await fetchCl();
+    renderKanban();
+    renderCl();
+  } catch(err) {
+    console.error('moverOppEstagio:', err);
+    toast('Erro ao mover', err.message || 'Tente de novo em instantes.', 'warning');
+  }
 }
 
 // ── Equipe (Sprint 4.3) ─────────────────────────────────────────────────
@@ -4170,7 +4277,7 @@ function renderCotacao(prop) {
       <td class="num">${valorSemIpi!=null?fmtBRL(valorSemIpi):'—'}</td>
       <td class="num">${ipiPct}%</td>
       <td class="num">${valorTotal!=null?fmtBRL(valorTotal):'—'}</td>
-      <td style="font-size:11px;color:#b91c1c;font-weight:600">${escHtml(p.classificacao_risco||'—')}</td>
+      <td style="font-size:11px;color:var(--er);font-weight:600">${escHtml(p.classificacao_risco||'—')}</td>
     </tr>`;
   }).join('');
 
@@ -5800,7 +5907,7 @@ function processarCSV(file) {
       document.getElementById('im-n').textContent = importNovas.length;
       document.getElementById('im-ok').disabled = importNovas.length === 0;
       const unmappedMsg = unmapped.length
-        ? `<div style="color:#92400e;background:#fef3c7;padding:6px 10px;border-radius:6px;font-size:11px;margin-top:6px">⚠ Colunas ignoradas (não reconhecidas): ${escHtml(unmapped.join(', '))}</div>`
+        ? `<div style="color:var(--wr-tx);background:var(--wr2);padding:6px 10px;border-radius:6px;font-size:11px;margin-top:6px">⚠ Colunas ignoradas (não reconhecidas): ${escHtml(unmapped.join(', '))}</div>`
         : '';
       document.getElementById('im-info').innerHTML =
         `<strong>${rows.length}</strong> linha(s) no CSV · <span style="color:var(--ok)"><b>${importNovas.length}</b> nova(s)</span>`
@@ -6078,11 +6185,104 @@ function showApp(){document.getElementById('ls').style.display='none';document.g
 function showLogin(){
   document.getElementById('ls').style.display='flex';
   document.getElementById('app').style.display='none';
+  mostrarCartaoLogin('login');
   ME=null;MEP=null;CL=[];PF=[];
   // Reseta o botao "Entrando..." pra "Entrar" caso tenha ficado travado
   const lb = document.getElementById('lb');
   if (lb) { lb.disabled = false; lb.textContent = 'Entrar'; }
 }
+
+// ── Sprint 9.3 (B-01): recuperacao de senha ───────────────────────────────
+// A tela #ls guarda tres cartoes; so um fica visivel por vez.
+function mostrarCartaoLogin(qual) {
+  const cartoes = { login:'lc-login', forgot:'lc-forgot', newpass:'lc-newpass' };
+  for (const [nome, id] of Object.entries(cartoes)) {
+    const el = document.getElementById(id);
+    if (el) el.style.display = (nome === qual) ? 'block' : 'none';
+  }
+}
+
+// Mostra a tela de "definir nova senha". Chamada quando o usuario chega pelo
+// link do email — nesse momento ele JA tem sessao valida (o token do link),
+// so que a sessao serve unicamente pra trocar a senha.
+function showNovaSenha() {
+  document.getElementById('ls').style.display = 'flex';
+  document.getElementById('app').style.display = 'none';
+  mostrarCartaoLogin('newpass');
+  setTimeout(() => document.getElementById('np1')?.focus(), 80);
+}
+
+document.getElementById('lfp')?.addEventListener('click', () => {
+  // Aproveita o email ja digitado no login, se houver
+  document.getElementById('fpe').value = document.getElementById('le').value.trim();
+  document.getElementById('fperr').textContent = '';
+  mostrarCartaoLogin('forgot');
+  setTimeout(() => document.getElementById('fpe')?.focus(), 80);
+});
+document.getElementById('fpvoltar')?.addEventListener('click', () => mostrarCartaoLogin('login'));
+document.getElementById('npvoltar')?.addEventListener('click', async () => {
+  // Sai da sessao de recuperacao pra nao ficar num limbo com senha nao trocada
+  try { await Promise.race([sb.auth.signOut(), new Promise(r=>setTimeout(r,1500))]); } catch {}
+  limparSessao();
+  window.location.replace(window.location.pathname);
+});
+
+// Envia o email com o link de redefinicao.
+document.getElementById('fpf')?.addEventListener('submit', async e => {
+  e.preventDefault();
+  const btn = document.getElementById('fpb'), err = document.getElementById('fperr');
+  const email = document.getElementById('fpe').value.trim();
+  btn.disabled = true; btn.textContent = 'Enviando...'; err.textContent = '';
+  try {
+    const { error } = await sb.auth.resetPasswordForEmail(email, {
+      redirectTo: window.location.origin + window.location.pathname
+    });
+    if (error) throw error;
+    // Mensagem identica com email existente ou nao — nao entrega quem tem conta.
+    const card = document.getElementById('lc-forgot');
+    card.querySelector('#fpf').style.display = 'none';
+    card.querySelector('.lc-alt').insertAdjacentHTML('beforebegin',
+      '<div class="lc-ok">Se existir uma conta para <b>' + escHtml(email) + '</b>, '
+      + 'o link de redefinição chega em alguns minutos. Verifique também o spam.</div>');
+  } catch(ex) {
+    console.error('[reset] erro:', ex);
+    err.textContent = ex.message || 'Não foi possível enviar agora. Tente de novo em instantes.';
+    btn.disabled = false; btn.textContent = 'Enviar link';
+  }
+});
+
+// Grava a nova senha e entra no app.
+document.getElementById('npf')?.addEventListener('submit', async e => {
+  e.preventDefault();
+  const btn = document.getElementById('npb'), err = document.getElementById('nperr');
+  const s1 = document.getElementById('np1').value, s2 = document.getElementById('np2').value;
+  err.textContent = '';
+  if (s1.length < 8)  { err.textContent = 'A senha precisa ter pelo menos 8 caracteres.'; return; }
+  if (s1 !== s2)      { err.textContent = 'As duas senhas não são iguais.'; return; }
+  btn.disabled = true; btn.textContent = 'Salvando...';
+  try {
+    const { error } = await sb.auth.updateUser({ password: s1 });
+    if (error) throw error;
+    // A recuperacao acabou: desliga a flag ANTES de abrir o app, senao o
+    // proximo TOKEN_REFRESHED cai no branch de recuperacao e volta pra ca.
+    MODO_RECUPERACAO = false;
+    // Limpa o #type=recovery da URL pra um F5 nao cair de novo nesta tela.
+    window.history.replaceState(null, '', window.location.pathname);
+    const { data: { session } } = await sb.auth.getSession();
+    if (session?.user && !APP_INICIADO) {
+      showApp();
+      await iniciar(session.user);
+      APP_INICIADO = true;
+      toast('Senha alterada', 'Sua nova senha já está valendo.', 'success');
+    } else {
+      mostrarCartaoLogin('login');
+    }
+  } catch(ex) {
+    console.error('[nova senha] erro:', ex);
+    err.textContent = ex.message || 'Não foi possível salvar a senha. Peça um link novo.';
+    btn.disabled = false; btn.textContent = 'Salvar e entrar';
+  }
+});
 
 // Sprint 5.3: força challenge MFA se usuário tem 2FA ativo e sessão está em AAL1
 let mfaChallengePending = null; // { factorId, challengeId }
@@ -6163,6 +6363,14 @@ let APP_INICIADO = false;
 
 sb.auth.onAuthStateChange(async(ev,s)=>{
   console.log('[auth] event:', ev, 'user:', s?.user?.email);
+  // Sprint 9.3 (B-01): chegou pelo link de redefinicao. Tem sessao valida, mas
+  // ela serve so pra trocar a senha — nao abre o app. Vem ANTES de tudo porque
+  // o Supabase emite INITIAL_SESSION/SIGNED_IN junto com PASSWORD_RECOVERY.
+  if (ev === 'PASSWORD_RECOVERY' || MODO_RECUPERACAO) {
+    console.log('[auth] modo recuperacao de senha');
+    showNovaSenha();
+    return;
+  }
   // SIGNED_OUT: limpa e volta pra tela de login
   if (ev === 'SIGNED_OUT' || !s?.user) {
     APP_INICIADO = false;
@@ -6190,6 +6398,13 @@ sb.auth.onAuthStateChange(async(ev,s)=>{
     finally { desarmarWatchdog(); }
 });
 (async()=>{
+  // Sprint 9.3 (B-01): se a URL trouxe #type=recovery, o boot NAO abre o app —
+  // senao o usuario entraria direto e nunca veria a tela de trocar a senha.
+  if (MODO_RECUPERACAO) {
+    console.log('[boot] link de recuperacao de senha detectado');
+    showNovaSenha();
+    return;
+  }
   console.log('[boot] verificando sessao existente...');
   const{data:{session}}=await sb.auth.getSession();
   console.log('[boot] sessao:', session?.user?.email || '(nenhuma)');
@@ -6214,11 +6429,13 @@ function toggleTheme() {
   const atual = document.documentElement.getAttribute('data-theme') || 'light';
   aplicarTema(atual === 'dark' ? 'light' : 'dark');
 }
-// Aplica tema salvo logo no carregamento (antes do app aparecer)
-(function(){ try {
-  const t = localStorage.getItem('crm_theme');
-  if (t === 'dark' || t === 'light') aplicarTema(t);
-} catch {} })();
+// O data-theme ja foi setado pelo script do <head> (Sprint 9.3 / B-02) — aqui
+// so falta acertar o icone do botao, que nao existia naquele momento.
+(function(){
+  const t = document.documentElement.getAttribute('data-theme') || 'light';
+  const btn = document.getElementById('theme-toggle');
+  if (btn) btn.textContent = t === 'dark' ? '☀' : '🌙';
+})();
 
 function abrirAjudaAtalhos() {
   document.getElementById('kbd-help').classList.add('op');
@@ -6267,6 +6484,20 @@ document.addEventListener('keydown', e => {
       <button type="button" class="btn bg" onclick="mfaLoginCancel()">Cancelar</button>
       <button type="button" class="btn bp" onclick="mfaLoginConfirm()">Verificar</button>
     </div>
+  </div>
+</div>
+
+<!-- MODAL MOVER ESTAGIO (Sprint 9.3 / B-03) -->
+<div class="mo" id="kb-move-m" onclick="if(event.target.id==='kb-move-m')fecharMoverEstagio()">
+  <!-- largura via classe, nao style inline: inline venceria o @media que
+       transforma o modal em bottom-sheet no celular e estouraria a tela -->
+  <div class="md kb-move-md">
+    <div class="mh">
+      <h3>Mover oportunidade</h3>
+      <button class="mx" type="button" onclick="fecharMoverEstagio()" aria-label="Fechar">✕</button>
+    </div>
+    <div id="kb-move-info" class="kb-move-info"></div>
+    <div id="kb-move-opts" class="kb-move-opts"></div>
   </div>
 </div>
 

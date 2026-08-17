@@ -199,7 +199,7 @@
     <!-- EMPRESAS -->
     <div id="cl-view" class="vw">
       <div class="ph">
-        <div><h2>Empresas</h2><span class="ps" id="cst">Carregando...</span></div>
+        <div><h2>Empresas</h2><span class="ps" id="cst" aria-live="polite">Carregando...</span></div>
         <div class="pa">
           <button class="btn bg sm write-only" onclick="abrImport()">↑ Importar CSV</button>
           <button class="btn bp write-only" id="ncbtn">+ Nova Empresa</button>
@@ -283,7 +283,7 @@
     <!-- PROPOSTAS (Sprint 6.5) -->
     <div id="pr-view" class="vw">
       <div class="ph">
-        <div><h2>Propostas</h2><span class="ps" id="pr-stats">—</span></div>
+        <div><h2>Propostas</h2><span class="ps" id="pr-stats" aria-live="polite">—</span></div>
         <div class="pa" style="gap:14px;flex-wrap:wrap">
           <div class="td-switch" id="pr-tabs">
             <button class="td-sw ac" data-st="em_andamento" onclick="setPrStatus('em_andamento')">Em andamento</button>
@@ -1134,7 +1134,11 @@
   </div>
 </div>
 
-<div id="tc"></div>
+<!-- role="status" = regiao viva EDUCADA: o leitor de tela termina o que estava
+     falando antes de anunciar. Precisa existir no DOM ANTES de receber conteudo,
+     por isso fica aqui estatico e nao e criado junto com o primeiro toast.
+     Erro individual sobe pra role="alert" (interrompe) — ver toast(). -->
+<div id="tc" role="status" aria-live="polite" aria-atomic="false"></div>
 
 <!-- BUSCA GLOBAL -->
 <div id="gs-overlay">
@@ -1321,6 +1325,10 @@ function toast(tit, msg, tipo) {
   const c = document.getElementById('tc');
   const t = document.createElement('div');
   t.className = 'toast'+(tipo==='success'?' ts':tipo==='warning'?' tw':'');
+  // Politeness por MENSAGEM: erro interrompe o que o leitor de tela estiver
+  // falando, confirmacao espera a vez. Nao da pra fazer isso so no container,
+  // que tem uma politeness so pra todas as mensagens.
+  if (tipo === 'warning') t.setAttribute('role', 'alert');
   const ico = tipo==='success'?'✓':tipo==='warning'?'⚠':'ℹ';
   // escHtml no titulo e na mensagem. Sao 91 chamadas de toast(), 11 delas
   // interpolando nome de empresa, contato ou produto — e o Importar CSV traz
@@ -1331,7 +1339,7 @@ function toast(tit, msg, tipo) {
   // fazia isso certo — este era o irmao esquecido.
   t.innerHTML = '<span style="font-size:15px;flex-shrink:0">'+ico+'</span>'
     +'<div class="tib"><div class="tit">'+escHtml(tit)+'</div>'+(msg?'<div class="tim">'+escHtml(msg)+'</div>':'')+'</div>'
-    +'<button class="tcl" onclick="this.closest(\'.toast\').remove()">✕</button>';
+    +'<button class="tcl" aria-label="Fechar aviso" onclick="this.closest(\'.toast\').remove()">✕</button>';
   c.appendChild(t);
   setTimeout(() => t?.parentNode && t.remove(), tipo==='warning' ? 10000 : 5000);
 }
@@ -7059,7 +7067,7 @@ function armarWatchdog() {
       +'<div class="tib"><div class="tit">Carregamento demorado</div>'
       +'<div class="tim">A conexão com o servidor está lenta. Quer limpar a sessão e recarregar?</div></div>'
       +'<button class="tundo" type="button">Recarregar</button>'
-      +'<button class="tcl" type="button">✕</button>';
+      +'<button class="tcl" aria-label="Fechar aviso" type="button">✕</button>';
     c.appendChild(t);
     t.querySelector('.tundo').addEventListener('click', () => { limparSessao(); window.location.reload(); });
     t.querySelector('.tcl').addEventListener('click', () => t.remove());

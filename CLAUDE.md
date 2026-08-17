@@ -778,6 +778,23 @@ que preenchem a data às 09:00 num toque. O seletor exato continua abaixo.
 > histórico do perfil e os relatórios todos leem essa tabela. Se registrar ficar
 > barato, o número sobe sem ninguém cobrar.
 
+### O nº da OC é pedido no momento em que o pedido fecha (2026-08-17)
+
+O campo de OC existia **só** dentro do modal do Pedido Comercial. Quem marcava a
+proposta como Pedido e mandava apenas o Pedido de Produção **nunca via o campo**
+— daí os 175 pedidos sem OC. Não era esquecimento: era um campo escondido atrás
+de um documento que talvez nem gerem.
+
+Agora `finalizarComoPedido()` pergunta logo depois de marcar. É o momento de
+maior informação — o cliente acabou de confirmar e tem o número na mão.
+
+> **"Depois" é obrigatório.** Às vezes a OC chega dias depois; forçar faria o
+> vendedor evitar marcar como Pedido, o que seria muito pior que um campo vazio.
+
+> A oferta de marcar a oportunidade como ganha virou `ofereceMarcarOppGanha()`.
+> Ela tem `return` no meio (opp inexistente ou já ganha), e qualquer coisa
+> depois dela era pulada **justamente nos casos mais comuns**.
+
 ### Guia da equipe: dois documentos, propósitos diferentes
 
 | Arquivo | O que é | Quando serve |

@@ -817,6 +817,34 @@
 </div>
 
 <!-- MODAL DADOS DO PEDIDO COMERCIAL -->
+<!-- PERGUNTA A OC NA HORA EM QUE O PEDIDO FECHA.
+     Ate aqui o campo de OC so existia dentro do modal do Pedido Comercial —
+     quem marcava como Pedido e mandava so o Pedido de Producao nunca via o
+     campo. Dai 175 pedidos sem OC: nao era esquecimento, era um campo
+     escondido atras de um documento que talvez nem gerem.
+     "Depois" e obrigatorio: as vezes a OC chega dias depois, e forcar faria o
+     vendedor evitar marcar como Pedido — o que seria muito pior. -->
+<div class="mo" id="oc-m" style="z-index:312">
+  <div class="md" style="max-width:440px">
+    <div class="mh">
+      <h3>Número da OC do cliente</h3>
+      <button class="mx" type="button" onclick="fecharPerguntaOC()" aria-label="Fechar">✕</button>
+    </div>
+    <div class="fg">
+      <label for="oc-input">Nº da ordem de compra <span style="color:var(--mt);font-weight:400;font-size:11px">— o número no sistema dele</span></label>
+      <input type="text" id="oc-input" placeholder="Ex: 4500123789" maxlength="60" autocomplete="off">
+      <div style="font-size:11px;color:var(--mt);margin-top:6px;line-height:1.55">
+        É por este número que o cliente cobra, confere e paga. Com ele lançado,
+        você acha o pedido digitando o número <b>dele</b> na busca.
+      </div>
+    </div>
+    <div class="ma">
+      <button type="button" class="btn bg" onclick="fecharPerguntaOC()">Depois</button>
+      <button type="button" class="btn bac" id="oc-salvar" onclick="salvarPerguntaOC()">Salvar OC</button>
+    </div>
+  </div>
+</div>
+
 <div class="mo" id="pcom-m" style="z-index:310">
   <div class="md" style="max-width:520px">
     <div class="mh">
@@ -3108,6 +3136,7 @@ document.addEventListener('keydown', e => {
   if (document.getElementById('edp-m')?.classList.contains('op')) { fecharEditarPedido(); return; }
   // Pedido Comercial: primeiro o modal de dados, depois a pagina do documento
   // (que precisa devolver a cot-page, nao so sumir).
+  if (document.getElementById('oc-m')?.classList.contains('op')) { fecharPerguntaOC(); return; }
   if (document.getElementById('pcom-m')?.classList.contains('op')) { document.getElementById('pcom-m').classList.remove('op'); return; }
   if (document.getElementById('pcom-page')?.classList.contains('op')) { fecharPedidoComercial(); return; }
   if (document.getElementById('cm').classList.contains('op')) { fechaModal(); return; }
@@ -3453,19 +3482,70 @@ async function mudarStatusProposta(novoStatus, msgSucesso) {
 async function finalizarComoPedido() {
   if (!PROP_ATUAL) return;
   await mudarStatusProposta('pedido', 'Proposta finalizada como Pedido');
-  // Oferece marcar a oportunidade vinculada como ganha
-  const oppId = PROP_ATUAL.opportunity_id;
+  await ofereceMarcarOppGanha();
+  // SEMPRE, e por ultimo. Antes, a oferta da oportunidade tinha `return` no
+  // meio (opp inexistente ou ja ganha) e qualquer coisa depois dela seria
+  // pulada justamente nos casos mais comuns.
+  perguntarOC();
+}
+
+// Extraida de finalizarComoPedido pra que os `return` dela nao engulam o que
+// vem depois.
+async function ofereceMarcarOppGanha() {
+  const oppId = PROP_ATUAL?.opportunity_id;
   if (!oppId) return;
   const opp = todasOpps().find(o => o.id === oppId);
   if (!opp || opp.estagio === 'ganha') return;
-  if (confirm(`Marcar tambem a oportunidade "${opp.titulo}" como GANHA?`)) {
-    try {
-      await api('PATCH','opportunities',`id=eq.${oppId}`, { estagio: 'ganha' });
-      CL = await fetchCl();
-      toast('Oportunidade marcada como Ganha','','success');
-    } catch(err) {
-      toast('Erro ao atualizar oportunidade', err.message||'', 'warning');
-    }
+  if (!confirm(`Marcar tambem a oportunidade "${opp.titulo}" como GANHA?`)) return;
+  try {
+    await api('PATCH','opportunities',`id=eq.${oppId}`, { estagio: 'ganha' });
+    CL = await fetchCl();
+    toast('Oportunidade marcada como Ganha','','success');
+  } catch(err) {
+    toast('Erro ao atualizar oportunidade', err.message||'', 'warning');
+  }
+}
+
+// ── Pergunta a OC no momento em que o pedido fecha ────────────────────────
+// O campo de OC so existia dentro do modal do Pedido Comercial. Quem marcava
+// como Pedido e mandava so o Pedido de Producao nunca via o campo — dai 175
+// pedidos sem OC. Aqui e o momento de maior informacao: o cliente acabou de
+// confirmar e tem o numero na mao.
+function perguntarOC() {
+  const p = PROP_ATUAL;
+  if (!p) return;
+  if (p.oc_numero && String(p.oc_numero).trim()) return;   // ja tem, nao incomoda
+  const campo = document.getElementById('oc-input');
+  if (!campo) return;
+  campo.value = '';
+  document.getElementById('oc-m').classList.add('op');
+  setTimeout(() => campo.focus(), 80);
+}
+
+function fecharPerguntaOC() {
+  document.getElementById('oc-m').classList.remove('op');
+}
+
+async function salvarPerguntaOC() {
+  const p = PROP_ATUAL;
+  const campo = document.getElementById('oc-input');
+  const btn = document.getElementById('oc-salvar');
+  if (!p || !campo) return;
+  const oc = campo.value.trim();
+  if (!oc) { fecharPerguntaOC(); return; }   // vazio = mesma coisa que "Depois"
+  btn.disabled = true; btn.textContent = 'Salvando...';
+  try {
+    await api('PATCH','proposals',`id=eq.${p.id}`, { oc_numero: oc });
+    PROP_ATUAL = { ...p, oc_numero: oc };
+    const i = PROPOSTAS.findIndex(x => x.id === p.id);
+    if (i >= 0) PROPOSTAS[i] = PROP_ATUAL;
+    fecharPerguntaOC();
+    if (document.getElementById('pr-view')?.classList.contains('ac')) renderPropostas();
+    toast('OC registrada', 'Agora dá pra achar este pedido pelo número do cliente.', 'success');
+  } catch(err) {
+    toast('Erro ao salvar a OC', err.message||'', 'warning');
+  } finally {
+    btn.disabled = false; btn.textContent = 'Salvar OC';
   }
 }
 

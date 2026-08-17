@@ -577,6 +577,22 @@ Técnico:
 > confirme buscando na produção uma string que **só exista na versão nova**
 > (`curl https://crm-adiblock.vercel.app/css/app.css | grep <marcador>`).
 
+> ⚠ **Media query NÃO aumenta especificidade.** No empate, vence quem vem
+> **depois** no arquivo. Regra de celular escrita ANTES da regra-base que ela
+> deveria sobrescrever é silenciosamente anulada — não há erro, não há aviso, o
+> app só se comporta como se a regra não existisse. Em 17/08/2026 três regras do
+> Sprint 7.3/9.3 estavam nesse estado, e uma delas (`.cl-cards{display:flex}`)
+> deixava a aba Empresas **em branco no celular** desde então. Por isso os blocos
+> responsivos ficam no **fim** do `app.css`. Para checar:
+> comparar cada regra dentro de `@media` com regras-base de mesmo seletor e
+> linha maior.
+
+> ⚠ **Seletor que não casa com nada é pior que seletor ausente** — parece que
+> resolveu. Já apareceu duas vezes: `.filtro-clear` (o botão "Limpar filtros" da
+> aba Empresas limpava só a busca, deixando período/classificação/vendedor
+> ligados) e um `span.lbl` que eu mesmo inventei. Ao escrever CSS ou
+> `querySelectorAll` mirando uma classe, confirmar que ela existe no HTML.
+
 > ⚠ **Verificar CSS também, não só JS e HTML.** Um comentário mal fechado no
 > `app.css` não gera erro em lugar nenhum: apaga silenciosamente a regra
 > seguinte. Em 14/08/2026 isso derrubou a navbar em produção e passou por duas
@@ -593,6 +609,7 @@ Técnico:
 | TOKEN_REFRESHED empilhava setInterval | setInterval sem clearInterval prévio | window._bellTimer com clear antes de recriar |
 | Migration falhou "invalid syntax for timestamptz" | coluna já era timestamptz, USING tentava concatenar de novo | DO $$ com check de data_type antes do ALTER |
 | Deploy parou de sair sem erro visível no app; produção congelada em um commit antigo | `vercel.json` com uma chave `"//"` de comentário — JSON válido, mas o schema da Vercel só aceita `source`/`headers`/`has`/`missing` em cada regra, e propriedade extra **rejeita o deploy inteiro** | tirar a chave; **JSON não tem comentário** — a explicação vai no CLAUDE.md ou no commit |
+| Aba Empresas em branco no celular; barras de ação de Hoje/Propostas vazando pra fora da tela | 3 regras de `@media(max-width:768px)` escritas ANTES das regras-base de mesmo seletor — media query não soma especificidade, então a base posterior vencia. Com o seletor de status visível, a `.nbr` (`flex-shrink:0`) passava de 360px e forçava a **página** a ficar mais larga; com a página larga, nada mais precisava quebrar | mover as 3 pro bloco do fim do arquivo + `min-width:0` e `flex-wrap` na `.nbr`, pra ela nunca empurrar o documento |
 | Abas da navbar empilhadas em coluna, vazando sobre a página | comentário CSS fechado cedo demais (`*/` no meio), o parser descartou até a próxima chave e levou junto `#tabs{display:flex}` | frase movida para dentro do comentário — e passou a haver checagem de CSS, não só de JS/HTML |
 
 ---

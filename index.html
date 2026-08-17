@@ -1641,8 +1641,17 @@ function renderCl() {
     tb.innerHTML = '<tr><td colspan="9"><div class="se" style="padding:50px 20px">'
       + '<span class="es-ico">🏢</span>'
       + '<div class="es-tit">'+(semCadastro?'Sem empresas cadastradas':'Nenhuma empresa encontrada')+'</div>'
-      + '<div class="es-msg">'+(semCadastro?'Cadastre sua primeira empresa pra começar a gerar oportunidades.':'Tente ajustar os filtros acima ou cadastrar uma nova.')+'</div>'
-      + (semCadastro ? '<button class="es-cta write-only" onclick="document.getElementById(\'ncbtn\').click()">+ Nova Empresa</button>' : '<button class="es-cta" onclick="document.querySelectorAll(\'.filtro-clear\').forEach(b=>b.click());document.getElementById(\'srch\').value=\'\';renderCl()">Limpar filtros</button>')
+      + '<div class="es-msg">'+(semCadastro
+          ? 'Cadastre sua primeira empresa pra começar a gerar oportunidades.'
+          : (filtrosAtivosDesc().length
+              ? 'Filtro ativo: '+escHtml(filtrosAtivosDesc().join(' · '))+'.<br>São '+CL.length+' empresas no total.'
+              : 'Tente ajustar os filtros acima ou cadastrar uma nova.'))+'</div>'
+      // O botao antigo varria '.filtro-clear', classe que nao existe em
+      // elemento nenhum: limpava so a busca e deixava periodo, classificacao e
+      // vendedor ligados. Agora chama limparFiltrosCl(), que zera os quatro.
+      + (semCadastro
+          ? '<button class="es-cta write-only" onclick="document.getElementById(\'ncbtn\').click()">+ Nova Empresa</button>'
+          : '<button class="es-cta" onclick="limparFiltrosCl()">Limpar filtros</button>')
       + '</div></td></tr>';
     return;
   }
@@ -1692,11 +1701,21 @@ function renderClCards(lst) {
   if (!cont) return;
   if (!lst.length) {
     const semCadastro = CL.length === 0;
+    // Diz QUAIS filtros estao escondendo tudo. Sem isso a tela vazia parece
+    // perda de dados — e o filtro de periodo aqui e por DATA DE CADASTRO, o que
+    // ninguem adivinha: "7 dias" com 159 empresas antigas devolve zero.
+    const ativos = filtrosAtivosDesc();
     cont.innerHTML = '<div class="se" style="padding:50px 20px">'
       + '<span class="es-ico">🏢</span>'
       + '<div class="es-tit">'+(semCadastro?'Sem empresas cadastradas':'Nenhuma empresa encontrada')+'</div>'
-      + '<div class="es-msg">'+(semCadastro?'Cadastre sua primeira empresa pra começar.':'Ajuste os filtros ou cadastre uma nova.')+'</div>'
-      + (semCadastro ? '<button class="es-cta write-only" onclick="document.getElementById(\'ncbtn\').click()">+ Nova Empresa</button>' : '')
+      + '<div class="es-msg">'+(semCadastro
+          ? 'Cadastre sua primeira empresa pra começar.'
+          : (ativos.length
+              ? 'Filtro ativo: '+escHtml(ativos.join(' · '))+'.<br>São '+CL.length+' empresas no total.'
+              : 'Ajuste os filtros ou cadastre uma nova.'))+'</div>'
+      + (semCadastro
+          ? '<button class="es-cta write-only" onclick="document.getElementById(\'ncbtn\').click()">+ Nova Empresa</button>'
+          : (ativos.length ? '<button class="es-cta" onclick="limparFiltrosCl()">Limpar filtros</button>' : ''))
       + '</div>';
     return;
   }
@@ -6422,6 +6441,29 @@ function setPeriodo(dias) {
     b.classList.toggle('ac', parseInt(b.dataset.d) === dias)
   );
   renderCl();
+}
+
+// Descreve em portugues os filtros ligados na aba Empresas, pra a tela vazia
+// poder dizer POR QUE esta vazia em vez de so dizer que esta.
+function filtrosAtivosDesc() {
+  const d = [];
+  const q  = document.getElementById('srch')?.value?.trim();
+  const tf = document.getElementById('stf');
+  const vf = document.getElementById('svf')?.value?.trim();
+  if (q) d.push('busca "'+q+'"');
+  if (tf?.value) d.push(tf.options[tf.selectedIndex]?.text || 'classificação');
+  if (vf) d.push('vendedor "'+vf+'"');
+  // O rotulo diz "cadastradas": e por data de cadastro, nao de contato — e a
+  // confusao que fez a tela parecer vazia de dados.
+  if (periodoFiltro > 0) d.push('cadastradas nos últimos '+periodoFiltro+' dias');
+  return d;
+}
+
+function limparFiltrosCl() {
+  const srch = document.getElementById('srch'); if (srch) srch.value = '';
+  const stf  = document.getElementById('stf');  if (stf)  stf.value  = '';
+  const svf  = document.getElementById('svf');  if (svf)  svf.value  = '';
+  setPeriodo(0);   // ja chama renderCl()
 }
 
 // ── Validação de Formulário ───────────────────────────────────────────────

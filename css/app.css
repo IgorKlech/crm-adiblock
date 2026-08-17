@@ -144,12 +144,17 @@ h1,h2,h3,h4{font-weight:800;letter-spacing:-.02em;line-height:1.2}
 /* Logo do login. A placa branca saiu: a logo SVG ja traz a propria placa no
    simbolo, entao a de tras virava uma caixa dentro da outra. */
 .li{display:inline-flex;align-items:center;justify-content:center;margin-bottom:18px}
-.li img{height:46px;width:auto;display:block}
+/* Sem `display` aqui: `.li img` vale (0,1,1) e vencia o `.logo-escuro`
+   (0,1,0) que deveria esconder uma das duas — as duas logos apareciam lado a
+   lado no login. Quem manda em display sao as regras do par abaixo, todas na
+   mesma especificidade. */
+.li img{height:46px;width:auto}
 /* Par claro/escuro: o cartao de login e branco no tema claro e azul-escuro no
    escuro — uma versao so da logo ficaria invisivel numa das duas. */
-.logo-escuro{display:none}
-[data-theme="dark"] .logo-claro{display:none}
-[data-theme="dark"] .logo-escuro{display:block}
+.li .logo-claro{display:block}
+.li .logo-escuro{display:none}
+[data-theme="dark"] .li .logo-claro{display:none}
+[data-theme="dark"] .li .logo-escuro{display:block}
 /* Logo da navbar: versao reversa, assentada direto no azul da marca */
 .nb-logo{height:30px;width:auto;display:block;flex-shrink:0}
 .ll h1{font-size:var(--fs-xl);font-weight:700;color:var(--tx);margin-bottom:4px}
@@ -598,8 +603,9 @@ td strong{color:var(--tx);font-weight:600}
   #gs-btn span{display:none}
   /* Atalhos de teclado nao fazem sentido sem teclado */
   #kbd-btn{display:none}
-  /* Status do vendedor e controle de mesa; o avatar continua abrindo o perfil */
-  .vs-wrap{display:none}
+  /* .vs-wrap, .cl-cards e .pr-grid foram para o bloco do FIM do arquivo:
+     aqui elas eram anuladas por regras-base posteriores de mesma
+     especificidade. Ver a nota sobre ordem de codigo no bloco final. */
   #mc{padding:14px}
   .ph{flex-wrap:wrap;gap:10px}
   .ph h2{font-size:var(--fs-lg)}
@@ -623,11 +629,10 @@ td strong{color:var(--tx);font-weight:600}
   .fa{flex-wrap:wrap}
   #gs-overlay{padding:20px 10px}
   #gs-box{max-width:100%}
-  /* Sprint 7.3: Empresas vira cards empilhados (esconde a tabela) */
+  /* Sprint 7.3: Empresas vira cards empilhados (esconde a tabela).
+     O `.cl-cards{display:flex}` esta no bloco do fim — aqui era anulado. */
   .cl-table-wrap{display:none}
-  .cl-cards{display:flex}
-  /* Sprint 7.3 item 1: Propostas em 1 coluna */
-  .pr-grid{grid-template-columns:1fr}
+  /* Sprint 7.3 item 1: Propostas em 1 coluna — no bloco do fim. */
   /* Sprint 7.3 item 3: alvos de toque >=44px em acoes de lista */
   .pr-card .btn,.td-act,.pf-opp-actions .btn{min-height:44px}
   .td-act{min-width:44px}
@@ -1335,4 +1340,45 @@ body.role-leitor .read-only-banner{display:block}
   .cot-topbar{padding:10px 12px}
   .cot-topbar .btn{flex:1;min-width:calc(50% - 4px)}
   .pcom-oc-box b{font-size:var(--fs-lg)}
+}
+
+/* ==========================================================================
+   ORDEM DE CODIGO — tres regras de celular que nunca funcionaram (2026-08-17)
+   --------------------------------------------------------------------------
+   Descobertas num teste em Galaxy S23 real. Media query NAO aumenta
+   especificidade: no empate, quem vence e a regra que vem DEPOIS no arquivo.
+   Estas tres viviam em blocos de @media colocados ANTES das regras-base que
+   deveriam sobrescrever, e eram silenciosamente anuladas:
+
+     .vs-wrap   L607 (@media) anulada pela base em L764  -> display
+     .cl-cards  L633 (@media) anulada pela base em L682  -> display
+     .pr-grid   L635 (@media) anulada pela base em L885  -> grid-template-columns
+
+   O estrago em cadeia: com o seletor de status visivel, a .nbr (flex-shrink:0)
+   passava dos 360px de um S23 e forcava a PAGINA a ficar mais larga que a tela.
+   Com a pagina larga, sobrava espaco e nada mais precisava quebrar — por isso
+   as barras de acao de Hoje e Propostas ficavam numa linha so e vazavam. E o
+   .cl-cards com display:none explicava a aba Empresas aparecer em branco:
+   nem os cards nem a mensagem de "nenhuma empresa" conseguiam aparecer.
+   ========================================================================== */
+@media(max-width:768px){
+  /* Status do vendedor e controle de mesa; o avatar continua abrindo o perfil */
+  .vs-wrap{display:none}
+  /* "ao vivo" e indicador de realtime: ~62px de decoracao numa tela de 360 */
+  #upd-ind{display:none!important}
+  /* Logo um pouco menor: a conta da .nbr + .nbl fechava em ~395px num S23 */
+  .nb-logo{height:26px}
+  /* Ultimos 12px pra fechar em 360 sem quebrar linha. Nao e capricho: em 360px
+     cada 8px e 2% da tela. */
+  #nb{padding:6px 10px 0}
+  .nbr{gap:5px}
+  /* Empresas vira cards empilhados (a tabela e escondida la em cima) */
+  .cl-cards{display:flex}
+  /* Propostas em 1 coluna */
+  .pr-grid{grid-template-columns:1fr}
+}
+/* A navbar nao pode empurrar a pagina. `flex-shrink:0` sem `min-width:0` deixa
+   a .nbr crescer alem da tela e levar o documento inteiro com ela. */
+@media(max-width:1024px){
+  .nbr{min-width:0;flex-wrap:wrap;justify-content:flex-end}
 }

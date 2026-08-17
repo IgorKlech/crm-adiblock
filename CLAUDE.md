@@ -272,6 +272,19 @@ branco no claro e azul-escuro no escuro, então uma versão só sumiria numa del
 
 ### Breakpoints (2026-08-17)
 
+**Aparelhos que a equipe usa de verdade** (confirmado com o Igor em 17/08/2026):
+**celular Android** e **iPad/tablet** — não há iPhone em uso. As duas larguras
+que mandam, portanto:
+
+| Aparelho | Largura lógica | Por que importa |
+|---|---|---|
+| Galaxy S23 (e Android típico) | **360px** | é o piso real; 390px é iPhone e leva a cálculo errado |
+| iPad Air / Pro 11" | **820–834px** | caem *acima* de 768, então recebem layout de mesa |
+
+> iPad é Safari: as manhas de iOS continuam valendo (input < 16px dá zoom
+> automático) mesmo sem iPhone na equipe.
+
+
 Eram 7 valores sem sistema (1280, 1100, 768, 680, 640, 560, 480) e a faixa de
 **769 a 1024px não tinha dono**: iPad Air (820) e iPad Pro 11" (834) caíam no
 layout de mesa, com navbar de linha única cheia e alvos de toque de ~31px.

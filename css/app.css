@@ -692,6 +692,9 @@ td strong{color:var(--tx);font-weight:600}
 .adp-nome{font-weight:600;color:var(--tx)}
 .adp-warn{color:var(--wr);font-weight:700}
 .adp-crit{color:var(--er);font-weight:700}
+/* Mesma protecao do .tw: no celular o painel vira cards, mas entre 769 e
+   1024px a tabela aparece e tem 7 colunas. Rolar e melhor que cortar. */
+.adp-table-wrap{overflow-x:auto}
 .adp-cards{display:none;flex-direction:column;gap:12px}
 .adp-card{background:var(--sur);border:1px solid var(--bdr);border-radius:var(--r);padding:14px}
 .adp-card-nome{font-size:var(--fs-base);font-weight:700;color:var(--tx);margin-bottom:10px}
@@ -718,7 +721,14 @@ td strong{color:var(--tx);font-weight:600}
 .pf-met{display:flex;flex-direction:column;gap:2px}
 .pf-met-l{font-size:var(--fs-2xs);font-weight:600;color:var(--mt);text-transform:uppercase;letter-spacing:.04em}
 .pf-met-v{font-size:var(--fs-md);font-weight:600;color:var(--tx)}
-.pf-tabs{background:var(--sur);border-bottom:1px solid var(--bdr);padding:0 24px;display:flex;gap:2px;position:sticky;top:53px;z-index:9}
+/* overflow-x na BASE: as 5 abas (Resumo, Contatos, Oportunidades, Interacoes,
+   Alteracoes) somam ~555px de faixa. Num Galaxy S23, que tem 360px de largura
+   logica, isso vazava ~195px pra fora da tela. Igual ao #tabs da navbar: a
+   faixa desliza em vez de espremer ou estourar. Em tela larga o auto nao faz
+   nada, entao nao precisa de breakpoint. */
+.pf-tabs{background:var(--sur);border-bottom:1px solid var(--bdr);padding:0 24px;display:flex;gap:2px;position:sticky;top:53px;z-index:9;overflow-x:auto;scrollbar-width:none;-ms-overflow-style:none}
+.pf-tabs::-webkit-scrollbar{display:none}
+.pf-tab{flex:none}
 .pf-tab{padding:11px 16px;background:none;border:none;border-bottom:2px solid transparent;font-size:var(--fs-md);font-weight:500;color:var(--mt);cursor:pointer;font-family:inherit;transition:all .15s;margin-bottom:-1px;white-space:nowrap}
 .pf-tab:hover{color:var(--tx)}
 .pf-tab.ac{color:var(--p);border-bottom-color:var(--p);font-weight:600}
@@ -1292,8 +1302,15 @@ body.role-leitor .read-only-banner{display:block}
      recuo de 14px deixava a barra mais estreita que o proprio texto. */
   .tb.ac::after{left:8px;right:8px}
 
-  /* Documentos coladas na borda: em 390px, 22px de cada lado sao 11% da tela */
+  /* Documentos colados na borda: em 360px, 22px de cada lado sao 12% da tela */
   .cot-body{margin:0;padding:16px 14px;border:none;border-radius:0}
+  /* Cabecalho do documento: a logo completa tem 186px de largura e o bloco de
+     numeros e `nowrap`. Lado a lado passavam dos 332px uteis de um S23. */
+  .cot-header{flex-direction:column;align-items:flex-start;gap:10px}
+  .cot-meta{text-align:left;white-space:normal}
+  .pf-tabs{padding:0 12px;top:auto}
+  /* Valor longo (email, CNPJ, endereco) quebra em vez de empurrar a linha */
+  .cot-info-list,.pf-card,.cl-card,.pr-card{overflow-wrap:anywhere}
   /* Tabela de documento vira um bloco que rola sozinho. Sem isso a tabela de
      5 colunas do Pedido Comercial empurra a pagina inteira pra fora da tela. */
   .cot-tab,.pcom-tab,.prod-tab{display:block;overflow-x:auto;white-space:nowrap}

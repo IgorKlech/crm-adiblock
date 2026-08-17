@@ -506,10 +506,14 @@ imutável — enfiar dado de entrega nele obrigaria a reescrever documento fecha
 
 ### Em andamento / não concluídos
 
-- **Sprint 8.1 (modularização) está PAUSADO** após extrair só CSS e `format.js`.
-  Faltam: `config.js`, `state.js`, `api.js`, `js/views/*`, `modals.js`, `main.js`,
-  e apagar os órfãos `app.js`/`style.css`. Retomar com smoke test entre cada
-  módulo (ordem de carga dos `<script src>` é crítica — globals compartilhados).
+- **Sprint 8.1 (modularização) — em andamento.** Já extraídos: `css/app.css`,
+  `js/format.js`, `js/config.js`, `js/api.js`. Os órfãos `app.js`/`style.css`
+  foram apagados em 17/08/2026. Faltam `state.js`, `js/views/*`, `modals.js` e
+  `main.js` — o `<script>` inline ainda tem **5.781 linhas**, e é aí que está o
+  ganho de verdade; config e api somaram só ~100 linhas.
+  As views são o pedaço difícil: dependem de tudo e não dá pra verificar sem
+  **abrir o app entre cada extração**. Análise estática pega sintaxe e ordem de
+  carga, não pega "a tela não renderiza mais".
 - **Sprint 9.1 (multi-tenant) saiu do papel**: as etapas D e F já foram aplicadas
   (NOT NULL + índices compostos + numeração por org; policies RLS por org, com
   ROLLBACK). O design segue em [docs/MULTI-TENANT.md](docs/MULTI-TENANT.md).
@@ -673,7 +677,10 @@ crm-adiblock/
 ├── css/
 │   └── app.css         ← todo o CSS (extraído do <style> no Sprint 8.1a)
 ├── js/
-│   └── format.js       ← helpers de formatação (Sprint 8.1b). Mais módulos virão.
+│   ├── config.js       ← chaves, cliente Supabase, guarda de carregamento (8.1c)
+│   ├── api.js          ← api(), apiDelete(), getToken() (8.1c)
+│   ├── format.js       ← helpers de formatação (8.1b)
+│   └── vendor/         ← supabase-js 2.39.3 (arquivo local, ver seção 2)
 ├── supabase_setup.sql  ← schema completo (DROP destrutivo COMENTADO — Regra de Ouro)
 ├── migrations/         ← mudanças de schema datadas (AAAA-MM-DD-*.sql)
 │   ├── 2026-06-03-embalagens-reais.sql
@@ -698,9 +705,16 @@ crm-adiblock/
     └── memory/         ← memórias persistentes do Claude
 ```
 
-> Carregamento JS: `index.html` carrega `<script src="js/format.js">` ANTES do
-> `<script>` inline (globals compartilhados, sem `type=module`). Novos módulos
-> seguem a mesma ordem. CSS via `<link href="css/app.css">`.
+> **Ordem de carga** (crítica — tudo compartilha escopo global, sem `type=module`):
+> `vendor/supabase-js` → `config.js` → `api.js` → `format.js` → `<script>` inline.
+> `api.js` usa `SB_URL`/`SB_KEY` de `config.js`; o inline usa `sb`, `api()`,
+> `apiDelete()` e `MODO_RECUPERACAO` dos dois. Módulo novo entra **antes** do
+> inline e **depois** de quem ele consome. CSS via `<link href="css/app.css">`.
+>
+> ⚠ **O `throw` da guarda de carregamento agora para só o `config.js`** — antes,
+> morando no inline, parava tudo. Se o supabase-js não carregar, os arquivos
+> seguintes ainda executam e enchem o console de erro de referência. O que o
+> usuário vê não muda: a tela de erro já substituiu o `body`.
 
 ---
 

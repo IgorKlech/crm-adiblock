@@ -697,6 +697,7 @@ crm-adiblock/
 │   └── 2026-08-14-pedido-comercial.sql
 ├── docs/
 │   ├── RESTORE.md      ← guia de restauração de backup
+│   ├── diagnostico-banco.sql ← 6 blocos SÓ-LEITURA de checagem do banco
 │   └── MULTI-TENANT.md ← design da migração multi-tenant (Sprint 9.0)
 ├── .github/workflows/
 │   └── backup.yml      ← backup diário automático (Sprint 7.5)

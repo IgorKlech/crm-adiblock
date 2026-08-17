@@ -694,7 +694,8 @@ crm-adiblock/
 ├── migrations/         ← mudanças de schema datadas (AAAA-MM-DD-*.sql)
 │   ├── 2026-06-03-embalagens-reais.sql
 │   ├── 2026-08-14-revisao-pedidos.sql
-│   └── 2026-08-14-pedido-comercial.sql
+│   ├── 2026-08-14-pedido-comercial.sql
+│   └── 2026-08-17-closed-at-retroativo.sql
 ├── docs/
 │   ├── RESTORE.md      ← guia de restauração de backup
 │   ├── diagnostico-banco.sql ← 6 blocos SÓ-LEITURA de checagem do banco
@@ -745,7 +746,6 @@ Da lista de sprints sugeridos, ainda faltam:
 - **U7**: Avatar/iniciais coloridas consistente em todas as telas
 - **O3**: Timeline unificada no perfil (interações + alterações + propostas + revisões de pedido)
 - **O4**: Anexos via Supabase Storage (PDF, foto da obra)
-- **closed_at retroativo**: opps ganhas com `closed_at` nulo afetam precisão do Radar (usa `created_at` como fallback)
 - **Guia do vendedor desatualizado**: `docs/GUIA-VENDEDOR.*` está untracked e não cobre editar pedido (revisões), Pedido Comercial nem recuperação de senha
 
 > Já feitos: U1 (cheat-sheet), U5 (mobile Sprint 7.3), O1 (modularização em

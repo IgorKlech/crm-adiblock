@@ -1322,8 +1322,15 @@ function toast(tit, msg, tipo) {
   const t = document.createElement('div');
   t.className = 'toast'+(tipo==='success'?' ts':tipo==='warning'?' tw':'');
   const ico = tipo==='success'?'✓':tipo==='warning'?'⚠':'ℹ';
+  // escHtml no titulo e na mensagem. Sao 91 chamadas de toast(), 11 delas
+  // interpolando nome de empresa, contato ou produto — e o Importar CSV traz
+  // esses nomes de FORA. Uma empresa chamada `<img src=x onerror=...>` rodaria
+  // script em qualquer toast que a mencionasse, com o token de sessao no
+  // localStorage ao alcance. Escapar aqui cobre as 91 de uma vez; nenhuma
+  // chamada passa HTML de proposito (conferido). O toastUndo logo abaixo ja
+  // fazia isso certo — este era o irmao esquecido.
   t.innerHTML = '<span style="font-size:15px;flex-shrink:0">'+ico+'</span>'
-    +'<div class="tib"><div class="tit">'+tit+'</div>'+(msg?'<div class="tim">'+msg+'</div>':'')+'</div>'
+    +'<div class="tib"><div class="tit">'+escHtml(tit)+'</div>'+(msg?'<div class="tim">'+escHtml(msg)+'</div>':'')+'</div>'
     +'<button class="tcl" onclick="this.closest(\'.toast\').remove()">✕</button>';
   c.appendChild(t);
   setTimeout(() => t?.parentNode && t.remove(), tipo==='warning' ? 10000 : 5000);
@@ -1839,12 +1846,12 @@ function drillDashboard(tipo) {
       .sort((a,b)=>(Number(b.valor_estimado)||0)-(Number(a.valor_estimado)||0));
     const tot = lst.reduce((s,o)=>s+(Number(o.valor_estimado)||0),0);
     titulo = `Pipeline em aberto — ${fMoeda(tot)} (${lst.length})`;
-    rows = lst.map(o => rowOpp(o, `<div class="drill-rt">${fMoeda(o.valor_estimado)}<small>${o.seller_name||''}</small></div>`)).join('');
+    rows = lst.map(o => rowOpp(o, `<div class="drill-rt">${fMoeda(o.valor_estimado)}<small>${escHtml(o.seller_name||'')}</small></div>`)).join('');
   }
   else if (tipo === 'sempasso') {
     const lst = opps.filter(semProximoPasso).sort((a,b)=>(a.company_nome||'').localeCompare(b.company_nome||''));
     titulo = `Sem próximo passo (${lst.length})`;
-    rows = lst.map(o => rowOpp(o, `<div class="drill-rt" style="color:var(--wr)">${o.callback_date?fData(o.callback_date):'sem retorno'}<small>${o.seller_name||''}</small></div>`)).join('');
+    rows = lst.map(o => rowOpp(o, `<div class="drill-rt" style="color:var(--wr)">${o.callback_date?fData(o.callback_date):'sem retorno'}<small>${escHtml(o.seller_name||'')}</small></div>`)).join('');
   }
 
   document.getElementById('drill-titulo').textContent = titulo;

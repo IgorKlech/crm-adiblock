@@ -153,7 +153,6 @@
         <div class="ua" id="uav" onclick="abrConfig()" title="Minhas configurações" style="cursor:pointer">?</div>
         <div>
           <div class="un" id="unm">-</div>
-          <span id="nb-alert" title="Clientes inativos">⚠</span>
       <div class="vs-wrap">
             <div class="vs-dot vs-disp" id="vs-dot"></div>
             <select class="vs-sel" id="vs-sel" onchange="atualizarStatus(this.value)">
@@ -358,15 +357,6 @@
         <div class="sk sk-pipe sk-click" onclick="drillDashboard('pipeline')" title="Ver oportunidades em aberto"><div class="sic sb2"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/></svg></div><div><div class="sv" id="d5" style="font-size:18px;margin-top:4px">-</div><div class="sl2">Valor do Pipeline</div></div></div>
         <div class="sk sw2 sk-click" onclick="drillDashboard('sempasso')" title="Oportunidades abertas sem próximo passo"><div class="sic sy"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg></div><div><div class="sv" id="d6">-</div><div class="sl2">Sem próximo passo</div></div></div>
       </div>
-      <!-- Alertas de Inatividade -->
-      <div id="inact-wrap" style="display:none" class="inact-wrap">
-        <div class="inact-header">
-          <div class="inact-title">⚠ Clientes sem contato há 7+ dias <span class="inact-badge" id="inact-badge">0</span></div>
-          <span style="font-size:12px;color:var(--wr-tx)">Entre em contato para não perder esses leads</span>
-        </div>
-        <div id="inact-body"></div>
-      </div>
-
       <!-- Funil de Conversão -->
       <div class="funnel-wrap">
         <div class="funnel-title">
@@ -1299,25 +1289,9 @@ function fMoedaK(v) {
     ? 'R$ ' + (v/1000).toFixed(1).replace('.',',') + 'k'
     : 'R$ ' + Number(v).toLocaleString('pt-BR');
 }
-function tempoStatus(c) {
-  const dt = c.status_changed_at || c.updated_at;
-  if (!dt) return '';
-  const d = Math.round((new Date() - new Date(dt)) / 86400000);
-  if (d === 0) return 'hoje';
-  if (d === 1) return 'há 1 dia';
-  return `há ${d} dias`;
-}
 function foneLink(tel) {
   if (!tel) return null;
   return '55' + tel.replace(/\D/g,'');
-}
-function toggleLossReason(status) {
-  const el = document.getElementById('lr-wrap');
-  if (el) el.style.display = status === 'Nao comprou' ? 'block' : 'none';
-}
-function bStatus(s) {
-  const m={'Pendente':'bp2','Em contato':'bec','Comprou':'bc','Nao comprou':'bnc','Inativo':'bi2'};
-  return '<span class="badge '+(m[s]||'bp2')+'">'+s+'</span>';
 }
 
 // ── Toast ─────────────────────────────────────────────────────────────────
@@ -1420,7 +1394,6 @@ function empresaVendedor(c) {
   return (aberta && aberta.seller_name) || (opps[0]?.seller_name) || null;
 }
 // Helper: total de produtos cadastrados nas oportunidades (pra display)
-function empresaPipeline(c) { return c.valor_pipeline || 0; }
 const fetchPf = () => api('GET','profiles','select=id,name,role,email&order=name');
 const fetchProds = () => api('GET','products','select=nome,embalagem,preco_materia_prima,preco_office,preco_pj&order=nome,embalagem');
 // Sprint 6.2: tarefas livres (nao atreladas a oportunidade)
@@ -1521,39 +1494,7 @@ function bulkLimpar() {
   atualizarBulkBar();
 }
 
-async function bulkMudarStatus(novoStatus) {
-  if (!selectedIds.size) return;
-  const ids = [...selectedIds];
-  conf('Mudar status', `Alterar ${ids.length} cliente(s) para "${novoStatus}"?`, async () => {
-    try {
-      const idsList = ids.map(i => `"${i}"`).join(',');
-      await api('PATCH', 'clients', `id=in.(${idsList})`, { status: novoStatus, status_changed_at: new Date().toISOString() });
-      toast('Status atualizado', `${ids.length} cliente(s) movido(s) para "${novoStatus}"`, 'success');
-      bulkLimpar();
-      CL = await fetchCl(); renderCl();
-    } catch(err) {
-      console.error('bulkMudarStatus:', err);
-      toast('Erro', err.message||'', 'warning');
-    }
-  });
-}
 
-async function bulkMudarVendedor(novoVend) {
-  if (!selectedIds.size) return;
-  const ids = [...selectedIds];
-  conf('Mudar vendedor', `Atribuir ${ids.length} cliente(s) ao vendedor "${novoVend}"?`, async () => {
-    try {
-      const idsList = ids.map(i => `"${i}"`).join(',');
-      await api('PATCH', 'clients', `id=in.(${idsList})`, { seller_name: novoVend });
-      toast('Vendedor atualizado', `${ids.length} cliente(s)`, 'success');
-      bulkLimpar();
-      CL = await fetchCl(); renderCl();
-    } catch(err) {
-      console.error('bulkMudarVendedor:', err);
-      toast('Erro', err.message||'', 'warning');
-    }
-  });
-}
 
 async function bulkExcluir() {
   if (!selectedIds.size) return;
@@ -2809,10 +2750,7 @@ function abrDel(id, nome) {
 function myRole()   { return MEP?.role || 'vendedor'; }
 function ehAdmin()  { return myRole() === 'admin'; }
 function ehLeitor() { return myRole() === 'leitor'; }
-function canWrite() { return !ehLeitor(); }
 function ehDono(rec) { return rec && rec.created_by === ME?.id; }
-function podeEditarEmpresa(c) { return ehAdmin() || ehDono(c); }
-function podeExcluirEmpresa(c) { return ehAdmin() || ehDono(c); }
 
 // Popula o select de vendedor responsável no modal de empresa
 function popularSelectVendedorResp(selectedId) {
@@ -2920,7 +2858,6 @@ async function iniciar(user) {
   if (n>0) toast(n+' retorno(s) vencido(s)',n+' cliente(s) com data vencida.','warning');
   startAutoRefresh();
   startRealtime();
-  loadAlertasInatividade();
   // Sprint 6.1: bell + tela Hoje (que e a aba default agora)
   updateBell();
   renderToday();
@@ -3191,59 +3128,6 @@ document.addEventListener('keydown', e => {
 });
 
 // ── Alertas de Inatividade ────────────────────────────────────────────────
-async function loadAlertasInatividade() {
-  // Sprint 3: será recalculado a partir de interactions ligadas a oportunidades (3.3)
-  const wrap = document.getElementById('inact-wrap');
-  if (wrap) wrap.style.display = 'none';
-  return;
-  try {
-    const corte = new Date(Date.now() - 7 * 86400000).toISOString();
-    // Busca clientes que tiveram contato nos últimos 7 dias
-    const recentes = await api('GET','call_history',`datetime=gte.${corte}&select=client_id`);
-    const comContato = new Set((recentes||[]).map(h=>h.client_id));
-
-    // Clientes ativos sem contato recente
-    const inativos = CL.filter(c =>
-      ['Pendente','Em contato'].includes(c.status) && !comContato.has(c.id)
-    ).sort((a,b) => {
-      // Ordena pelos mais antigos primeiro (sem status_changed_at, usa created_at)
-      const da = a.status_changed_at || a.created_at || '';
-      const db2 = b.status_changed_at || b.created_at || '';
-      return da < db2 ? -1 : 1;
-    });
-
-    const wrap  = document.getElementById('inact-wrap');
-    const badge = document.getElementById('inact-badge');
-    const nb    = document.getElementById('nb-alert');
-
-    if (!inativos.length) {
-      if (wrap) wrap.style.display = 'none';
-      if (nb)   nb.style.display   = 'none';
-      return;
-    }
-
-    if (badge) badge.textContent = inativos.length;
-    if (nb) { nb.textContent = inativos.length + ' inativo(s)'; nb.style.display = 'inline'; }
-    if (wrap) {
-      wrap.style.display = 'block';
-      document.getElementById('inact-body').innerHTML = inativos.slice(0,8).map(c => {
-        const nv = c.seller_name||c.seller?.name||'Sem vendedor';
-        const dt = c.status_changed_at || c.created_at || '';
-        const diasSemContato = dt ? Math.floor((Date.now()-new Date(dt))/86400000) : '?';
-        return `<div class="inact-row">
-          <div class="inact-info">
-            <div class="inact-name">${c.name}</div>
-            <div class="inact-meta">${nv} • ${c.status}${c.phone?' • '+c.phone:''}</div>
-          </div>
-          <div style="display:flex;align-items:center;gap:10px">
-            <div class="inact-days">${diasSemContato}d sem contato</div>
-            <button class="btn bp sm" onclick="abrPainel('${c.id}')">Contatar</button>
-          </div>
-        </div>`;
-      }).join('') + (inativos.length > 8 ? `<div style="padding:10px 18px;font-size:12px;color:var(--mt)">+ ${inativos.length-8} outros clientes inativos</div>` : '');
-    }
-  } catch(e) { console.error('Inatividade:', e.message); }
-}
 
 // ── Relatório Semanal ─────────────────────────────────────────────────────
 function abrRelatorio() {
@@ -3301,47 +3185,6 @@ function numPedido(p) {
 }
 
 // Abre o modal de preparação da cotação (escolhe IPI, risco, condições)
-function abrCotacao(id) {
-  // Sprint 3.2: cotação agora será gerada a partir de uma oportunidade (3.3). Desabilitado.
-  toast('Em breve', 'Cotação será gerada a partir de uma oportunidade (Sprint 3.3).', 'info');
-  return;
-  const c = CL.find(x => x.id === id);
-  if (!c) { toast('Cliente não encontrado','','warning'); return; }
-  GC_CLIENT_ID = id;
-
-  document.getElementById('gc-cli-title').textContent = 'Cliente — ' + (c.name||'');
-  const resumo = [
-    c.email ? `📧 ${escHtml(c.email)}` : null,
-    c.cnpj ? `CNPJ: ${escHtml(c.cnpj)}` : null,
-    c.contato_outros ? `Solicitante: ${escHtml(c.contato_outros)}` : null,
-    (c.endereco || c.cidade) ? `${escHtml(c.endereco||'')}${c.cidade?', '+escHtml(c.cidade):''}${c.uf?'/'+escHtml(c.uf):''}` : null,
-    c.obra ? `Obra: ${escHtml(c.obra)}` : null,
-  ].filter(Boolean).join(' · ') || '<span style="color:var(--mt2)">Sem dados fiscais cadastrados — edite o cliente para preencher.</span>';
-  document.getElementById('gc-cli-resumo').innerHTML = resumo;
-
-  const prods = (c.produtos && c.produtos.length > 0) ? c.produtos : [];
-  const lista = document.getElementById('gc-prod-lista');
-  if (!prods.length) {
-    lista.innerHTML = '<div style="font-size:13px;color:var(--mt);padding:12px 0">Cliente sem produtos cadastrados. Volte e adicione produtos primeiro.</div>';
-    document.getElementById('gc-sub').disabled = true;
-  } else {
-    document.getElementById('gc-sub').disabled = false;
-    lista.innerHTML = `<div class="gc-phead">
-      <div>Produto</div><div>Embalagem</div>
-      <div class="num">Qtd (kg)</div><div class="num">Preço R$/kg</div>
-      <div class="num">IPI %</div><div>Classificação</div>
-    </div>` + prods.map((p, i) => `<div class="gc-prow" data-idx="${i}">
-      <div>${escHtml(p.produto||'—')}</div>
-      <div>${escHtml(p.embalagem||'—')}</div>
-      <input class="num gc-qtd" type="number" step="0.01" min="0" value="${p.qtd_kg!=null?p.qtd_kg:''}">
-      <input class="num gc-prc" type="number" step="0.01" min="0" value="${p.preco_kg!=null?p.preco_kg:''}">
-      <input class="num gc-ipi" type="number" step="0.01" min="0" value="0">
-      <select class="gc-risco">${RISCOS.map(r=>`<option>${r}</option>`).join('')}</select>
-    </div>`).join('');
-  }
-
-  document.getElementById('gcm').classList.add('op');
-}
 
 document.getElementById('gcf').addEventListener('submit', async e => {
   e.preventDefault();
@@ -5303,22 +5146,7 @@ async function atualizarStatus(status) {
 }
 
 // ── Audit Log ─────────────────────────────────────────────────────────────
-function detectChanges(oldC, newC) {
-  const labels = {
-    name:'Nome', phone:'Telefone', status:'Status', seller_name:'Vendedor',
-    callback_date:'Data Retorno', estimated_value:'Valor Est.',
-    produto:'Produto', peso:'Peso', observation:'Observação', loss_reason:'Motivo Perda'
-  };
-  return Object.keys(labels)
-    .filter(k => String(oldC[k]||'') !== String(newC[k]||''))
-    .map(k => ({field:k, label:labels[k], from:oldC[k]||null, to:newC[k]||null}));
-}
 
-async function logAudit(clientId, action, changes) {
-  // Sprint 3: audit_log será substituído por sistema próprio ligado a opportunities (3.3+).
-  // Por enquanto no-op para não criar registros órfãos.
-  return;
-}
 
 // ── Página de Perfil ──────────────────────────────────────────────────────
 let pfClientId = null;
@@ -6423,35 +6251,8 @@ async function executarExclusaoLgpd() {
     });
 }
 
-async function salvarProdutos(clientId) {
-  const produtos = getProdutosDoForm();
-  // Apaga todos os produtos antigos e insere os novos (replace all)
-  await api('DELETE', 'client_products', `client_id=eq.${clientId}`);
-  if (produtos.length > 0) {
-    await api('POST', 'client_products', null,
-      produtos.map(p => ({
-        client_id: clientId,
-        produto: p.produto,
-        embalagem: p.embalagem,
-        qtd_kg: p.qtd_kg,
-        preco_kg: p.preco_kg,
-      }))
-    );
-  }
-}
 
 // Soma o total (R$) de todos os produtos de um cliente
-function calcTotalCliente(c) {
-  const prods = c?.produtos || [];
-  let total = 0, hasAny = false;
-  for (const p of prods) {
-    if (p.qtd_kg != null && p.preco_kg != null) {
-      total += Number(p.qtd_kg) * Number(p.preco_kg);
-      hasAny = true;
-    }
-  }
-  return hasAny ? total : null;
-}
 
 // ── Filtro por Período ────────────────────────────────────────────────────
 let periodoFiltro = 0;

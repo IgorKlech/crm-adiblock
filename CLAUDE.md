@@ -678,9 +678,9 @@ crm-adiblock/
 ├── assets/
 │   ├── fonts/          ← Manrope self-hosted (woff2 500/600/700/800)
 │   └── img/            ← logos SVG e favicon (vindos do site adiblock.online)
-├── logo.png            ← ÓRFÃO desde 14/08/2026 (substituída pelas SVG)
-├── app.js              ← ÓRFÃO (não referenciado) — APAGAR ao concluir Sprint 8.1
-├── style.css           ← ÓRFÃO (não referenciado) — APAGAR ao concluir Sprint 8.1
+├── logo.png            ← ÓRFÃO desde 14/08/2026 (substituída pelas SVG).
+│                         Mantida a pedido: pode estar em uso FORA do app
+│                         (assinatura de e-mail, papel timbrado).
 └── .claude/
     ├── settings.json
     ├── commands/       ← skills: /deploy, /sql-pending, /status
@@ -695,6 +695,14 @@ crm-adiblock/
 ---
 
 ## 15. Próximos itens em aberto (não implementados)
+
+> **Painel "Clientes sem contato há 7+ dias" foi REMOVIDO em 17/08/2026.** Estava
+> desligado desde o Sprint 3 (um `return;` na quinta linha da função) enquanto o
+> HTML, o CSS e o ícone de alerta da navbar seguiam no sistema, inertes. O Radar
+> de Reativação (Sprint 8.2) faz o mesmo trabalho melhor — prioriza dormentes em
+> vez de só listar. Se um dia voltar, precisa ser reescrito sobre `interactions`;
+> a versão antiga consultava `call_history`, tabela que não existe mais.
+
 
 Da lista de sprints sugeridos, ainda faltam:
 

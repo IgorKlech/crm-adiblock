@@ -514,6 +514,14 @@ imutável — enfiar dado de entrega nele obrigaria a reescrever documento fecha
   As views são o pedaço difícil: dependem de tudo e não dá pra verificar sem
   **abrir o app entre cada extração**. Análise estática pega sintaxe e ordem de
   carga, não pega "a tela não renderiza mais".
+
+> **O que checar depois de extrair um módulo** (a análise estática cobre isto,
+> e só isto): sintaxe de cada arquivo; **colisão de declaração no escopo global**
+> — só coluna zero conta, `const` dentro de função é local e repetir é normal;
+> toda função movida ainda tem chamador (`onclick` do HTML, inline ou outro
+> módulo); e **quais linhas do módulo executam no carregamento** — essas são as
+> perigosas, porque um erro ali impede as funções abaixo de existirem. Por isso
+> `document.getElementById(...)` de nível superior em módulo usa `?.`.
 - **Sprint 9.1 (multi-tenant) saiu do papel**: as etapas D e F já foram aplicadas
   (NOT NULL + índices compostos + numeração por org; policies RLS por org, com
   ROLLBACK). O design segue em [docs/MULTI-TENANT.md](docs/MULTI-TENANT.md).
@@ -680,6 +688,7 @@ crm-adiblock/
 │   ├── config.js       ← chaves, cliente Supabase, guarda de carregamento (8.1c)
 │   ├── api.js          ← api(), apiDelete(), getToken() (8.1c)
 │   ├── format.js       ← helpers de formatação (8.1b)
+│   ├── documentos.js   ← os 3 papéis imprimíveis + PROP_ATUAL (8.1d)
 │   └── vendor/         ← supabase-js 2.39.3 (arquivo local, ver seção 2)
 ├── supabase_setup.sql  ← schema completo (DROP destrutivo COMENTADO — Regra de Ouro)
 ├── migrations/         ← mudanças de schema datadas (AAAA-MM-DD-*.sql)
@@ -706,7 +715,7 @@ crm-adiblock/
 ```
 
 > **Ordem de carga** (crítica — tudo compartilha escopo global, sem `type=module`):
-> `vendor/supabase-js` → `config.js` → `api.js` → `format.js` → `<script>` inline.
+> `vendor/supabase-js` → `config.js` → `api.js` → `format.js` → `documentos.js` → `<script>` inline.
 > `api.js` usa `SB_URL`/`SB_KEY` de `config.js`; o inline usa `sb`, `api()`,
 > `apiDelete()` e `MODO_RECUPERACAO` dos dois. Módulo novo entra **antes** do
 > inline e **depois** de quem ele consome. CSS via `<link href="css/app.css">`.

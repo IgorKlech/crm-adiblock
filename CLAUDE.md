@@ -576,6 +576,33 @@ O evento `TOKEN_REFRESHED` do Supabase Auth dispara ~a cada hora e era tratado c
 
 Requisito LGPD: o log de auditoria deve sobreviver à exclusão da empresa. Com FK normal (`ON DELETE SET NULL` já está no código), o `DELETE` em `companies` disparava violação de constraint. Removida a FK; o `company_id` é apenas um atalho de filtro, não integridade referencial.
 
+### "Produtos Vendidos" conta PEDIDO, não oportunidade (2026-08-17)
+
+O painel do Dashboard somava `opportunity_products` — os produtos de **toda**
+oportunidade, em qualquer estágio. Lead que nunca fechou entrava como venda.
+
+E errava no sentido oposto também: `opportunity_products` guarda a lista de
+produtos **uma vez por oportunidade**, mas o banco tem **176 pedidos fechados
+para 110 oportunidades ganhas** — muita recompra do mesmo cliente na mesma
+oportunidade. Essas ~66 vendas a mais eram colapsadas numa só.
+
+A fonte é `proposals` com status `pedido`/`expedido`, lendo o **snapshot**:
+
+- captura recompra (cada pedido conta uma vez);
+- usa o valor **realmente negociado**, já com as revisões — `opportunity_products`
+  é a estimativa da abertura;
+- pega os 8 pedidos cuja oportunidade não foi marcada como ganha.
+
+Custo aceito: perde 3 oportunidades ganhas sem pedido gerado (2,7%) — e essas
+não têm venda confirmada mesmo.
+
+> **O filtro de período usa `status_changed_at` da proposta**, não o `created_at`
+> da empresa. Antes, "últimos 30 dias" queria dizer *empresas cadastradas nos
+> últimos 30 dias* — mesmo defeito do filtro da aba Empresas.
+
+> **Valor é qtd × preço, sem IPI** (imposto não é receita de produto), e o
+> painel declara isso no título. Número de faturamento tem que dizer de onde vem.
+
 ### Por que snapshot jsonb imutável nas proposals?
 
 Proposta comercial é documento legal. Se o preço ou nome do produto mudar no catálogo depois, a proposta original deve preservar os valores exatos do momento da geração. Nunca fazer JOIN para buscar dados atuais de uma proposta antiga.

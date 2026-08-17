@@ -377,7 +377,10 @@
       <!-- Relatório de Produtos -->
       <div class="prod-rep-wrap">
         <div class="prod-rep-head">
-          <h3>Produtos Vendidos</h3>
+          <!-- Diz a FONTE do numero. A ambiguidade era o bug: o painel somava
+               oportunidade em aberto junto com venda fechada, e nada na tela
+               avisava. Numero de faturamento tem que declarar de onde vem. -->
+          <h3>Produtos Vendidos <span class="prod-rep-fonte">pedidos fechados · sem IPI</span></h3>
           <div class="prod-rep-filters">
             <select id="prod-rep-vend" onchange="renderProdRep()">
               <option value="">Todos os vendedores</option>
@@ -2415,62 +2418,88 @@ function popularVendSelect() {
     [...nomes].sort().map(n => `<option value="${escHtml(n)}"${n===atual?' selected':''}>${escHtml(n)}</option>`).join('');
 }
 
-// Agrega CL.produtos aplicando filtros de vendedor e período
-// Sprint 3.4: agrega opportunity_products de todas as oportunidades.
-// OPPS_PRODS é populado por carregarOppsProds() (uma só query) antes do render.
-let OPPS_PRODS = []; // [{opportunity_id, produto, embalagem, qtd_kg, preco_kg}]
-async function carregarOppsProds() {
-  try {
-    OPPS_PRODS = (await api('GET','opportunity_products','select=opportunity_id,produto,embalagem,qtd_kg,preco_kg')) || [];
-  } catch(err) { console.error('carregarOppsProds:', err); OPPS_PRODS = []; }
-}
-
+// ── Produtos Vendidos: agrega os PEDIDOS, nao as oportunidades ────────────
+//
+// Antes esta funcao varria `opportunity_products` inteiro — os produtos de
+// TODA oportunidade, em qualquer estagio. Um lead que nunca fechou entrava na
+// conta como venda. O painel se chama "Produtos Vendidos" e mostrava
+// "cotados + vendidos", o que estraga valor e quantidade ao mesmo tempo.
+//
+// E errava tambem no sentido oposto: `opportunity_products` guarda a lista de
+// produtos UMA VEZ por oportunidade, mas o banco tem 176 pedidos fechados pra
+// 110 oportunidades ganhas — muita recompra do mesmo cliente na mesma
+// oportunidade. Essas 66 vendas a mais eram colapsadas numa so.
+//
+// A fonte certa e o PEDIDO, por tres razoes:
+//   1. captura recompra: cada pedido conta uma vez
+//   2. usa o snapshot, que tem o valor REALMENTE negociado — e ja incorpora as
+//      revisoes (o `opportunity_products` e a estimativa da abertura)
+//   3. pega os 8 pedidos cuja oportunidade nao foi marcada como ganha
+// Custo: perde 3 oportunidades ganhas sem pedido gerado (2,7%) — e essas nao
+// tem venda confirmada mesmo.
+//
+// Valor = qtd x preco, SEM IPI: IPI e imposto, nao receita de produto.
 function agregarProdutos(filtroVend, filtroDias) {
   const cutoff = filtroDias > 0 ? Date.now() - filtroDias*86400000 : 0;
-  // Mapa opportunity_id → { empresa, opp, vend, created_at }
-  const oppIdx = new Map();
-  for (const c of CL) {
-    for (const o of (c.oportunidades || [])) {
-      oppIdx.set(o.id, { empresa: c, opp: o, vend: o.seller_name || '(sem vendedor)' });
-    }
-  }
   const map = new Map();
-  for (const p of OPPS_PRODS) {
-    if (!p.produto) continue;
-    const ctx = oppIdx.get(p.opportunity_id);
-    if (!ctx) continue; // opp inexistente (deletada)
-    if (filtroVend && ctx.vend !== filtroVend) continue;
-    // Filtro de período: usa created_at da empresa
-    if (cutoff && ctx.empresa.created_at && new Date(ctx.empresa.created_at).getTime() < cutoff) continue;
-    const key = p.produto;
-    if (!map.has(key)) map.set(key, {
-      nome: p.produto, totalKg: 0, totalRS: 0,
-      clientes: new Map(),
-      embalagens: new Set(),
-      vendedores: new Set(),
-    });
-    const e = map.get(key);
-    if (p.embalagem) e.embalagens.add(p.embalagem);
-    e.vendedores.add(ctx.vend);
-    const q  = p.qtd_kg   != null ? Number(p.qtd_kg)   : 0;
-    const pr = p.preco_kg != null ? Number(p.preco_kg) : 0;
-    const valor = q * pr;
-    e.totalKg += q;
-    e.totalRS += valor;
-    const cliKey = ctx.empresa.id;
-    const cli = e.clientes.get(cliKey) || { id:cliKey, nome:ctx.empresa.razao_social, vendedor:ctx.vend, qtd:0, valor:0, embalagens:new Set() };
-    cli.qtd += q;
-    cli.valor += valor;
-    if (p.embalagem) cli.embalagens.add(p.embalagem);
-    e.clientes.set(cliKey, cli);
+
+  for (const prop of (PROPOSTAS || [])) {
+    const st = prop.status || 'em_andamento';
+    if (st !== 'pedido' && st !== 'expedido') continue;   // so venda fechada
+
+    // Data da VENDA. O filtro antigo usava o created_at da EMPRESA, entao
+    // "ultimos 30 dias" queria dizer "empresas cadastradas nos ultimos 30
+    // dias" — nada a ver com quando se vendeu.
+    const dt = new Date(prop.status_changed_at || prop.created_at).getTime();
+    if (cutoff && dt < cutoff) continue;
+
+    const snap = prop.snapshot || {};
+    // Perfil PRIMEIRO, snapshot depois. O dropdown de filtro e montado a partir
+    // de PF.name; o snapshot guarda o nome de quando a proposta foi gerada, que
+    // pode ser o e-mail se o perfil ainda estava sem nome. Se o valor daqui nao
+    // casar com o do dropdown, o filtro de vendedor devolve lista vazia.
+    const vend = (PF || []).find(f => f.id === prop.seller_id)?.name
+              || snap.consultor?.nome
+              || '(sem vendedor)';
+    if (filtroVend && vend !== filtroVend) continue;
+
+    const empNome = snap.cliente?.name
+                 || (CL || []).find(c => c.id === prop.company_id)?.razao_social
+                 || '(sem empresa)';
+    const empId = prop.company_id || empNome;
+
+    for (const it of (snap.produtos || [])) {
+      if (!it.produto) continue;
+      const key = it.produto;
+      if (!map.has(key)) map.set(key, {
+        nome: it.produto, totalKg: 0, totalRS: 0,
+        clientes: new Map(), embalagens: new Set(), vendedores: new Set(),
+      });
+      const e = map.get(key);
+      if (it.embalagem) e.embalagens.add(it.embalagem);
+      e.vendedores.add(vend);
+
+      const q  = Number(it.qtd_kg)   || 0;
+      const pr = Number(it.preco_kg) || 0;
+      const valor = q * pr;
+      e.totalKg += q;
+      e.totalRS += valor;
+
+      const cli = e.clientes.get(empId)
+               || { id: empId, nome: empNome, vendedor: vend, qtd: 0, valor: 0, embalagens: new Set() };
+      cli.qtd   += q;
+      cli.valor += valor;
+      if (it.embalagem) cli.embalagens.add(it.embalagem);
+      e.clientes.set(empId, cli);
+    }
   }
   return [...map.values()];
 }
 
 async function renderProdRep() {
   if (!document.getElementById('prod-rep-body')) return; // dashboard não montado ainda
-  // Sprint 3.4: busca opportunity_products de todas as oportunidades
-  await carregarOppsProds();
+  // Nao busca mais opportunity_products: a agregacao passou a ler PROPOSTAS,
+  // que ja esta em memoria. Uma consulta a menos por render do dashboard.
   popularVendSelect();
   const filtroVend = document.getElementById('prod-rep-vend').value;
   const agg = agregarProdutos(filtroVend, prodRepPeriodo);

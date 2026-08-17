@@ -998,6 +998,9 @@ body.role-leitor .read-only-banner{display:block}
 /* ── Relatório de Produtos ── */
 .prod-rep-wrap{background:var(--sur);border:1px solid var(--bdr);border-radius:var(--r);padding:18px 20px;margin-top:18px}
 .prod-rep-head{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:14px;flex-wrap:wrap}
+/* Fonte do numero, ao lado do titulo. Peso e cor de rotulo, nao de titulo:
+   informa sem competir. */
+.prod-rep-fonte{font-size:var(--fs-2xs);font-weight:600;color:var(--mt);text-transform:uppercase;letter-spacing:var(--ls-label);margin-left:8px;white-space:nowrap}
 .prod-rep-head h3{margin:0;font-size:var(--fs-lg);font-weight:600;color:var(--tx)}
 .prod-rep-filters{display:flex;align-items:center;gap:10px}
 .prod-rep-filters select{padding:6px 10px;border:1.5px solid var(--bdr);border-radius:var(--rs);font-size:var(--fs-sm);font-family:inherit;color:var(--tx);background:var(--sur);outline:none}

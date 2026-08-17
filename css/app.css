@@ -1423,3 +1423,23 @@ body.role-leitor .read-only-banner{display:block}
   .guia-link{align-items:flex-start}
   .guia-seta{display:none}
 }
+
+/* ── Escolha rapida do proximo retorno (2026-08-17) ──────────────────────
+   O campo datetime-local custa 4 a 6 toques num Android; estes botoes fazem
+   em um. Alvo de 36px aqui e 44px no celular — sao a acao mais repetida do
+   sistema, varias vezes por dia. */
+.ret-rapido{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:8px}
+.ret-rapido button{
+  padding:7px 13px;min-height:36px;border:1px solid var(--bdr2);border-radius:var(--rp);
+  background:var(--sur);color:var(--tx2);font-family:inherit;font-size:var(--fs-sm);
+  font-weight:600;cursor:pointer;white-space:nowrap;
+  transition:all .2s var(--ease);
+}
+.ret-rapido button:hover{border-color:var(--p);color:var(--p)}
+.ret-rapido button:focus-visible{outline:none;box-shadow:var(--ring)}
+/* Aceso = foi este que gerou a data no campo. Sem isso o vendedor nao sabe se
+   o toque pegou, porque o campo abaixo mostra a data crua. */
+.ret-rapido button.ac{background:var(--p);border-color:var(--p);color:#fff}
+@media(max-width:768px){
+  .ret-rapido button{min-height:44px;padding:9px 15px;font-size:var(--fs-md)}
+}

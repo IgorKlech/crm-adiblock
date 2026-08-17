@@ -1050,7 +1050,20 @@
             <option>Nao tem interesse</option><option>Ligar de volta</option>
           </select>
         </div>
-        <div class="fg"><label>Próximo retorno</label><input type="datetime-local" id="int-cb" oninput="limpaIntErro()"></div>
+        <div class="fg"><label for="int-cb">Próximo retorno</label>
+          <!-- Escolha rapida. Salvar exige uma de tres saidas (retorno, encerrar
+               ou "Comprou"), e no caso mais comum sobra este campo. Num Android
+               o datetime-local abre seletor de data e DEPOIS o de hora: 4 a 6
+               toques so aqui. Estes botoes fazem em um. O campo exato continua
+               abaixo pra quando a hora importa. -->
+          <div class="ret-rapido" role="group" aria-label="Escolha rápida do próximo retorno">
+            <button type="button" onclick="setRetornoRapido(1)">Amanhã</button>
+            <button type="button" onclick="setRetornoRapido(3)">3 dias</button>
+            <button type="button" onclick="setRetornoRapido(7)">1 semana</button>
+            <button type="button" onclick="setRetornoRapido(15)">15 dias</button>
+            <button type="button" onclick="setRetornoRapido(30)">1 mês</button>
+          </div>
+          <input type="datetime-local" id="int-cb" oninput="limpaIntErro();document.querySelectorAll('.ret-rapido button').forEach(b=>b.classList.remove('ac'))"></div>
       </div>
       <div class="fg"><label>Contato com quem falou</label><select id="int-contato"><option value="">—</option></select></div>
       <div class="fg"><label>Anotação</label><textarea id="int-notes" placeholder="O que foi conversado..." rows="3"></textarea></div>
@@ -5268,12 +5281,46 @@ function abrInteracao(oppId, companyId, origem) {
   const contatos = c?.contatos || [];
   document.getElementById('int-contato').innerHTML = '<option value="">—</option>' +
     contatos.map(ct => `<option value="${ct.id}">${escHtml(ct.nome)}</option>`).join('');
+  // O form.reset() zera os campos, mas nao a marcacao dos botoes de escolha
+  // rapida: eles nao sao campos de formulario. Sem isto, o modal reabre com um
+  // botao aceso apontando pra uma data que ja nao esta no campo.
+  document.querySelectorAll('.ret-rapido button').forEach(b => b.classList.remove('ac'));
   limpaIntErro(); // Sprint 7.2: garante estado limpo de validacao
   document.getElementById('int-m').classList.add('op');
   setTimeout(() => document.getElementById('int-res').focus(), 80);
 }
 
 // Sprint 7.2: limpa o destaque de erro do "proximo passo obrigatorio"
+// Preenche o "Próximo retorno" com N dias a partir de hoje, as 09:00.
+//
+// Existe porque salvar interacao exige uma saida (retorno, encerrar ou
+// "Comprou") e, no caso mais comum — "ele vai pensar, ligo semana que vem" —
+// so resta este campo. Num celular o datetime-local custa 4 a 6 toques; aqui
+// custa um. O seletor exato continua disponivel logo abaixo.
+//
+// PULA FIM DE SEMANA: retorno agendado pra sabado nao e retorno, e lixo que
+// aparece atrasado na segunda. A equipe atende de seg a sex (ver rodape do
+// site). Se cair no sabado ou domingo, empurra pra segunda.
+function setRetornoRapido(dias) {
+  const d = new Date();
+  d.setDate(d.getDate() + dias);
+  d.setHours(9, 0, 0, 0);
+  const diaSem = d.getDay();               // 0 = domingo, 6 = sabado
+  if (diaSem === 6) d.setDate(d.getDate() + 2);
+  else if (diaSem === 0) d.setDate(d.getDate() + 1);
+
+  const campo = document.getElementById('int-cb');
+  if (!campo) return;
+  const pad = n => String(n).padStart(2, '0');
+  campo.value = `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+
+  // Marca qual botao gerou a data em uso — sem isso o vendedor nao sabe se
+  // clicou, ja que o campo abaixo mostra a data crua.
+  document.querySelectorAll('.ret-rapido button').forEach(b =>
+    b.classList.toggle('ac', b.getAttribute('onclick') === `setRetornoRapido(${dias})`));
+  limpaIntErro();
+}
+
 function limpaIntErro() {
   document.getElementById('int-cb').classList.remove('err','shake');
   document.getElementById('int-ferr').classList.remove('show');

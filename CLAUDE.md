@@ -757,6 +757,27 @@ crm-adiblock/
 
 ---
 
+### Registrar interação é a ação mais repetida do sistema (2026-08-17)
+
+Salvar interação exige uma de três saídas (Sprint 7.2): agendar retorno,
+encerrar a oportunidade, ou resultado "Comprou". No caso mais comum — *"ele vai
+pensar, ligo semana que vem"* — só resta o campo de retorno, que é um
+`datetime-local`. Num Android isso abre o seletor de data e **depois** o de
+hora: 4 a 6 toques só ali, ~8 a 10 para anotar uma ligação.
+
+A regra está certa (foi ela que zerou as "perdidas sem motivo"). O caro era
+**obedecê-la**. Daí os botões `Amanhã · 3 dias · 1 semana · 15 dias · 1 mês`,
+que preenchem a data às 09:00 num toque. O seletor exato continua abaixo.
+
+> **Pulam fim de semana.** Retorno agendado para sábado não é retorno — é lixo
+> que aparece atrasado na segunda. Consequência aceita: numa sexta, "Amanhã" e
+> "3 dias" dão a mesma data. O campo mostra a data real, então não há engano.
+
+> **Por que isso é prioridade:** o banco tinha **139 interações para 154
+> oportunidades** — a maioria das negociações sem nenhuma anotação. O Radar, o
+> histórico do perfil e os relatórios todos leem essa tabela. Se registrar ficar
+> barato, o número sobe sem ninguém cobrar.
+
 ### Guia da equipe: dois documentos, propósitos diferentes
 
 | Arquivo | O que é | Quando serve |

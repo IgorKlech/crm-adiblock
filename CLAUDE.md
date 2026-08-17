@@ -319,6 +319,23 @@ tablet **e** celular mora no bloco de 1024; só o que difere é repetido no de 7
 > Tablet fica com a tabela de propósito: cabem ~12 empresas onde caberiam 4.
 > Por isso o `.tw` tem `overflow-x:auto` **na base**, não dentro de um breakpoint.
 
+### Rótulos em caixa alta e campos de formulário
+
+**Tracking sai de `--ls-label` (.1em).** Eram quatro valores para o mesmo papel
+(`.04em`, `.05em`, `.06em`, `0.7px`) — é o tracking que faz caixa alta pequena
+parecer deliberada em vez de só pequena. O site usa `.14em`, mas lá o rótulo tem
+13px numa página arejada; aqui tem 11px numa tela densa.
+
+> O traço da `.eyebrow` do site **não** foi trazido. Os títulos de seção dos
+> documentos já têm borda inferior, que cumpre o mesmo papel de separar — o traço
+> seria decoração competindo com ela.
+
+**Campo de formulário segue o padrão do site**: levemente **recuado** em repouso
+(fundo `--bg`, mais suave que a superfície do card) e **branco com anel da marca**
+(`--ring`, amarelo) no foco. Antes era branco sempre e a única pista de foco era
+a borda fina mudar de cor — pouco num formulário de 12 campos. Funciona igual no
+tema escuro, onde `--bg` é *mais escuro* que `--sur`: a lógica se inverte junto.
+
 ### Raio e sombra
 
 Raio sai sempre de `--rs` (6px) / `--r` (10px) / `--rl` (14px) / `99px` (pílula).

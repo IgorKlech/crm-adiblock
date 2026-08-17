@@ -2164,12 +2164,18 @@ function renderListaHoje(body) {
     </div>`;
   };
 
+  // Secao vazia fica COMPACTA: titulo e mensagem na mesma linha. Do jeito
+  // antigo cada bloco vazio comia ~116px de altura pra dizer que nao havia
+  // nada, e num dia calmo os dois somavam ~230px da primeira tela — a tela
+  // que a equipe abre primeiro todo dia. A informacao continua ali; o que sai
+  // e o espaco em branco.
   const sec = (titulo, lista, badgeCls, vazia) => `
-    <div class="td-sec">
+    <div class="td-sec${lista.length ? '' : ' td-sec-vazia'}">
       <div class="td-sec-h">
         <h3>${titulo} <span class="td-badge ${badgeCls}">${lista.length}</span></h3>
+        ${lista.length ? '' : `<span class="td-vazia-msg">${vazia}</span>`}
       </div>
-      ${lista.length ? lista.map(e=>linha(e, badgeCls==='td-late')).join('') : `<div class="td-empty">${vazia}</div>`}
+      ${lista.length ? lista.map(e=>linha(e, badgeCls==='td-late')).join('') : ''}
     </div>`;
 
   body.innerHTML =

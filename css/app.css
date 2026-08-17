@@ -79,6 +79,12 @@
      la: card de lista com 22px de raio infla numa tela densa. */
   --r:14px;--rs:10px;--rl:20px;--rp:999px;
   --ease:cubic-bezier(.22,1,.36,1);  /* mesmo easing do site */
+  /* Tracking dos rotulos em CAIXA ALTA. Eram 4 valores pro mesmo papel
+     (.04em, .05em, .06em e 0.7px). O site usa .14em; aqui .1em, porque la
+     o rotulo tem 13px numa pagina arejada e aqui tem 11px numa tela densa.
+     E o tracking que faz caixa alta pequena parecer deliberada, e nao so
+     pequena. */
+  --ls-label:.1em;
 }
 /* O site nao tem tema escuro. Este aqui e DERIVADO da escala de azuis dele:
    o fundo e o --blue-950 e a superficie e o --blue-900, entao o escuro do CRM
@@ -171,13 +177,19 @@ h1,h2,h3,h4{font-weight:800;letter-spacing:-.02em;line-height:1.2}
 
 /* FORMS */
 .fg{margin-bottom:14px}
-.fg label{display:block;font-size:var(--fs-xs);font-weight:600;color:var(--tx2);text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px}
-.fg input,.fg select,.fg textarea{width:100%;padding:9px 12px;border:1.5px solid var(--bdr);border-radius:var(--rs);font-size:var(--fs-md);font-family:inherit;color:var(--tx);background:var(--sur);outline:none;transition:border-color .15s,box-shadow .15s;appearance:none}
-.fg input:focus,.fg select:focus,.fg textarea:focus{border-color:var(--p);box-shadow:var(--ring-p)}
+.fg label{display:block;font-size:var(--fs-xs);font-weight:600;color:var(--tx2);text-transform:uppercase;letter-spacing:var(--ls-label);margin-bottom:6px}
+/* Campo no padrao do site: levemente RECUADO em repouso (fundo --bg, que e mais
+   suave que a superficie do card) e BRANCO com anel da marca no foco. Antes era
+   branco sempre, e a unica pista de foco era a borda fina mudar de cor — pouco
+   num formulario de 12 campos. O recuo tambem funciona no tema escuro, onde
+   --bg e mais escuro que --sur: a logica se inverte junto. */
+.fg input,.fg select,.fg textarea{width:100%;padding:9px 12px;border:1px solid var(--bdr2);border-radius:var(--rs);font-size:var(--fs-md);font-family:inherit;color:var(--tx);background:var(--bg);outline:none;transition:border-color .2s var(--ease),box-shadow .2s var(--ease),background .2s var(--ease);appearance:none}
+.fg input:focus,.fg select:focus,.fg textarea:focus{border-color:var(--p);background:var(--sur);box-shadow:var(--ring)}
+.fg input::placeholder,.fg textarea::placeholder{color:var(--mt)}
 .fg textarea{resize:vertical;min-height:80px}
 .fr{display:grid;grid-template-columns:1fr 1fr;gap:14px}
 .fs{margin-bottom:18px}
-.fsl{font-size:var(--fs-xs);font-weight:700;color:var(--p);text-transform:uppercase;letter-spacing:.05em;margin-bottom:10px;padding-bottom:8px;border-bottom:1px solid var(--bdr)}
+.fsl{font-size:var(--fs-xs);font-weight:700;color:var(--p);text-transform:uppercase;letter-spacing:var(--ls-label);margin-bottom:10px;padding-bottom:8px;border-bottom:1px solid var(--bdr)}
 .fa{display:flex;gap:8px;justify-content:flex-end;margin-top:20px;padding-top:16px;border-top:1px solid var(--bdr)}
 .em{color:var(--er);font-size:var(--fs-sm);min-height:16px;margin-top:4px}
 
@@ -422,6 +434,12 @@ td strong{color:var(--tx);font-weight:600}
 .td-badge.td-now{background:var(--ok)}
 .td-badge.td-soon{background:var(--p)}
 .td-empty{font-size:var(--fs-md);color:var(--mt);padding:14px 0;text-align:center}
+/* Secao sem nada: vira uma linha so. 18px de padding + 12px de margem do
+   cabecalho + 48px do bloco de texto centralizado davam ~116px por secao
+   vazia; agora sao ~44px. Num dia calmo isso devolve ~140px da primeira tela. */
+.td-sec-vazia{padding:11px 18px}
+.td-sec-vazia .td-sec-h{margin-bottom:0;gap:12px}
+.td-vazia-msg{font-size:var(--fs-md);color:var(--mt);text-align:right}
 .td-row{display:flex;align-items:center;gap:14px;padding:11px 0;border-bottom:1px solid var(--bdr);cursor:pointer;transition:background .12s}
 .td-row:last-child{border-bottom:none}
 .td-row:hover{background:var(--bg)}
@@ -728,7 +746,7 @@ td strong{color:var(--tx);font-weight:600}
 .pf-sub{display:flex;align-items:center;gap:10px;flex-wrap:wrap;font-size:var(--fs-md);color:var(--mt);margin-bottom:14px}
 .pf-metrics{display:flex;gap:24px;flex-wrap:wrap}
 .pf-met{display:flex;flex-direction:column;gap:2px}
-.pf-met-l{font-size:var(--fs-2xs);font-weight:600;color:var(--mt);text-transform:uppercase;letter-spacing:.04em}
+.pf-met-l{font-size:var(--fs-2xs);font-weight:600;color:var(--mt);text-transform:uppercase;letter-spacing:var(--ls-label)}
 .pf-met-v{font-size:var(--fs-md);font-weight:600;color:var(--tx)}
 /* overflow-x na BASE: as 5 abas (Resumo, Contatos, Oportunidades, Interacoes,
    Alteracoes) somam ~555px de faixa. Num Galaxy S23, que tem 360px de largura
@@ -798,7 +816,7 @@ td strong{color:var(--tx);font-weight:600}
 .rel-cover h1{font-size:var(--fs-xl);font-weight:700;color:var(--tx);margin-bottom:6px}
 .rel-cover p{font-size:var(--fs-md);color:var(--mt)}
 .rel-section{margin-bottom:22px}
-.rel-section-title{font-size:var(--fs-xs);font-weight:700;color:var(--p);text-transform:uppercase;letter-spacing:.06em;margin-bottom:12px;padding-bottom:8px;border-bottom:2px solid var(--ps)}
+.rel-section-title{font-size:var(--fs-xs);font-weight:700;color:var(--p);text-transform:uppercase;letter-spacing:var(--ls-label);margin-bottom:12px;padding-bottom:8px;border-bottom:2px solid var(--ps)}
 .rel-cards{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:6px}
 @media(max-width:680px){.rel-cards{grid-template-columns:1fr 1fr}}
 .rel-card{background:var(--sur);border:1px solid var(--bdr);border-radius:var(--r);padding:16px;text-align:center;border-top:3px solid var(--bdr2)}
@@ -1123,7 +1141,7 @@ body.role-leitor .read-only-banner{display:block}
 .cot-meta{text-align:right;font-size:var(--fs-sm);color:var(--mt);line-height:1.6;white-space:nowrap}
 .cot-meta b{color:var(--tx);font-weight:600}
 .cot-sect{margin-bottom:14px}
-.cot-sect-title{font-size:var(--fs-xs);font-weight:700;color:var(--p);text-transform:uppercase;letter-spacing:.06em;margin-bottom:8px;padding-bottom:5px;border-bottom:1px solid var(--bdr)}
+.cot-sect-title{font-size:var(--fs-xs);font-weight:700;color:var(--p);text-transform:uppercase;letter-spacing:var(--ls-label);margin-bottom:8px;padding-bottom:5px;border-bottom:1px solid var(--bdr)}
 .cot-info{display:grid;grid-template-columns:repeat(2,1fr);gap:8px 24px;font-size:var(--fs-md)}
 .cot-info div span{color:var(--mt);margin-right:6px}
 .cot-info div b{color:var(--tx);font-weight:600}
@@ -1334,6 +1352,10 @@ body.role-leitor .read-only-banner{display:block}
 
   /* Radar e cards de acao: botao ocupa a linha inteira em vez de virar tira */
   .rd-card-actions{flex-wrap:wrap}
+  /* Secao vazia: em 360px "Proximos 3 dias" e a mensagem nao cabem na mesma
+     linha. Empilha, e ainda assim fica bem menor que o bloco centralizado. */
+  .td-sec-vazia .td-sec-h{flex-direction:column;align-items:flex-start;gap:2px}
+  .td-vazia-msg{text-align:left}
 }
 
 /* ── ATE 480px: CELULAR ESTREITO ─────────────────────────────────────────── */

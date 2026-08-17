@@ -276,6 +276,17 @@ Eram 7 valores sem sistema (1280, 1100, 768, 680, 640, 560, 480) e a faixa de
 **769 a 1024px não tinha dono**: iPad Air (820) e iPad Pro 11" (834) caíam no
 layout de mesa, com navbar de linha única cheia e alvos de toque de ~31px.
 
+A **navbar** tem escada propria, porque com 7 abas e a identidade nova (Manrope
+mais larga, aba em pílula, botão peso 700) ela passou a precisar de **~1667px** —
+só cabia inteira em 1920px+. Em cada degrau sai o item menos essencial:
+`1600` Controle Comercial · `1500` "ao vivo" · `1440` nome/papel · `1380` status ·
+`1280` atalhos · `1200` rótulo curto nas abas · `1100` Busca só ícone.
+
+> A guarda **estrutural** é o `overflow:hidden` na `.nbl` com `ellipsis` no `.bn2`:
+> a `.nbl` encolhe, mas **texto não encolhe com a caixa** — sem isso o "Controle
+> Comercial" transbordava e pintava por cima das abas. A escada evita chegar lá;
+> o `overflow` garante que, se chegar, não vira sobreposição.
+
 | Faixa | Quem | O que muda |
 |---|---|---|
 | ≤1024 | **tablet** e tudo abaixo | toque de 44px, rótulo curto nas abas, documentos sem largura fixa |

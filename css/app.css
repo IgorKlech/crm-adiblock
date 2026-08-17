@@ -211,10 +211,14 @@ h1,h2,h3,h4{font-weight:800;letter-spacing:-.02em;line-height:1.2}
 
 /* NAVBAR */
 #nb{height:56px;background:var(--nb);display:flex;align-items:center;justify-content:space-between;padding:0 20px;position:sticky;top:0;z-index:100}
-.nbl{display:flex;align-items:center;gap:14px;min-width:0;flex-shrink:1}
+/* overflow:hidden e a guarda ESTRUTURAL. A .nbl encolhe (flex-shrink:1 +
+   min-width:0), mas texto nao encolhe com a caixa: o "Controle Comercial"
+   transbordava e pintava por cima das abas. Com hidden + ellipsis no .bn2,
+   isso nao pode mais acontecer em largura nenhuma. */
+.nbl{display:flex;align-items:center;gap:14px;min-width:0;flex-shrink:1;overflow:hidden}
 .br{display:flex;align-items:center;gap:10px;flex-shrink:0}
 .bi{width:28px;height:28px;border-radius:var(--rs);background:var(--p);color:#fff;font-size:var(--fs-md);font-weight:800;display:flex;align-items:center;justify-content:center}
-.bn2{color:rgba(255,255,255,.7);font-size:var(--fs-lg);font-weight:400}.bn2 strong{color:#fff;font-weight:700}
+.bn2{color:rgba(255,255,255,.7);font-size:var(--fs-lg);font-weight:400;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}.bn2 strong{color:#fff;font-weight:700}
 /* Sprint 9.3 (E-01, antecipado): com 7 abas o #tabs esticava a pagina inteira
    no celular — a barra passava de 550px num viewport de 390 e TUDO ficava
    deslocado, inclusive os modais em bottom-sheet. Agora a faixa desliza.
@@ -238,7 +242,7 @@ h1,h2,h3,h4{font-weight:800;letter-spacing:-.02em;line-height:1.2}
 .nbr{display:flex;align-items:center;gap:10px;flex-shrink:0}
 /* Sprint 8.2: com 7 abas, esconde o nome "Controle Comercial" em telas medias
    pra liberar espaco e evitar sobreposicao com o lado direito da navbar */
-@media(max-width:1280px){ .bn2{display:none} }
+/* O .bn2 agora sai a partir de 1600px — ver a escada da navbar no fim do arquivo. */
 .uc{display:flex;align-items:center;gap:8px}
 .ua{width:28px;height:28px;border-radius:50%;font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0;color:#fff}
 .un{font-size:var(--fs-md);font-weight:500;color:rgba(255,255,255,.85)}
@@ -1382,3 +1386,35 @@ body.role-leitor .read-only-banner{display:block}
 @media(max-width:1024px){
   .nbr{min-width:0;flex-wrap:wrap;justify-content:flex-end}
 }
+
+/* ==========================================================================
+   NAVBAR — escada progressiva (2026-08-17)
+   --------------------------------------------------------------------------
+   Com 7 abas, rotulo completo e a identidade nova (Manrope e mais larga que a
+   Inter, aba virou pilula com mais padding, botao com peso 700), a navbar
+   passou a precisar de ~1667px. Ou seja: so cabia inteira em 1920px+.
+   Em 1366px faltavam ~340px e o "Controle Comercial" pintava por cima das
+   abas — a .nbl encolhe, o texto dentro dela nao.
+
+   A guarda estrutural (overflow:hidden na .nbl) ja impede o vazamento. Esta
+   escada e o que evita CHEGAR nele: em cada degrau sai o item menos essencial
+   daquela largura, do mais decorativo pro mais funcional.
+
+   Ordem no arquivo = do mais largo pro mais estreito, pra o degrau seguinte
+   somar ao anterior. Media query nao soma especificidade — ver a nota sobre
+   ordem de codigo mais acima.
+   ========================================================================== */
+/* "Controle Comercial" — a logo ja diz de quem e o sistema */
+@media(max-width:1600px){ .bn2{display:none} }
+/* "ao vivo" — indicador de realtime, puramente informativo */
+@media(max-width:1500px){ #upd-ind{display:none!important} }
+/* Nome e papel do usuario — o avatar identifica e abre o perfil */
+@media(max-width:1440px){ .un,.ur{display:none} }
+/* Seletor de status do vendedor */
+@media(max-width:1380px){ .vs-wrap{display:none} }
+/* Atalhos de teclado: quem usa atalho aprende o "?" */
+@media(max-width:1280px){ #kbd-btn{display:none} }
+/* Rotulo curto: Pipeline -> Pipe, Propostas -> Prop, Dashboard -> Dash */
+@media(max-width:1200px){ .tb-full{display:none} .tb-short{display:inline} }
+/* Busca vira so o icone (o atalho Ctrl+K continua valendo) */
+@media(max-width:1100px){ #gs-btn span{display:none} #gs-btn{padding:7px 10px} }

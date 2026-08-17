@@ -2223,25 +2223,51 @@ function calNav(dir) {
 // ── Sprint 6.2: Export .ics (Google Calendar / Outlook / Apple Calendar) ──
 // Sprint 6.9: backup manual completo (plano Free do Supabase nao tem backup
 // restauravel). Baixa um JSON com tudo pro usuario guardar no PC.
+// Busca a tabela INTEIRA, em paginas, ate a ultima vir curta.
+//
+// Por que isso existe: o PostgREST tem um teto de linhas por resposta. Um
+// `select=*` sem paginacao devolve so a primeira pagina e nao avisa — voce
+// recebe 200 OK com um pedaco dos dados. Num backup isso e pior que falhar:
+// o arquivo baixa, parece completo, e so se descobre que estava cortado no dia
+// em que ele for preciso. E o plano Supabase e Free, sem backup nativo
+// restauravel (Regra de Ouro nº 2) — este arquivo E a rede de seguranca.
+//
+// `order=id.asc` nao e enfeite: sem ordem estavel, paginar por offset pode
+// pular e repetir linha entre paginas.
+async function apiTudo(tabela, select, pagina = 1000) {
+  const todas = [];
+  for (let off = 0; ; off += pagina) {
+    const p = await api('GET', tabela, `${select}&order=id.asc&limit=${pagina}&offset=${off}`);
+    const arr = Array.isArray(p) ? p : (p ? [p] : []);
+    todas.push(...arr);
+    if (arr.length < pagina) return todas;
+    if (todas.length > 500000) {              // trava de seguranca
+      console.warn('apiTudo: parei em 500k linhas de ' + tabela);
+      return todas;
+    }
+  }
+}
+
 async function baixarBackup() {
   toast('Gerando backup...', 'Buscando todos os dados', 'info');
   try {
     // Busca direto do banco (dados frescos e completos, sem depender do cache local).
     // Sprint 7.5: cobre TODAS as tabelas (mesma lista do backup automatico).
+    // Tudo via apiTudo(): backup nao pode vir pela metade.
     const [companies, contacts, opportunities, opp_products, interactions,
            proposals, tasks, products, profiles, audit_log, lgpd_requests] =
       await Promise.all([
-        api('GET','companies','select=*'),
-        api('GET','contacts','select=*'),
-        api('GET','opportunities','select=*'),
-        api('GET','opportunity_products','select=*'),
-        api('GET','interactions','select=*'),
-        api('GET','proposals','select=*'),
-        api('GET','tasks','select=*').catch(()=>[]),
-        api('GET','products','select=*').catch(()=>[]),
-        api('GET','profiles','select=id,name,email,role'),
-        api('GET','audit_log','select=*').catch(()=>[]),
-        api('GET','lgpd_requests','select=*').catch(()=>[]),
+        apiTudo('companies','select=*'),
+        apiTudo('contacts','select=*'),
+        apiTudo('opportunities','select=*'),
+        apiTudo('opportunity_products','select=*'),
+        apiTudo('interactions','select=*'),
+        apiTudo('proposals','select=*'),
+        apiTudo('tasks','select=*').catch(()=>[]),
+        apiTudo('products','select=*').catch(()=>[]),
+        apiTudo('profiles','select=id,name,email,role'),
+        apiTudo('audit_log','select=*').catch(()=>[]),
+        apiTudo('lgpd_requests','select=*').catch(()=>[]),
       ]);
 
     const backup = {
@@ -2249,11 +2275,16 @@ async function baixarBackup() {
         sistema: 'CRM Adiblock',
         gerado_em: new Date().toISOString(),
         gerado_por: MEP?.name || ME?.email || '?',
+        // Totais de TODAS as tabelas, inclusive interacoes e contatos, que
+        // antes ficavam de fora. Servem pra conferir se o arquivo veio inteiro:
+        // e o unico jeito de perceber um backup truncado sem abrir o JSON.
         totais: {
           empresas: companies.length, contatos: contacts.length,
-          oportunidades: opportunities.length, propostas: proposals.length,
+          oportunidades: opportunities.length, opp_produtos: opp_products.length,
+          interacoes: interactions.length, propostas: proposals.length,
           tarefas: tasks.length, produtos: products.length,
-          audit_log: audit_log.length, lgpd: lgpd_requests.length,
+          perfis: profiles.length, audit_log: audit_log.length,
+          lgpd: lgpd_requests.length,
         },
       },
       companies, contacts, opportunities, opportunity_products: opp_products,
@@ -5451,7 +5482,14 @@ async function renderPfHistorico(c) {
   el.innerHTML = '<div class="sl"><div class="sp"></div></div>';
   try {
     const oppIds = opps.map(o => `"${o.id}"`).join(',');
-    const ints = await api('GET','interactions',`opportunity_id=in.(${oppIds})&select=*,seller:profiles(name)&order=datetime.desc`);
+    // Teto de 300. Esta era a unica consulta de TELA sem limite: um cliente
+    // antigo, com varias oportunidades e anos de ligacoes registradas, traria
+    // tudo de uma vez. E a disciplina nº 2 do guia e "toda conversa vira
+    // interacao", entao isto cresce por design.
+    // 300 e generoso pra rolar e ainda assim um teto: quem precisa do que ficou
+    // antes disso usa a aba Alterações ou o backup.
+    const LIM_INT = 300;
+    const ints = await api('GET','interactions',`opportunity_id=in.(${oppIds})&select=*,seller:profiles(name)&order=datetime.desc&limit=${LIM_INT}`);
     if (!ints || !ints.length) {
       el.innerHTML = '<div class="pf-empty">Nenhuma interação registrada ainda.</div>';
       return;
@@ -5476,7 +5514,13 @@ async function renderPfHistorico(c) {
         <div style="font-size:13px;font-weight:600;color:var(--p);margin-bottom:8px">📋 ${escHtml(o.titulo)} <span class="estagio-badge est-${o.estagio}">${ESTAGIO_LBL[o.estagio]||o.estagio}</span></div>
         <div style="background:var(--sur);border:1px solid var(--bdr);border-radius:var(--rs)">${rows}</div>
       </div>`;
-    }).join('');
+    }).join('')
+    // Bateu no teto: diz que cortou. Truncar sem avisar faz o vendedor achar
+    // que aquilo e o historico inteiro — e ele decide em cima disso.
+    + (ints.length >= LIM_INT
+        ? `<div class="pf-empty" style="margin-top:4px">Mostrando as <b>${LIM_INT}</b> interações mais recentes.
+             As anteriores continuam no banco e saem no backup.</div>`
+        : '');
   } catch(err) {
     console.error('renderPfHistorico:', err);
     el.innerHTML = '<div class="pf-empty" style="color:var(--er)">Erro ao carregar histórico: '+escHtml(err.message||'')+'</div>';

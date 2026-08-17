@@ -21,6 +21,16 @@ Guia de contexto para novas sessões. Leia antes de qualquer implementação.
    (c) o `audit_log` (só mudanças, parcial) como último recurso.
    Restauração: ver **`docs/RESTORE.md`**.
 
+   > ⚠ **Backup tem que trazer a tabela INTEIRA.** O PostgREST corta a resposta
+   > num teto de linhas e devolve **200 OK** — um `select=*` sem paginação baixa
+   > um arquivo que parece completo e não é. Isso só se descobre no dia em que o
+   > backup for preciso. As duas camadas paginam:
+   > o workflow (`backup.yml`) via cabeçalho `Range`, e o botão do app via
+   > `apiTudo()`, que busca em páginas de 1000 até a última vir curta.
+   > `order=id.asc` não é enfeite: sem ordem estável, paginar por offset pula e
+   > repete linha. O `_meta.totais` do JSON lista a contagem de **todas** as
+   > tabelas — é o único jeito de perceber um arquivo truncado sem abri-lo.
+
    **Secrets do GitHub** (Settings > Secrets and variables > Actions) que o
    workflow exige — NUNCA colocar a service key em arquivo do repo:
    - `SUPABASE_URL` — ex: `https://kgiynhrytnzfdywgjhby.supabase.co`

@@ -1,0 +1,384 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>A Rotina no CRM — CRM Adiblock</title>
+<meta name="description" content="Como usar o CRM Adiblock no dia a dia: os quatro momentos, os erros mais comuns e a cola rapida.">
+<meta name="robots" content="noindex">
+<link rel="icon" href="../assets/img/favicon.svg" type="image/svg+xml">
+<!-- Servido pelo proprio CRM (mesma origem, mesmo dominio que a equipe ja
+     acessa). Nao depende de conta em servico nenhum e entra no backup do repo.
+     A versao como artifact existe so pra compartilhar rapido. -->
+<style>
+  /* Paleta da Adiblock — a mesma do CRM e do site, pra parecer o mesmo produto.
+     Amarelo so no que exige acao. */
+  :root{
+    --azul-900:#0a1f3c; --azul-800:#0f2c54; --azul-700:#143a6e; --azul-600:#1b4f96;
+    --azul-50:#eef4fc; --azul-100:#dbe7f7;
+    --amarelo:#ffd200; --amarelo-tinta:#14204a;
+    --tinta:#0c1826; --tinta-suave:#35485c; --apagado:#6a7c90;
+    --fundo:#f2f6fb; --papel:#ffffff; --papel-2:#e9f0f8;
+    --linha:#dbe4ef; --linha-forte:#c3d1e2;
+    --alerta:#b3261e; --alerta-fundo:#fbe9e7;
+    --certo:#0e6f4c; --certo-fundo:#e4f4ec;
+    --sombra:0 1px 2px rgba(9,30,66,.07),0 3px 10px rgba(9,30,66,.06);
+    --fonte:"Segoe UI Variable Display","Segoe UI",system-ui,-apple-system,Roboto,sans-serif;
+    --mono:ui-monospace,"Cascadia Mono",Consolas,monospace;
+  }
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]){
+      --azul-50:rgba(143,184,240,.12); --azul-100:rgba(143,184,240,.2);
+      --azul-700:#9cc0ee; --azul-600:#b9d3f8;
+      --tinta:#eaf1fa; --tinta-suave:#b9cbe0; --apagado:#8aa2bd;
+      --fundo:#061428; --papel:#0b2140; --papel-2:#122c4f;
+      --linha:#1b3861; --linha-forte:#28507f;
+      --alerta:#ff9c92; --alerta-fundo:rgba(255,120,105,.14);
+      --certo:#71d7ab; --certo-fundo:rgba(90,215,165,.14);
+      --sombra:0 1px 2px rgba(0,0,0,.4),0 3px 12px rgba(0,0,0,.3);
+    }
+  }
+  :root[data-theme="dark"]{
+    --azul-50:rgba(143,184,240,.12); --azul-100:rgba(143,184,240,.2);
+    --azul-700:#9cc0ee; --azul-600:#b9d3f8;
+    --tinta:#eaf1fa; --tinta-suave:#b9cbe0; --apagado:#8aa2bd;
+    --fundo:#061428; --papel:#0b2140; --papel-2:#122c4f;
+    --linha:#1b3861; --linha-forte:#28507f;
+    --alerta:#ff9c92; --alerta-fundo:rgba(255,120,105,.14);
+    --certo:#71d7ab; --certo-fundo:rgba(90,215,165,.14);
+    --sombra:0 1px 2px rgba(0,0,0,.4),0 3px 12px rgba(0,0,0,.3);
+  }
+
+  *{box-sizing:border-box}
+  body{
+    margin:0; background:var(--fundo); color:var(--tinta);
+    font-family:var(--fonte); font-size:17px; line-height:1.6;
+    -webkit-font-smoothing:antialiased;
+  }
+  .pag{max-width:720px; margin:0 auto; padding:0 18px 80px}
+
+  /* ── Capa ─────────────────────────────────────────────────────────────── */
+  header{
+    background:var(--azul-800); color:#fff;
+    margin:0 -18px 30px; padding:38px 24px 32px;
+    border-radius:0 0 22px 22px;
+  }
+  header .marca{
+    display:inline-flex; align-items:center; gap:9px;
+    font-size:12px; font-weight:700; text-transform:uppercase; letter-spacing:.13em;
+    color:var(--amarelo); margin-bottom:14px;
+  }
+  header .marca::before{content:""; width:24px; height:3px; background:var(--amarelo); border-radius:2px}
+  header h1{
+    margin:0 0 10px; font-size:clamp(28px,7vw,40px); font-weight:800;
+    letter-spacing:-.025em; line-height:1.1; text-wrap:balance;
+  }
+  header p{margin:0; font-size:17px; color:#b9d3f8; max-width:44ch}
+
+  /* ── Momentos do dia ──────────────────────────────────────────────────── */
+  .momento{
+    background:var(--papel); border:1px solid var(--linha); border-radius:16px;
+    box-shadow:var(--sombra); margin-bottom:18px; overflow:hidden;
+  }
+  .momento-topo{
+    display:flex; align-items:center; gap:14px;
+    padding:18px 20px; background:var(--azul-50); border-bottom:1px solid var(--linha);
+  }
+  .hora{
+    flex:none; width:46px; height:46px; border-radius:13px;
+    background:var(--azul-700); color:var(--papel);
+    display:grid; place-items:center; font-size:20px; font-weight:800;
+  }
+  .momento-topo h2{margin:0; font-size:20px; font-weight:800; letter-spacing:-.02em; line-height:1.2}
+  .momento-topo .quando{display:block; font-size:13px; font-weight:600; color:var(--azul-700); margin-top:2px}
+  .momento-corpo{padding:20px}
+  .momento-corpo > :first-child{margin-top:0}
+  .momento-corpo > :last-child{margin-bottom:0}
+  .momento p{margin:0 0 14px; color:var(--tinta-suave)}
+  .momento p strong{color:var(--tinta)}
+
+  /* ── Passos ───────────────────────────────────────────────────────────── */
+  ol.passos{margin:0 0 14px; padding:0; list-style:none; counter-reset:passo}
+  ol.passos li{
+    counter-increment:passo; position:relative; padding:0 0 14px 38px; margin:0;
+  }
+  ol.passos li::before{
+    content:counter(passo); position:absolute; left:0; top:1px;
+    width:25px; height:25px; border-radius:50%;
+    background:var(--azul-100); color:var(--azul-700);
+    display:grid; place-items:center; font-size:13px; font-weight:800;
+  }
+  ol.passos li:last-child{padding-bottom:0}
+
+  .botao{
+    display:inline-block; padding:3px 12px; border-radius:999px;
+    background:var(--azul-700); color:var(--papel);
+    font-size:14px; font-weight:700; white-space:nowrap;
+  }
+  .botao.amarelo{background:var(--amarelo); color:var(--amarelo-tinta)}
+
+  /* ── Destaques ────────────────────────────────────────────────────────── */
+  .porque{
+    background:var(--papel-2); border-radius:12px; padding:15px 17px;
+    font-size:15.5px; color:var(--tinta-suave); margin:0 0 14px;
+  }
+  .porque b{color:var(--tinta)}
+  .porque::before{
+    content:"Por que isso importa"; display:block;
+    font-size:11px; font-weight:800; text-transform:uppercase; letter-spacing:.1em;
+    color:var(--apagado); margin-bottom:6px;
+  }
+  .atencao{
+    background:var(--alerta-fundo); border-left:4px solid var(--alerta);
+    border-radius:0 12px 12px 0; padding:15px 17px; margin:0 0 14px;
+    font-size:15.5px; color:var(--tinta);
+  }
+  .atencao b{color:var(--alerta)}
+
+  /* ── Erros comuns ─────────────────────────────────────────────────────── */
+  .secao-titulo{
+    font-size:12px; font-weight:800; text-transform:uppercase; letter-spacing:.13em;
+    color:var(--azul-700); margin:38px 0 4px;
+    padding-bottom:9px; border-bottom:2px solid var(--linha-forte);
+  }
+  .secao-sub{font-size:16px; color:var(--tinta-suave); margin:14px 0 20px}
+  .erro{
+    background:var(--papel); border:1px solid var(--linha); border-radius:14px;
+    padding:17px 19px; margin-bottom:14px; box-shadow:var(--sombra);
+  }
+  .erro h3{margin:0 0 4px; font-size:17.5px; font-weight:800; letter-spacing:-.015em}
+  .erro .numero{
+    display:inline-block; font-family:var(--mono); font-size:12.5px; font-weight:700;
+    color:var(--alerta); background:var(--alerta-fundo);
+    padding:2px 9px; border-radius:999px; margin-bottom:9px;
+  }
+  .erro p{margin:0 0 10px; font-size:15.5px; color:var(--tinta-suave)}
+  .erro p:last-child{margin-bottom:0}
+  .certo-fazer{
+    display:flex; gap:9px; align-items:flex-start;
+    background:var(--certo-fundo); border-radius:10px; padding:11px 13px;
+    font-size:15px; color:var(--tinta);
+  }
+  .certo-fazer::before{content:"✓"; color:var(--certo); font-weight:800; flex:none}
+
+  /* ── Cola final ───────────────────────────────────────────────────────── */
+  table.cola{width:100%; border-collapse:collapse; font-size:15.5px; margin-top:6px}
+  table.cola th{
+    text-align:left; padding:9px 10px; font-size:11px; font-weight:800;
+    text-transform:uppercase; letter-spacing:.09em; color:var(--apagado);
+    border-bottom:2px solid var(--linha-forte);
+  }
+  table.cola td{padding:11px 10px; border-bottom:1px solid var(--linha); vertical-align:top}
+  table.cola tr:last-child td{border-bottom:none}
+  table.cola td:first-child{font-weight:700; white-space:nowrap; color:var(--tinta)}
+  .tabela-caixa{
+    background:var(--papel); border:1px solid var(--linha); border-radius:14px;
+    padding:6px 10px; box-shadow:var(--sombra); overflow-x:auto;
+  }
+  kbd{
+    font-family:var(--mono); font-size:13px; font-weight:700;
+    background:var(--azul-800); color:#fff; padding:2px 8px; border-radius:6px;
+  }
+  footer{
+    margin-top:44px; padding-top:20px; border-top:1px solid var(--linha);
+    font-size:14px; color:var(--apagado); text-align:center;
+  }
+  @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+</head>
+<body>
+<div class="pag">
+
+  <header>
+    <div class="marca">Adiblock · Comercial</div>
+    <h1>A rotina no CRM</h1>
+    <p>Quatro momentos do dia. Se você fizer só isso, o sistema funciona — e trabalha a seu favor.</p>
+  </header>
+
+  <!-- ══════════ MOMENTO 1 ══════════ -->
+  <section class="momento">
+    <div class="momento-topo">
+      <div class="hora">1</div>
+      <div>
+        <h2>Comece pelo "Hoje"</h2>
+        <span class="quando">Ao abrir o sistema, todo dia</span>
+      </div>
+    </div>
+    <div class="momento-corpo">
+      <p>A aba <strong>Hoje</strong> responde uma pergunta só: <strong>com quem eu preciso falar agora?</strong> Ela já abre sozinha quando você entra.</p>
+      <ol class="passos">
+        <li>Olhe o bloco <strong>Atrasados</strong> primeiro — são retornos que já passaram da data.</li>
+        <li>Em cada linha, use os botões: <span class="botao">💬 WhatsApp</span> <span class="botao">📞 Ligar</span></li>
+        <li>Falou com a pessoa? Vá para o momento 2.</li>
+        <li>Não conseguiu falar? <strong>Reagende</strong> — nunca deixe vencido.</li>
+      </ol>
+      <div class="porque">
+        Se você não zera essa lista, ela vira uma pilha que ninguém mais olha. Cliente que fica sem retorno vai para o concorrente sem avisar.
+      </div>
+    </div>
+  </section>
+
+  <!-- ══════════ MOMENTO 2 ══════════ -->
+  <section class="momento">
+    <div class="momento-topo">
+      <div class="hora">2</div>
+      <div>
+        <h2>Registre a conversa</h2>
+        <span class="quando">Logo depois de cada ligação, visita ou WhatsApp</span>
+      </div>
+    </div>
+    <div class="momento-corpo">
+      <p><strong>Este é o passo mais importante de todos</strong>, e é o que menos está sendo feito hoje.</p>
+      <ol class="passos">
+        <li>Clique em <span class="botao">📝 Registrar</span> — dá para fazer direto da tela "Hoje", sem procurar nada.</li>
+        <li>Escreva o que aconteceu. Uma linha basta: <em>"pediu preço do Faster pra obra do viaduto"</em>.</li>
+        <li><strong>Marque a data do próximo retorno.</strong> Não pule este campo.</li>
+      </ol>
+      <div class="porque">
+        Hoje o sistema tem <b>154 negociações</b> e apenas <b>139 conversas registradas</b>. Ou seja: a maioria das negociações não tem nenhuma anotação. Sem isso, ninguém sabe o que foi combinado — nem você, daqui a duas semanas. E quando um cliente liga e você está de folga, quem atende começa do zero.
+      </div>
+      <div class="atencao">
+        <b>A regra:</b> falou com cliente, registra. Se a conversa não virou registro, para o sistema ela não aconteceu.
+      </div>
+    </div>
+  </section>
+
+  <!-- ══════════ MOMENTO 3 ══════════ -->
+  <section class="momento">
+    <div class="momento-topo">
+      <div class="hora">3</div>
+      <div>
+        <h2>Cliente pediu preço</h2>
+        <span class="quando">Quando a conversa vira negociação</span>
+      </div>
+    </div>
+    <div class="momento-corpo">
+      <ol class="passos">
+        <li>Abra a empresa e crie uma <strong>oportunidade</strong> — é a negociação em si ("Aditivo para a obra do viaduto").</li>
+        <li>Adicione os produtos com quantidade e preço.</li>
+        <li>Clique em <span class="botao amarelo">Gerar proposta</span> — os botões amarelos são sempre os que fecham venda.</li>
+        <li>Mande o PDF para o cliente.</li>
+      </ol>
+      <div class="porque">
+        A proposta congela os preços do dia em que foi feita. Se o catálogo mudar depois, a proposta antiga continua valendo o que foi combinado — é a sua proteção numa discussão.
+      </div>
+    </div>
+  </section>
+
+  <!-- ══════════ MOMENTO 4 ══════════ -->
+  <section class="momento">
+    <div class="momento-topo">
+      <div class="hora">4</div>
+      <div>
+        <h2>O cliente fechou</h2>
+        <span class="quando">O momento que mais gera confusão depois</span>
+      </div>
+    </div>
+    <div class="momento-corpo">
+      <ol class="passos">
+        <li>Abra a proposta e clique em <span class="botao amarelo">✓ Marcar como Pedido</span>.</li>
+        <li>Clique em <span class="botao">📋 Pedido de Produção</span> e mande para a fábrica. <strong>Esse não tem preços</strong> — pode mandar sem medo.</li>
+        <li>Clique em <span class="botao">📄 Pedido Comercial</span> e mande para o cliente. Esse confirma o que foi fechado.</li>
+        <li><strong>Peça o número da OC ao cliente e lance na hora.</strong></li>
+      </ol>
+      <div class="porque">
+        A OC é o número que o <b>cliente</b> gerou no sistema dele. É por ele que ele cobra, confere e paga. Quando ele ligar dizendo <em>"estou falando do pedido 4500123789"</em>, esse é o número que ele tem na mão — o nosso ele não sabe de cor. Com a OC lançada, você acha o pedido digitando o número dele na busca.
+      </div>
+      <div class="atencao">
+        Hoje <b>175 pedidos</b> estão sem o número da OC. Depois ninguém lembra de perguntar, e a cobrança trava.
+      </div>
+    </div>
+  </section>
+
+  <!-- ══════════ MUDANÇAS ══════════ -->
+  <section class="momento">
+    <div class="momento-topo">
+      <div class="hora">✎</div>
+      <div>
+        <h2>O cliente mudou de ideia</h2>
+        <span class="quando">Desconto, item a mais, troca de pagamento</span>
+      </div>
+    </div>
+    <div class="momento-corpo">
+      <p><strong>Não cancele e refaça.</strong> O cliente já tem o número do pedido na mão.</p>
+      <ol class="passos">
+        <li>Abra o pedido e clique em <span class="botao">✏ Editar</span>.</li>
+        <li>Mude o que precisar — preço, quantidade, ou acrescente outro produto.</li>
+        <li>Escreva o <strong>motivo</strong> de verdade: <em>"trocou 30DD por 45DD e pediu 5%"</em>. Não escreva "ajuste".</li>
+      </ol>
+      <div class="porque">
+        O pedido vira <b>revisão 2</b> e continua com o mesmo número. A versão anterior fica guardada. É isso que responde <em>"por que este pedido saiu mais barato?"</em> daqui a seis meses.
+      </div>
+      <div class="atencao">
+        <b>Se o pedido já foi para a fábrica, mande o Pedido de Produção de novo.</b> O sistema avisa, mas quem reenvia é você — senão a fábrica produz a versão antiga.
+      </div>
+    </div>
+  </section>
+
+  <!-- ══════════ ERROS ══════════ -->
+  <div class="secao-titulo">Os três erros mais comuns</div>
+  <p class="secao-sub">Não são suposições — são o que os dados do sistema mostram hoje.</p>
+
+  <div class="erro">
+    <span class="numero">139 conversas para 154 negociações</span>
+    <h3>Falar com o cliente e não registrar</h3>
+    <p>É o erro mais caro. Sem registro, o histórico do cliente fica vazio, o Radar não sabe quem sumiu, e o relatório da equipe mostra menos trabalho do que foi feito de verdade.</p>
+    <div class="certo-fazer">Registre logo depois da conversa, enquanto está fresco. Uma linha resolve.</div>
+  </div>
+
+  <div class="erro">
+    <span class="numero">18 negociações paradas</span>
+    <h3>Deixar oportunidade sem próximo passo</h3>
+    <p>Negociação sem data de retorno some da sua vista. Ela ganha um aviso de alerta no Pipeline justamente por isso.</p>
+    <div class="certo-fazer">Toda negociação aberta tem uma data marcada. Sempre.</div>
+  </div>
+
+  <div class="erro">
+    <span class="numero">175 pedidos sem OC</span>
+    <h3>Não pedir o número da OC</h3>
+    <p>Sem ele, quando o cliente ligar citando o número dele, ninguém acha o pedido no sistema.</p>
+    <div class="certo-fazer">Pediu para faturar? Pergunte a OC na mesma conversa e lance na hora.</div>
+  </div>
+
+  <!-- ══════════ COLA ══════════ -->
+  <div class="secao-titulo">Cola rápida</div>
+  <p class="secao-sub">O que cada documento é, e para quem vai. Nunca mande o errado.</p>
+
+  <div class="tabela-caixa">
+    <table class="cola">
+      <tr><th>Documento</th><th>Para quem</th><th>Tem preço?</th></tr>
+      <tr><td>Proposta Comercial</td><td>Cliente — é a oferta</td><td><strong>Sim</strong></td></tr>
+      <tr><td>Pedido de Produção</td><td>Fábrica — o que produzir</td><td><strong>Não</strong></td></tr>
+      <tr><td>Pedido Comercial</td><td>Cliente — confirma o pedido</td><td><strong>Sim</strong></td></tr>
+    </table>
+  </div>
+
+  <div class="secao-titulo">Atalhos no computador</div>
+  <div class="tabela-caixa" style="margin-top:14px">
+    <table class="cola">
+      <tr><td><kbd>T</kbd></td><td>Hoje</td></tr>
+      <tr><td><kbd>C</kbd></td><td>Empresas</td></tr>
+      <tr><td><kbd>P</kbd></td><td>Propostas</td></tr>
+      <tr><td><kbd>R</kbd></td><td>Radar — clientes que sumiram</td></tr>
+      <tr><td><kbd>Ctrl</kbd> <kbd>K</kbd></td><td>Buscar (empresa, pedido, ou o nº da OC do cliente)</td></tr>
+    </table>
+  </div>
+
+  <div class="secao-titulo">Esqueceu a senha?</div>
+  <p class="secao-sub" style="margin-bottom:0">
+    Na tela de entrada, clique em <strong>"Esqueci minha senha"</strong> e informe seu e-mail da Adiblock.
+    O link chega em alguns minutos — confira o spam. Ele vale <strong>uma vez só</strong>.
+    Você não precisa pedir para ninguém.
+  </p>
+
+  <footer>
+    Adiblock · CRM Comercial<br>
+    Dúvida que não está aqui? Fale com o Igor.
+  </footer>
+
+</div>
+<p style="max-width:720px;margin:0 auto;padding:0 18px 40px;text-align:center">
+  <a href="../index.html" style="display:inline-block;padding:11px 22px;border-radius:999px;background:var(--azul-700);color:var(--papel);text-decoration:none;font-weight:700;font-size:16px">← Voltar para o CRM</a>
+</p>
+</body>
+</html>

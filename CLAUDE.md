@@ -726,6 +726,7 @@ crm-adiblock/
 ├── docs/
 │   ├── RESTORE.md      ← guia de restauração de backup
 │   ├── diagnostico-banco.sql ← 6 blocos SÓ-LEITURA de checagem do banco
+│   ├── rotina.html     ← guia curto da equipe, SERVIDO pelo próprio CRM
 │   └── MULTI-TENANT.md ← design da migração multi-tenant (Sprint 9.0)
 ├── .github/workflows/
 │   └── backup.yml      ← backup diário automático (Sprint 7.5)
@@ -755,6 +756,27 @@ crm-adiblock/
 > usuário vê não muda: a tela de erro já substituiu o `body`.
 
 ---
+
+### Guia da equipe: dois documentos, propósitos diferentes
+
+| Arquivo | O que é | Quando serve |
+|---|---|---|
+| `docs/GUIA-VENDEDOR.md` / `.html` | **referência** — 12 seções, cobre tudo | tirar dúvida específica de quem já usa |
+| `docs/rotina.html` | **rotina** — ~900 palavras, 4 momentos do dia | aprender a usar; é o que se manda pra quem chegou |
+
+O segundo nasceu em 17/08/2026 porque o primeiro não estava resolvendo: manual
+de referência responde pergunta de quem já sabe. Os números do banco mostravam
+onde a adoção falhava — 139 interações para 154 oportunidades, 0 tarefas, 175
+pedidos sem OC — e a **rotina cita esses números**. Regra a pessoa discute; o
+próprio número ela reconhece.
+
+> **É servido pelo CRM, não por link externo.** `crm-adiblock.vercel.app/docs/rotina.html`
+> — mesma origem que a equipe já acessa, sem depender de conta em serviço
+> nenhum, e entra no backup do repo. Entradas: faixa no topo da aba **Hoje** (a
+> primeira tela do dia) e link no **cartão de login**.
+>
+> Não foi pra navbar de propósito: ela fecha em **356px de 360** num Galaxy S23
+> e não tem folga pra mais um botão. Ver a escada da navbar na seção 5.
 
 ## 15. Próximos itens em aberto (não implementados)
 

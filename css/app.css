@@ -1402,3 +1402,24 @@ body.role-leitor .read-only-banner{display:block}
 @media(max-width:1200px){ .tb-full{display:none} .tb-short{display:inline} }
 /* Busca vira so o icone (o atalho Ctrl+K continua valendo) */
 @media(max-width:1100px){ #gs-btn span{display:none} #gs-btn{padding:7px 10px} }
+
+/* ── Link do guia na tela Hoje (2026-08-17) ──────────────────────────────
+   Discreto de proposito: quem ja sabe usar nao pode ser incomodado por ele
+   todo dia, e quem nao sabe precisa achar sem procurar. Por isso e uma faixa
+   de uma linha no topo, e nao um card. */
+.guia-link{
+  display:flex;align-items:center;gap:10px;
+  background:var(--ps);border:1px solid var(--bdr);border-left:3px solid var(--ac);
+  border-radius:var(--r);padding:10px 14px;margin-bottom:16px;
+  color:var(--tx2);font-size:var(--fs-md);text-decoration:none;
+  transition:border-color .2s var(--ease),transform .2s var(--ease);
+}
+.guia-link:hover{border-color:var(--p);transform:translateY(-1px)}
+.guia-link b{color:var(--tx)}
+.guia-ico{font-size:16px;flex-shrink:0}
+.guia-seta{margin-left:auto;color:var(--p);font-weight:700;flex-shrink:0}
+@media(max-width:560px){
+  /* Em 360px o texto inteiro nao cabe numa linha; a seta sai e o resto quebra */
+  .guia-link{align-items:flex-start}
+  .guia-seta{display:none}
+}

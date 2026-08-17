@@ -270,6 +270,31 @@ mesma altura que o site usa na própria navbar, o piso onde a tagline ainda lê.
 No login a logo troca com o tema (`.logo-claro` / `.logo-escuro`): o cartão é
 branco no claro e azul-escuro no escuro, então uma versão só sumiria numa delas.
 
+### Breakpoints (2026-08-17)
+
+Eram 7 valores sem sistema (1280, 1100, 768, 680, 640, 560, 480) e a faixa de
+**769 a 1024px não tinha dono**: iPad Air (820) e iPad Pro 11" (834) caíam no
+layout de mesa, com navbar de linha única cheia e alvos de toque de ~31px.
+
+| Faixa | Quem | O que muda |
+|---|---|---|
+| ≤1024 | **tablet** e tudo abaixo | toque de 44px, rótulo curto nas abas, documentos sem largura fixa |
+| ≤768 | celular | Empresas vira cards, tabela de documento rola, navbar em 2 linhas |
+| ≤480 | celular estreito | modais viram bottom-sheet |
+
+Os três blocos ficam **no fim do `app.css`**, nessa ordem: são os últimos a
+casar, e 1024 → 768 → 480 garante que o mais estreito vence. Regra que serve a
+tablet **e** celular mora no bloco de 1024; só o que difere é repetido no de 768.
+
+> **Tablet é touch.** Duas coisas seguem daí e são fáceis de esquecer: alvo de
+> 44px vale acima de 768 também, e **arrastar não funciona** — o botão "⇄ Mover"
+> do Kanban é o único caminho, então ele precisa ser clicável no tablet, não só
+> visível.
+
+> `isMobile()` no JS (`max-width:768px`) decide **cards vs. tabela** em Empresas.
+> Tablet fica com a tabela de propósito: cabem ~12 empresas onde caberiam 4.
+> Por isso o `.tw` tem `overflow-x:auto` **na base**, não dentro de um breakpoint.
+
 ### Raio e sombra
 
 Raio sai sempre de `--rs` (6px) / `--r` (10px) / `--rl` (14px) / `99px` (pílula).

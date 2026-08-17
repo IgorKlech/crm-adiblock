@@ -262,7 +262,12 @@ h1,h2,h3,h4{font-weight:800;letter-spacing:-.02em;line-height:1.2}
 .fi:focus{border-color:var(--p)}
 
 /* TABLE */
-.tw{background:var(--sur);border-radius:var(--r);box-shadow:var(--sh);border:1px solid var(--bdr);overflow:hidden}
+/* overflow-x:auto na BASE, nao so no celular. O `overflow:hidden` que estava
+   aqui existia pra o raio recortar os cantos, mas cortava a tabela junto: entre
+   769 e 1100px (iPad Air, iPad Pro 11") as colunas da direita sumiam sem aviso
+   e sem barra de rolagem. Em tela larga isto e inofensivo — a tabela cabe e o
+   auto nao faz nada. */
+.tw{background:var(--sur);border-radius:var(--r);box-shadow:var(--sh);border:1px solid var(--bdr);overflow-x:auto;overflow-y:hidden}
 table{width:100%;border-collapse:collapse}
 thead th{background:var(--bg);color:var(--mt);padding:10px 14px;text-align:left;font-size:var(--fs-xs);font-weight:600;text-transform:uppercase;letter-spacing:.05em;white-space:nowrap;user-select:none;border-bottom:1px solid var(--bdr)}
 thead th.so{cursor:pointer;transition:color .15s}
@@ -1240,3 +1245,77 @@ body.role-leitor .read-only-banner{display:block}
 .pr-custom-range{align-items:center;gap:6px}
 .pr-custom-range input[type=date]{padding:5px 8px;border:1.5px solid var(--bdr);border-radius:var(--rs);font-size:var(--fs-sm);font-family:inherit;background:var(--sur);color:var(--tx);outline:none}
 .pr-custom-range input[type=date]:focus{border-color:var(--p)}
+
+/* ==========================================================================
+   TABLET E CELULAR — faixa consolidada (2026-08-17)
+   --------------------------------------------------------------------------
+   Ate aqui o mundo era "<=768px e celular, acima e mesa". Isso deixava a faixa
+   de 769 a 1024px sem dono: iPad Air (820) e iPad Pro 11" (834) recebiam o
+   layout de mesa, com a navbar de linha unica cheia e alvos de toque de ~31px.
+
+   Estes blocos vem no FIM do arquivo de proposito: sao os ultimos a casar, e
+   entre eles a ordem 1024 -> 768 -> 480 garante que o mais estreito vence.
+   Regra que vale pra tablet E celular mora no bloco de 1024; so o que muda
+   entre os dois e repetido no de 768.
+   ========================================================================== */
+
+/* ── ATE 1024px: TABLET (e tudo abaixo) ─────────────────────────────────── */
+@media(max-width:1024px){
+  /* Toque. Tablet e touch tanto quanto celular, e a regra de 44px do Sprint
+     7.3 so valia pra <=768. 44px e o minimo da diretriz de acessibilidade. */
+  .btn{min-height:40px}
+  .pr-card .btn,.td-act,.pf-opp-actions .btn,.rd-card-actions .btn,
+  .ma .btn,.cot-topbar .btn,.pf-topbar .btn{min-height:44px}
+  .mx{width:40px;height:40px}
+  /* No tablet arrastar tambem nao funciona — e touch igual ao celular. O botao
+     "Mover" ja aparecia aqui, mas com 11px e alvo de ~26px: visivel e
+     inclicavel, que e pior que ausente. */
+  .kb-move-btn{min-height:44px;font-size:var(--fs-md)}
+  .kb-card{cursor:pointer}
+
+  /* Navbar: rotulo curto nas abas e fora o que o avatar ja diz */
+  .tb-full{display:none}
+  .tb-short{display:inline}
+  .un,.ur{display:none}
+  #gs-btn span{display:none}
+  #gs-btn{padding:7px 10px}
+
+  /* Documentos (proposta, pedido de producao, pedido comercial): a largura
+     fixa de 880px estourava a tela do tablet. */
+  .cot-body{max-width:100%;margin:16px auto;padding:20px 22px}
+  .cot-topbar{flex-wrap:wrap;gap:8px}
+}
+
+/* ── ATE 768px: CELULAR ──────────────────────────────────────────────────── */
+@media(max-width:768px){
+  /* Barra amarela da aba ativa: no celular o padding cai pra 9px, entao o
+     recuo de 14px deixava a barra mais estreita que o proprio texto. */
+  .tb.ac::after{left:8px;right:8px}
+
+  /* Documentos coladas na borda: em 390px, 22px de cada lado sao 11% da tela */
+  .cot-body{margin:0;padding:16px 14px;border:none;border-radius:0}
+  /* Tabela de documento vira um bloco que rola sozinho. Sem isso a tabela de
+     5 colunas do Pedido Comercial empurra a pagina inteira pra fora da tela. */
+  .cot-tab,.pcom-tab,.prod-tab{display:block;overflow-x:auto;white-space:nowrap}
+  .cot-2col{grid-template-columns:1fr;gap:14px}
+
+  /* Pedido Comercial: o numero da OC empilha em vez de disputar a linha */
+  .pcom-oc-box{flex-direction:column;align-items:flex-start;gap:2px;padding:10px 14px}
+
+  /* Historico de revisoes */
+  .edp-rev{padding:10px 12px}
+  .edp-rev-head{flex-direction:column;align-items:flex-start;gap:2px}
+
+  /* Radar e cards de acao: botao ocupa a linha inteira em vez de virar tira */
+  .rd-card-actions{flex-wrap:wrap}
+}
+
+/* ── ATE 480px: CELULAR ESTREITO ─────────────────────────────────────────── */
+@media(max-width:480px){
+  /* A topbar dos documentos ja quebra em varias linhas (flex-wrap la em cima).
+     Nao escondo o rotulo dos botoes: eles nao tem um <span> pra isso, e
+     "Editar" / "Marcar como Pedido" so em emoji seria adivinhacao. */
+  .cot-topbar{padding:10px 12px}
+  .cot-topbar .btn{flex:1;min-width:calc(50% - 4px)}
+  .pcom-oc-box b{font-size:var(--fs-lg)}
+}

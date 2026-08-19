@@ -469,6 +469,18 @@ cada combinação possível.
 da negociação, às vezes dias depois. O snapshot é o que foi *negociado* e é
 imutável — enfiar dado de entrega nele obrigaria a reescrever documento fechado.
 
+> ⚠ **Largura de coluna em documento vai em PORCENTAGEM, nunca em px.** Em
+> 19/08/2026 a proposta saiu do PDF com `Classe 3 (Líquido in` e
+> `VALOR TOTAL R$ 8` cortados. Causa: a `<colgroup>` somava **452px fixos** e um
+> A4 com margem de 2cm tem só **~642px** de largura útil. Papel não rola: o que
+> passa da página é **cortado**, e ninguém percebe até o cliente receber.
+> Porcentagem escala para o papel, para a tela e para a margem que o usuário
+> escolher na hora de imprimir. As duas `<colgroup>` somam exatamente 100%.
+>
+> No `@media print` a margem caiu para 1,4cm, a fonte da tabela para 11px, e o
+> `white-space:nowrap` das colunas numéricas é **desligado** — ele serve na tela,
+> onde há rolagem; no papel, valor que não cabe simplesmente some.
+
 **`pesoDaEmbalagem(emb)`** — extrai peso por embalagem:
 - Regex: `"Bombona 20"` → 20, `"Saco 25"` → 25
 - Defaults: `"Tambor"` → 200, `"CNT"` → 1000

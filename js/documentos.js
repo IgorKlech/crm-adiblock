@@ -215,11 +215,11 @@ function renderPedidoComercial(prop) {
     <div class="cot-sect-title" style="margin-top:18px">Itens do pedido</div>
     <table class="cot-tab pcom-tab">
       <thead><tr>
-        <th class="num" style="width:38px">Item</th>
+        <th class="num" style="width:6%">Item</th>
         <th>Produto</th>
-        <th class="num" style="width:90px">Qtd (kg)</th>
-        <th class="num" style="width:90px">R$/kg</th>
-        <th class="num" style="width:110px">Total</th>
+        <th class="num" style="width:16%">Qtd (kg)</th>
+        <th class="num" style="width:16%">R$/kg</th>
+        <th class="num" style="width:18%">Total</th>
       </tr></thead>
       <tbody>${linhas || '<tr><td colspan="5" style="text-align:center;color:var(--mt)">— sem itens —</td></tr>'}</tbody>
       <tfoot>
@@ -342,13 +342,16 @@ function renderPedidoProducao(prop, solicitante, obsProd) {
     </div>
 
     <table class="prod-tab">
+      <!-- Porcentagem, nao px: 416px fixos numa area imprimivel de ~642px
+           deixavam pouca folga, e o mesmo defeito da proposta cortaria colunas
+           num papel com margem maior. Soma 100. -->
       <colgroup>
-        <col style="width:36px">
-        <col style="width:auto">
-        <col style="width:120px">
-        <col style="width:80px">
-        <col style="width:90px">
-        <col style="width:90px">
+        <col style="width:6%">
+        <col style="width:34%">
+        <col style="width:20%">
+        <col style="width:13%">
+        <col style="width:13%">
+        <col style="width:14%">
       </colgroup>
       <thead><tr>
         <th class="num">Item</th>
@@ -410,7 +413,7 @@ function renderCotacao(prop) {
       <td class="num">${valorSemIpi!=null?fmtBRL(valorSemIpi):'—'}</td>
       <td class="num">${ipiPct}%</td>
       <td class="num">${valorTotal!=null?fmtBRL(valorTotal):'—'}</td>
-      <td style="font-size:11px;color:var(--er);font-weight:600">${escHtml(p.classificacao_risco||'—')}</td>
+      <td class="cot-risco">${escHtml(p.classificacao_risco||'—')}</td>
     </tr>`;
   }).join('');
 
@@ -468,15 +471,21 @@ function renderCotacao(prop) {
     <div class="cot-sect">
       <div class="cot-sect-title">Produtos</div>
       <table class="cot-tab">
+        <!-- Largura em PORCENTAGEM, nao em px. Com px a soma era 452px fixos, e
+             a area imprimivel de um A4 com margem de 2cm tem ~642px: a tabela
+             passava da pagina e o excedente era CORTADO, porque papel nao rola.
+             Sintoma: "Classe 3 (Liquido in" e "VALOR TOTAL R$ 8" truncados no
+             PDF. Porcentagem escala pro papel, pra tela e pra margem que o
+             usuario escolher na hora de imprimir. Soma 100. -->
         <colgroup>
-          <col style="width:32px">
-          <col style="width:auto">
-          <col style="width:54px">
-          <col style="width:64px">
-          <col style="width:74px">
-          <col style="width:38px">
-          <col style="width:80px">
-          <col style="width:110px">
+          <col style="width:4%">
+          <col style="width:28%">
+          <col style="width:8%">
+          <col style="width:11%">
+          <col style="width:12%">
+          <col style="width:5%">
+          <col style="width:12%">
+          <col style="width:20%">
         </colgroup>
         <thead><tr>
           <th class="num">Item</th>

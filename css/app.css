@@ -1122,6 +1122,10 @@ body.role-leitor .read-only-banner{display:block}
 .cot-tab td{padding:7px 5px;border-bottom:1px solid var(--bdr);word-wrap:break-word;vertical-align:top}
 .cot-tab tr:last-child td{border-bottom:none}
 .cot-tab .num{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
+/* A classificacao de risco e o texto mais longo da linha ("Classe 3 (Liquido
+   inflamavel)"). Tem que QUEBRAR: se nao quebra, empurra a tabela pra fora
+   da pagina — e no papel o que sai fora e cortado, nao rolado. */
+.cot-risco{font-size:var(--fs-xs);color:var(--er);font-weight:600;white-space:normal;overflow-wrap:anywhere;line-height:1.35}
 .cot-tab tfoot td{padding:10px 6px;font-weight:700;font-size:var(--fs-md);background:var(--bg);border-top:2px solid var(--p)}
 .cot-tab tfoot td.cot-total-lbl{text-align:right;color:var(--mt);font-weight:600;font-size:var(--fs-xs);text-transform:uppercase;letter-spacing:.05em}
 .cot-tab tfoot td.cot-total-val{color:var(--p);text-align:right;font-size:var(--fs-base);white-space:nowrap}
@@ -1185,7 +1189,16 @@ body.role-leitor .read-only-banner{display:block}
   body{background:#fff!important}
   .rel-card,.rel-table,.rel-section,.cot-sect,.cot-tab tr,.prod-tab tr{break-inside:avoid}
   .cot-body{border:none!important;margin:0!important;padding:0!important;max-width:100%!important}
-  @page{margin:2cm}
+  /* 1,4cm em vez de 2cm: com 2cm sobram ~642px de largura util num A4, e a
+     tabela de 8 colunas da proposta nao cabia. Com 1,4cm sao ~688px — mais
+     folga sem o documento encostar na borda. */
+  @page{margin:1.4cm 1.4cm 1.6cm}
+  /* No papel a tabela ganha um ponto a menos: cabe mais coluna sem apertar. */
+  .cot-tab,.pcom-tab,.prod-tab{font-size:11px!important}
+  .cot-tab th,.cot-tab td{padding:5px 4px!important}
+  /* nowrap nas colunas de numero serve na TELA, onde ha rolagem. No papel, um
+     valor que nao cabe some — melhor deixar quebrar do que sumir. */
+  .cot-tab .num,.cot-tab tfoot td.cot-total-val{white-space:normal!important}
 }
 
 /* ── Lista de produtos dinâmica ── */

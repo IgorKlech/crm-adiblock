@@ -1443,3 +1443,38 @@ body.role-leitor .read-only-banner{display:block}
 @media(max-width:768px){
   .ret-rapido button{min-height:44px;padding:9px 15px;font-size:var(--fs-md)}
 }
+
+/* ── Catálogo de produtos (admin) — 2026-08-17 ───────────────────────────
+   z-index 280: mesma faixa do #pfpage, e o modal dele (300) abre por cima. */
+#cat-page{display:none;position:fixed;inset:0;background:var(--bg);z-index:280;overflow-y:auto}
+#cat-page.op{display:block}
+.cat-corpo{max-width:1000px;margin:0 auto;padding:20px}
+.cat-conta{font-size:var(--fs-sm);color:var(--mt);white-space:nowrap}
+.cat-aviso{background:var(--ps);border-left:3px solid var(--p);border-radius:var(--rs);padding:11px 15px;font-size:var(--fs-md);line-height:1.55;color:var(--tx2);margin-bottom:14px}
+.cat-busca{width:100%;padding:11px 14px;border:1px solid var(--bdr2);border-radius:var(--rs);font-size:var(--fs-base);font-family:inherit;background:var(--bg);color:var(--tx);outline:none;margin-bottom:18px;transition:all .2s var(--ease)}
+.cat-busca:focus{border-color:var(--p);background:var(--sur);box-shadow:var(--ring)}
+/* Uma ficha por produto; as embalagens moram dentro dela */
+.cat-prod{background:var(--sur);border:1px solid var(--bdr);border-radius:var(--r);margin-bottom:14px;overflow:hidden}
+.cat-prod-head{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:13px 16px;background:var(--bg);border-bottom:1px solid var(--bdr)}
+.cat-prod-head h3{margin:0;font-size:var(--fs-lg);font-weight:700;color:var(--tx);letter-spacing:-.01em;min-width:0;overflow-wrap:anywhere}
+.cat-embs{display:flex;flex-direction:column}
+.cat-emb{display:grid;grid-template-columns:1.4fr repeat(3,1fr) auto;gap:12px;align-items:end;padding:13px 16px;border-bottom:1px solid var(--bdr)}
+.cat-emb:last-child{border-bottom:none}
+.cat-emb-nome{font-size:var(--fs-md);font-weight:700;color:var(--tx);padding-bottom:8px;overflow-wrap:anywhere}
+.cat-preco{display:block}
+.cat-preco span{display:block;font-size:var(--fs-2xs);font-weight:700;text-transform:uppercase;letter-spacing:var(--ls-label);color:var(--mt);margin-bottom:4px}
+.cat-preco input{width:100%;padding:7px 10px;border:1px solid var(--bdr2);border-radius:var(--rs);font-size:var(--fs-md);font-family:inherit;background:var(--bg);color:var(--tx);outline:none;text-align:right;font-variant-numeric:tabular-nums}
+.cat-preco input:focus{border-color:var(--p);background:var(--sur);box-shadow:var(--ring)}
+.cat-emb-acoes{display:flex;align-items:center;gap:6px;padding-bottom:1px}
+.cat-del{background:none;border:1px solid transparent;border-radius:var(--rs);color:var(--mt2);font-size:15px;line-height:1;cursor:pointer;padding:7px 9px;transition:all .15s}
+.cat-del:hover{background:var(--er2);color:var(--er);border-color:var(--er)}
+.cat-del:focus-visible{outline:none;box-shadow:var(--ring)}
+@media(max-width:768px){
+  /* Em 360px cinco colunas nao cabem: vira duas, com o nome da embalagem
+     ocupando a linha inteira e os precos em pares. */
+  .cat-emb{grid-template-columns:1fr 1fr;gap:10px;padding:14px}
+  .cat-emb-nome{grid-column:1/3;padding-bottom:0}
+  .cat-emb-acoes{grid-column:1/3;justify-content:flex-end}
+  .cat-emb-acoes .btn{flex:1;min-height:44px}
+  .cat-preco input{min-height:44px;font-size:var(--fs-lg)}
+}

@@ -427,6 +427,7 @@
       <div class="ph">
         <div><h2>Equipe</h2><span class="ps" id="eq-cst">Carregando...</span></div>
         <div class="pa">
+          <button class="btn bg sm admin-only" onclick="abrirCatalogo()" title="Cadastrar produtos, embalagens e preços">🧪 Catálogo de produtos</button>
           <a class="btn bg sm admin-only" href="https://supabase.com/dashboard/project/kgiynhrytnzfdywgjhby/auth/users" target="_blank" title="Cadastrar novo vendedor pelo Supabase Auth">+ Convidar via Supabase</a>
         </div>
       </div>
@@ -920,6 +921,76 @@
 </div>
 
 <!-- PÁGINA DE PERFIL DO CLIENTE -->
+<!-- CATALOGO DE PRODUTOS — so admin (2026-08-17).
+     A trava de verdade esta no BANCO: a policy `products_write` exige
+     is_admin(). Esconder o botao com .admin-only e conveniencia, nao seguranca
+     — um vendedor que abrisse isto pelo console esbarraria no RLS.
+     Cada linha da tabela e um par PRODUTO + EMBALAGEM (chave unica no banco),
+     por isso a tela agrupa por produto e lista as embalagens dentro. -->
+<div id="cat-page">
+  <div class="pf-topbar">
+    <div style="display:flex;align-items:center;gap:12px">
+      <button class="pf-back" onclick="fecharCatalogo()">← Voltar</button>
+      <span style="font-size:var(--fs-lg);font-weight:700;color:var(--tx)">Catálogo de produtos</span>
+      <span class="cat-conta" id="cat-conta"></span>
+    </div>
+    <div style="display:flex;gap:8px">
+      <button class="btn bac sm" onclick="abrirNovoProduto()">+ Novo produto</button>
+    </div>
+  </div>
+
+  <div class="cat-corpo">
+    <div class="cat-aviso">
+      Os preços daqui são a <b>sugestão</b> que aparece ao montar uma proposta.
+      Proposta já gerada <b>não muda</b> — ela guarda os valores do dia em que foi feita.
+    </div>
+    <input type="search" id="cat-busca" class="cat-busca" placeholder="Buscar produto ou embalagem..." oninput="renderCatalogo()" autocomplete="off">
+    <div id="cat-lista"></div>
+  </div>
+</div>
+
+<!-- MODAL: novo produto ou nova embalagem de um produto existente -->
+<div class="mo" id="cat-m" style="z-index:300">
+  <div class="md" style="max-width:520px">
+    <div class="mh">
+      <h3 id="cat-m-tit">Novo produto</h3>
+      <button class="mx" type="button" onclick="fecharNovoProduto()" aria-label="Fechar">✕</button>
+    </div>
+    <form id="cat-f">
+      <div class="fg">
+        <label for="cat-nome">Produto</label>
+        <input type="text" id="cat-nome" required maxlength="120" placeholder="Ex: ADB-Faster" autocomplete="off">
+      </div>
+      <div class="fg">
+        <label for="cat-emb">Embalagem</label>
+        <input type="text" id="cat-emb" required maxlength="60" placeholder="Ex: Bombona 20" autocomplete="off">
+        <div style="font-size:var(--fs-xs);color:var(--mt);margin-top:5px;line-height:1.5">
+          O número na embalagem é lido pelo Pedido de Produção para calcular peso
+          (<code>Bombona 20</code> → 20 kg). "Tambor" vale 200 e "CNT" vale 1000.
+        </div>
+      </div>
+      <div class="fr">
+        <div class="fg"><label for="cat-pj">Base PJ (R$/kg)</label>
+          <input type="number" id="cat-pj" step="0.01" min="0" required placeholder="0,00"></div>
+        <div class="fg"><label for="cat-office">Base OFFICE (R$/kg)</label>
+          <input type="number" id="cat-office" step="0.01" min="0" placeholder="0,00"></div>
+      </div>
+      <div class="fg">
+        <label for="cat-mp">Matéria-prima (R$/kg)</label>
+        <input type="number" id="cat-mp" step="0.01" min="0" placeholder="0,00">
+        <div style="font-size:var(--fs-xs);color:var(--mt);margin-top:5px">
+          Custo interno — não aparece para o vendedor em lugar nenhum.
+        </div>
+      </div>
+      <p id="cat-erro" class="em"></p>
+      <div class="ma">
+        <button type="button" class="btn bg" onclick="fecharNovoProduto()">Cancelar</button>
+        <button type="submit" class="btn bp" id="cat-sub">Salvar</button>
+      </div>
+    </form>
+  </div>
+</div>
+
 <div id="pfpage">
   <div class="pf-topbar">
     <div style="display:flex;align-items:center;gap:12px">
@@ -1210,6 +1281,7 @@
 <script src="js/api.js"></script>
 <script src="js/format.js"></script>
 <script src="js/documentos.js"></script>
+<script src="js/catalogo.js"></script>
 
 <script>
 // ── Estado ────────────────────────────────────────────────────────────────
@@ -1354,7 +1426,7 @@ function empresaVendedor(c) {
 }
 // Helper: total de produtos cadastrados nas oportunidades (pra display)
 const fetchPf = () => api('GET','profiles','select=id,name,role,email&order=name');
-const fetchProds = () => api('GET','products','select=nome,embalagem,preco_materia_prima,preco_office,preco_pj&order=nome,embalagem');
+const fetchProds = () => api('GET','products','select=id,nome,embalagem,preco_materia_prima,preco_office,preco_pj&order=nome,embalagem');
 // Sprint 6.2: tarefas livres (nao atreladas a oportunidade)
 const fetchTasks = () => api('GET','tasks','select=*,company:companies(id,razao_social),seller:profiles(id,name)&order=due_at.asc');
 // Sprint 6.3+6.5+6.7+6.8. Tenta com todas as colunas; se falhar (colunas ainda nao migradas),
@@ -3136,6 +3208,8 @@ document.addEventListener('keydown', e => {
   if (document.getElementById('edp-m')?.classList.contains('op')) { fecharEditarPedido(); return; }
   // Pedido Comercial: primeiro o modal de dados, depois a pagina do documento
   // (que precisa devolver a cot-page, nao so sumir).
+  if (document.getElementById('cat-m')?.classList.contains('op')) { fecharNovoProduto(); return; }
+  if (document.getElementById('cat-page')?.classList.contains('op')) { fecharCatalogo(); return; }
   if (document.getElementById('oc-m')?.classList.contains('op')) { fecharPerguntaOC(); return; }
   if (document.getElementById('pcom-m')?.classList.contains('op')) { document.getElementById('pcom-m').classList.remove('op'); return; }
   if (document.getElementById('pcom-page')?.classList.contains('op')) { fecharPedidoComercial(); return; }

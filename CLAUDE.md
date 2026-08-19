@@ -716,6 +716,7 @@ crm-adiblock/
 │   ├── api.js          ← api(), apiDelete(), getToken() (8.1c)
 │   ├── format.js       ← helpers de formatação (8.1b)
 │   ├── documentos.js   ← os 3 papéis imprimíveis + PROP_ATUAL (8.1d)
+│   ├── catalogo.js     ← cadastro de produtos/embalagens/preços (só admin)
 │   └── vendor/         ← supabase-js 2.39.3 (arquivo local, ver seção 2)
 ├── supabase_setup.sql  ← schema completo (DROP destrutivo COMENTADO — Regra de Ouro)
 ├── migrations/         ← mudanças de schema datadas (AAAA-MM-DD-*.sql)
@@ -745,7 +746,7 @@ crm-adiblock/
 ```
 
 > **Ordem de carga** (crítica — tudo compartilha escopo global, sem `type=module`):
-> `vendor/supabase-js` → `config.js` → `api.js` → `format.js` → `documentos.js` → `<script>` inline.
+> `vendor/supabase-js` → `config.js` → `api.js` → `format.js` → `documentos.js` → `catalogo.js` → `<script>` inline.
 > `api.js` usa `SB_URL`/`SB_KEY` de `config.js`; o inline usa `sb`, `api()`,
 > `apiDelete()` e `MODO_RECUPERACAO` dos dois. Módulo novo entra **antes** do
 > inline e **depois** de quem ele consome. CSS via `<link href="css/app.css">`.
@@ -756,6 +757,31 @@ crm-adiblock/
 > usuário vê não muda: a tela de erro já substituiu o `body`.
 
 ---
+
+### Catálogo de produtos — só admin (2026-08-17)
+
+Antes disto **não havia nenhum caminho de escrita em `products` no app**: o
+catálogo (231 linhas) era editado direto no Supabase.
+
+> **A trava está no BANCO, não na tela.** A policy `products_write` já exigia
+> `is_admin() AND org_id = current_org()` desde o Sprint 5.1. O `.admin-only` no
+> botão e o `catEhAdmin()` no JS são conveniência e mensagem clara — quem
+> chamasse as funções pelo console esbarraria no RLS.
+
+**Cada linha de `products` é um par PRODUTO + EMBALAGEM** (`UNIQUE (nome,
+embalagem)`). "Cadastrar embalagem nova" é criar outra linha com o mesmo `nome`.
+Por isso a tela agrupa por produto e lista as embalagens dentro.
+
+Os três preços, com os rótulos que o app já usava:
+
+| Coluna | Rótulo | Onde aparece |
+|---|---|---|
+| `preco_pj` | **Base PJ** | é o preço sugerido ao montar proposta |
+| `preco_office` | **Base OFFICE** | cadastro de produto da oportunidade |
+| `preco_materia_prima` | **Matéria-prima** | custo interno — não aparece pro vendedor |
+
+> Mexer no preço aqui **não altera proposta já gerada** — ela guarda o snapshot
+> do dia. A tela diz isso em texto, porque é a dúvida óbvia de quem edita preço.
 
 ### Registrar interação é a ação mais repetida do sistema (2026-08-17)
 

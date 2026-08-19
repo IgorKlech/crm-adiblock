@@ -511,7 +511,11 @@ imutável — enfiar dado de entrega nele obrigaria a reescrever documento fecha
   foram apagados em 17/08/2026. Faltam `state.js`, `js/views/*`, `modals.js` e
   `main.js` — o `<script>` inline ainda tem **5.781 linhas**, e é aí que está o
   ganho de verdade; config e api somaram só ~100 linhas.
-  As views são o pedaço difícil: dependem de tudo e não dá pra verificar sem
+  **25% do JS já está em módulo.** O padrão que funciona: extrair por **domínio
+  contíguo**, não por tamanho — `documentos.js` rendeu 9% e `propostas.js` 12%
+  num passo cada, enquanto `config`+`api` renderam 1,7%. Fronteira boa vale mais
+  que volume.
+  As views ainda são o pedaço difícil: dependem de tudo e não dá pra verificar sem
   **abrir o app entre cada extração**. Análise estática pega sintaxe e ordem de
   carga, não pega "a tela não renderiza mais".
 
@@ -716,6 +720,7 @@ crm-adiblock/
 │   ├── api.js          ← api(), apiDelete(), getToken() (8.1c)
 │   ├── format.js       ← helpers de formatação (8.1b)
 │   ├── documentos.js   ← os 3 papéis imprimíveis + PROP_ATUAL (8.1d)
+│   ├── propostas.js    ← aba Propostas + ciclo de vida do pedido (8.1e)
 │   ├── catalogo.js     ← cadastro de produtos/embalagens/preços (só admin)
 │   └── vendor/         ← supabase-js 2.39.3 (arquivo local, ver seção 2)
 ├── supabase_setup.sql  ← schema completo (DROP destrutivo COMENTADO — Regra de Ouro)
@@ -746,7 +751,8 @@ crm-adiblock/
 ```
 
 > **Ordem de carga** (crítica — tudo compartilha escopo global, sem `type=module`):
-> `vendor/supabase-js` → `config.js` → `api.js` → `format.js` → `documentos.js` → `catalogo.js` → `<script>` inline.
+> `vendor/supabase-js` → `config.js` → `api.js` → `format.js` → `documentos.js`
+> → `propostas.js` → `catalogo.js` → `<script>` inline.
 > `api.js` usa `SB_URL`/`SB_KEY` de `config.js`; o inline usa `sb`, `api()`,
 > `apiDelete()` e `MODO_RECUPERACAO` dos dois. Módulo novo entra **antes** do
 > inline e **depois** de quem ele consome. CSS via `<link href="css/app.css">`.

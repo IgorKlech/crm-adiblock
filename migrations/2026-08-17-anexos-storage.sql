@@ -1,41 +1,39 @@
 -- =========================================================================
--- 2026-08-17 — Anexos (O4): bucket no Storage + tabela de metadados
+-- 2026-08-17 — Anexos do pedido (O4): bucket privado + metadados
 -- =========================================================================
 -- POR QUE
---   Hoje a OC assinada, a foto da obra e o comprovante vivem na caixa de
---   e-mail de quem recebeu. Quem precisa depois nao acha, e quando a pessoa
---   esta de folga ninguem acha. O CRM ja guarda o pedido; falta guardar o
---   papel que veio junto.
+--   A OC assinada e o comprovante vivem na caixa de e-mail de quem recebeu.
+--   Quem precisa depois nao acha, e quando a pessoa esta de folga ninguem
+--   acha. O CRM ja guarda o pedido; falta guardar o papel que veio junto.
 --
--- DESENHO — as tres decisoes que sustentam o resto:
+-- ESCOPO: anexo pertence a uma PROPOSTA/PEDIDO. Foto de obra em oportunidade
+--   foi descartada pelo Igor em 17/08, entao nao ha tabela generica: o anexo
+--   tem `proposal_id` com FK de verdade e ON DELETE CASCADE. Integridade
+--   referencial de graca, em vez de um par (entidade, entidade_id) sem FK.
 --
---   1. BUCKET PRIVADO, nao publico.
---      Uma OC tem preco, CNPJ e dados do cliente. Bucket publico significa
---      que qualquer um com a URL le o arquivo, para sempre, sem login. O
---      acesso passa a ser por URL ASSINADA com validade curta, gerada pelo
---      app depois do RLS aprovar.
+-- ⚠ SOBRE "so le quem tem login"
+--   O bucket e privado, entao o arquivo nao e alcancavel por URL direta e o
+--   RLS so libera pra quem esta autenticado na organizacao dona. Mas o app
+--   acessa por URL ASSINADA, e uma URL assinada e um portador: quem receber o
+--   link abre o arquivo ate ele expirar, mesmo sem login. Nao da pra eliminar
+--   isso sem servidor proprio (restricao do projeto). A mitigacao e VALIDADE
+--   CURTA — o app vai gerar links de 60 segundos, o suficiente pra abrir e
+--   curto demais pra circular. Fica dito porque a diferenca importa: nao e
+--   "so quem tem login le", e "so quem tem login CONSEGUE O LINK, e o link
+--   morre em 1 minuto".
 --
---   2. UMA TABELA GENERICA, nao uma por entidade.
---      `attachments(entidade, entidade_id)` aponta pra proposta, empresa ou
---      oportunidade. Fosse uma coluna `proposal_id`, anexar foto de obra numa
---      oportunidade exigiria outra tabela e outra tela. O custo e nao ter FK
---      real — resolvido pela limpeza descrita em (3).
+-- ⚠ LGPD
+--   Apagar a empresa NAO apaga estes anexos: `proposals.company_id` e
+--   ON DELETE SET NULL, ou seja, a proposta sobrevive a exclusao da empresa —
+--   e o anexo com ela. E uma OC tem CNPJ, endereco e nome de pessoa.
+--   Por isso a exclusao LGPD no app tera de, nesta ordem:
+--     1) apagar os OBJETOS no Storage das propostas daquela empresa
+--     2) apagar as linhas de attachments
+--     3) so entao apagar a empresa
+--   Cascata de banco nunca alcanca arquivo no Storage. A CASCADE abaixo cobre
+--   o caso de a PROPOSTA ser excluida, e ainda assim so o metadado.
 --
---   3. O CAMINHO COMECA PELO org_id.
---      `{org_id}/{entidade}/{entidade_id}/{arquivo}` — e o que permite a
---      policy do Storage filtrar por organizacao, lendo a primeira pasta do
---      caminho. Sem isso nao ha isolamento multi-tenant no bucket, so na
---      tabela — e o arquivo e o dado que importa.
---
--- ⚠ LGPD — O PONTO QUE MAIS IMPORTA AQUI
---   Apagar a empresa CASCATEIA a linha de metadados, mas NAO apaga o arquivo
---   no Storage. Metadado some, arquivo fica, e o dado pessoal sobrevive — o
---   oposto do que a exclusao LGPD promete.
---   Por isso o app tem que remover os OBJETOS DO STORAGE ANTES de apagar a
---   empresa. A cascata aqui e rede de seguranca contra metadado orfao, nunca
---   a forma primaria de apagar. Ver executarExclusaoLgpd().
---
--- SEGURO DE RODAR: cria bucket e tabela novos. Nao toca em nada existente.
+-- SEGURO DE RODAR: cria bucket e tabela novos, nao toca em nada existente.
 -- Idempotente.
 --
 -- ANTES DE RODAR: clique "Baixar Backup" no Dashboard (Regra de Ouro nº 2).
@@ -44,9 +42,9 @@
 BEGIN;
 
 -- ── 1) O bucket ──────────────────────────────────────────────────────────
--- public=false, teto de 10 MB por arquivo e lista de tipos fechada. O teto
--- existe porque foto de celular passa de 5 MB com facilidade e o plano Free
--- tem 1 GB no total; a lista fechada evita que o bucket vire deposito.
+-- public=false: sem isso, qualquer um com a URL le o arquivo pra sempre.
+-- Teto de 10 MB e tipos fechados — foto de celular passa de 5 MB com
+-- facilidade e o plano Free tem 1 GB no total.
 INSERT INTO storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
 VALUES (
   'anexos', 'anexos', false, 10485760,
@@ -58,13 +56,10 @@ ON CONFLICT (id) DO UPDATE
       allowed_mime_types = EXCLUDED.allowed_mime_types;
 
 -- ── 2) Metadados ─────────────────────────────────────────────────────────
--- Sem FK pra entidade de proposito (ver decisao 2). `entidade` e fechado por
--- CHECK, que e o que impede erro de digitacao virar anexo invisivel.
 CREATE TABLE IF NOT EXISTS public.attachments (
   id            uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   org_id        uuid REFERENCES public.organizations(id) ON DELETE CASCADE,
-  entidade      text NOT NULL CHECK (entidade IN ('proposal','company','opportunity')),
-  entidade_id   uuid NOT NULL,
+  proposal_id   uuid NOT NULL REFERENCES public.proposals(id) ON DELETE CASCADE,
   caminho       text NOT NULL UNIQUE,   -- caminho no bucket; unico evita metadado duplicado
   nome_original text NOT NULL,          -- o nome que o usuario reconhece
   mime          text,
@@ -73,8 +68,8 @@ CREATE TABLE IF NOT EXISTS public.attachments (
   created_by    uuid REFERENCES public.profiles(id) ON DELETE SET NULL
 );
 
-CREATE INDEX IF NOT EXISTS idx_anexos_entidade
-  ON public.attachments(org_id, entidade, entidade_id, created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_anexos_proposta
+  ON public.attachments(org_id, proposal_id, created_at DESC);
 
 -- org_id automatico, mesmo padrao da etapa 91d
 DROP TRIGGER IF EXISTS tg_set_org_id ON public.attachments;
@@ -96,16 +91,16 @@ CREATE POLICY "anexos_insert" ON public.attachments FOR INSERT TO authenticated
 
 -- Apagar so quem subiu, ou o admin. Anexo costuma ser prova (OC assinada,
 -- comprovante) — qualquer um poder apagar o documento do outro e risco sem
--- ganho. Sem UPDATE: anexo se troca apagando e subindo de novo, e assim o
--- created_by nunca mente sobre quem pos o arquivo ali.
+-- ganho. Sem UPDATE: troca-se apagando e subindo de novo, e assim created_by
+-- nunca mente sobre quem pos o arquivo ali.
 CREATE POLICY "anexos_delete" ON public.attachments FOR DELETE TO authenticated
   USING (org_id = public.current_org() AND (public.is_admin() OR created_by = auth.uid()));
 
 -- ── 4) RLS do STORAGE ────────────────────────────────────────────────────
--- Aqui esta o isolamento de verdade: sem isto, a tabela filtra por org mas o
--- ARQUIVO fica acessivel a qualquer usuario autenticado que descubra o
--- caminho. `storage.foldername(name)` devolve as pastas do caminho; a [1] e o
--- org_id, por isso ele vem primeiro.
+-- O isolamento de verdade. Sem isto a tabela filtra por org mas o ARQUIVO
+-- fica alcancavel por qualquer usuario autenticado que descubra o caminho.
+-- `storage.foldername(name)` devolve as pastas; a [1] e o org_id — por isso
+-- o caminho e {org_id}/proposals/{proposal_id}/{arquivo}.
 DROP POLICY IF EXISTS "anexos_obj_select" ON storage.objects;
 DROP POLICY IF EXISTS "anexos_obj_insert" ON storage.objects;
 DROP POLICY IF EXISTS "anexos_obj_delete" ON storage.objects;
@@ -126,16 +121,17 @@ CREATE POLICY "anexos_obj_delete" ON storage.objects FOR DELETE TO authenticated
 COMMIT;
 
 -- =========================================================================
--- CONFERENCIA
+-- CONFERENCIA — rode e mande a saida
 -- =========================================================================
 --   SELECT id, public, file_size_limit, allowed_mime_types
---     FROM storage.buckets WHERE id = 'anexos';        -- public tem que ser false
+--     FROM storage.buckets WHERE id = 'anexos';        -- public TEM QUE SER false
 --
 --   SELECT policyname, cmd FROM pg_policies
---    WHERE tablename = 'objects' AND policyname LIKE 'anexos_%';   -- 3 linhas
+--    WHERE tablename = 'objects' AND policyname LIKE 'anexos_%'
+--    ORDER BY policyname;                              -- 3 linhas
 --
 --   SELECT policyname, cmd FROM pg_policies
---    WHERE tablename = 'attachments';                  -- 3 linhas
+--    WHERE tablename = 'attachments' ORDER BY policyname;   -- 3 linhas
 --
 -- ROLLBACK (apaga os anexos junto — so use se nada foi enviado ainda):
 --   BEGIN;

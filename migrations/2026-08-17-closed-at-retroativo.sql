@@ -54,13 +54,6 @@ SELECT id, estagio, closed_at AS closed_at_antigo, estagio_changed_at
    AND closed_at IS NULL
    AND estagio_changed_at IS NOT NULL;
 
--- ── Antes: quantas serao tocadas ─────────────────────────────────────────
-SELECT 'ANTES' AS momento,
-       count(*) FILTER (WHERE estagio = 'ganha'   AND closed_at IS NULL) AS ganhas_sem_closed_at,
-       count(*) FILTER (WHERE estagio = 'perdida' AND closed_at IS NULL) AS perdidas_sem_closed_at,
-       (SELECT count(*) FROM public._bkp_closed_at_20260819)             AS guardadas_pro_rollback
-  FROM public.opportunities;
-
 -- ── A correcao ───────────────────────────────────────────────────────────
 -- Ganhas e perdidas juntas: as duas sao "fechadas" e as duas alimentam
 -- relatorio. O criterio e o mesmo.
@@ -70,13 +63,21 @@ UPDATE public.opportunities
    AND closed_at IS NULL
    AND estagio_changed_at IS NOT NULL;
 
--- ── Depois: tem que dar zero, fora as que nao tinham estagio_changed_at ──
-SELECT 'DEPOIS' AS momento,
-       count(*) FILTER (WHERE estagio = 'ganha'   AND closed_at IS NULL) AS ganhas_sem_closed_at,
-       count(*) FILTER (WHERE estagio = 'perdida' AND closed_at IS NULL) AS perdidas_sem_closed_at,
+-- ── Conferencia: ANTES e DEPOIS num resultado so ─────────────────────────
+-- Num SO select de proposito: o SQL Editor do Supabase exibe apenas o
+-- resultado do ULTIMO comando, entao um "SELECT ANTES" separado nao
+-- apareceria na tela. Os numeros do ANTES vem da tabela de rollback, que
+-- guarda exatamente as linhas que foram tocadas.
+SELECT (SELECT count(*) FROM public._bkp_closed_at_20260819
+          WHERE estagio = 'ganha')                                       AS antes_ganhas,
+       (SELECT count(*) FROM public._bkp_closed_at_20260819
+          WHERE estagio = 'perdida')                                     AS antes_perdidas,
+       count(*) FILTER (WHERE estagio = 'ganha'   AND closed_at IS NULL) AS depois_ganhas_nulas,
+       count(*) FILTER (WHERE estagio = 'perdida' AND closed_at IS NULL) AS depois_perdidas_nulas,
        count(*) FILTER (WHERE estagio IN ('ganha','perdida')
                           AND closed_at IS NULL
-                          AND estagio_changed_at IS NULL)               AS sem_data_nenhuma
+                          AND estagio_changed_at IS NULL)                AS sem_data_nenhuma,
+       (SELECT count(*) FROM public._bkp_closed_at_20260819)             AS guardadas_pro_rollback
   FROM public.opportunities;
 
 COMMIT;

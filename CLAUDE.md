@@ -721,6 +721,7 @@ crm-adiblock/
 │   ├── format.js       ← helpers de formatação (8.1b)
 │   ├── documentos.js   ← os 3 papéis imprimíveis + PROP_ATUAL (8.1d)
 │   ├── propostas.js    ← aba Propostas + ciclo de vida do pedido (8.1e)
+│   ├── anexos.js       ← arquivos do pedido no Supabase Storage (O4)
 │   ├── catalogo.js     ← cadastro de produtos/embalagens/preços (só admin)
 │   └── vendor/         ← supabase-js 2.39.3 (arquivo local, ver seção 2)
 ├── supabase_setup.sql  ← schema completo (DROP destrutivo COMENTADO — Regra de Ouro)
@@ -753,7 +754,7 @@ crm-adiblock/
 
 > **Ordem de carga** (crítica — tudo compartilha escopo global, sem `type=module`):
 > `vendor/supabase-js` → `config.js` → `api.js` → `format.js` → `documentos.js`
-> → `propostas.js` → `catalogo.js` → `<script>` inline.
+> → `propostas.js` → `anexos.js` → `catalogo.js` → `<script>` inline.
 > `api.js` usa `SB_URL`/`SB_KEY` de `config.js`; o inline usa `sb`, `api()`,
 > `apiDelete()` e `MODO_RECUPERACAO` dos dois. Módulo novo entra **antes** do
 > inline e **depois** de quem ele consome. CSS via `<link href="css/app.css">`.
@@ -764,6 +765,36 @@ crm-adiblock/
 > usuário vê não muda: a tela de erro já substituiu o `body`.
 
 ---
+
+### Anexos do pedido (O4) — 2026-08-17
+
+A OC assinada e o comprovante ficam junto do pedido, não na caixa de e-mail de
+quem recebeu. Bucket `anexos` no Supabase Storage, **privado**.
+
+> ⚠ **Não é "só quem tem login lê".** O app abre por **URL assinada**, e URL
+> assinada é um **portador**: quem receber o link abre até expirar, mesmo sem
+> login. Sem servidor próprio (restrição do projeto) não dá para eliminar isso.
+> A mitigação é validade de **60 segundos** — tempo de abrir, curto demais para
+> circular. A diferença importa ao explicar para o cliente.
+
+**O caminho começa pelo `org_id`**: `{org_id}/proposals/{proposal_id}/{arquivo}`.
+A policy do Storage filtra lendo a **primeira pasta** (`storage.foldername(name)[1]`).
+Sem essa ordem, o isolamento multi-tenant existe na tabela mas **não no arquivo**.
+
+> ⚠ **Cascata de banco NUNCA alcança objeto no Storage.** Apagar a empresa
+> removeria o metadado e deixaria o arquivo — com CNPJ e endereço — no bucket.
+> Pior: `proposals.company_id` é `ON DELETE SET NULL`, então a proposta nem é
+> apagada junto. Por isso `apagarAnexosDaEmpresa()` roda **antes** do delete nos
+> **três** caminhos que apagam empresa: `abrDel`, `bulkExcluir` e
+> `executarExclusaoLgpd`. Esquecer um deles reabre o buraco.
+
+**Ordem em toda operação: arquivo primeiro, metadado depois.** Falhando o
+metadado, sobra arquivo sem linha — invisível mas recuperável pelo painel. Na
+ordem inversa, sobra linha apontando para arquivo inexistente.
+
+Apagar anexo: só quem enviou, ou admin. É prova (OC assinada), e qualquer um
+poder apagar o documento do outro é risco sem ganho. Não há `UPDATE`: troca-se
+apagando e subindo de novo, e assim `created_by` nunca mente.
 
 ### Catálogo de produtos — só admin (2026-08-17)
 

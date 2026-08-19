@@ -1478,3 +1478,28 @@ body.role-leitor .read-only-banner{display:block}
   .cat-emb-acoes .btn{flex:1;min-height:44px}
   .cat-preco input{min-height:44px;font-size:var(--fs-lg)}
 }
+
+/* ── Anexos do pedido (O4) — 2026-08-17 ──────────────────────────────────
+   O botao vive na TOPBAR da proposta, nao no documento: a .cot-topbar ja e
+   escondida no @media print, entao o anexo nunca sai no PDF do cliente. */
+.cot-anx-badge{display:inline-flex;align-items:center;justify-content:center;min-width:18px;height:18px;padding:0 5px;margin-left:4px;border-radius:99px;background:var(--ac);color:var(--ac-tx);font-size:var(--fs-2xs);font-weight:800;font-variant-numeric:tabular-nums}
+.anx-aviso{background:var(--ps);border-left:3px solid var(--p);border-radius:var(--rs);padding:10px 14px;font-size:var(--fs-md);line-height:1.55;color:var(--tx2);margin-bottom:14px}
+.anx-vazio{font-size:var(--fs-md);color:var(--mt);text-align:center;padding:22px 0}
+.anx-item{display:flex;align-items:center;gap:11px;padding:10px 0;border-bottom:1px solid var(--bdr)}
+.anx-item:last-child{border-bottom:none}
+.anx-ico{font-size:19px;flex-shrink:0}
+.anx-info{flex:1;min-width:0}
+/* Nome e botao, nao link: o endereco real e uma URL assinada gerada na hora e
+   valida por 60s — nao existe href estavel pra colocar aqui. */
+.anx-nome{display:block;width:100%;text-align:left;background:none;border:none;padding:0;font-family:inherit;font-size:var(--fs-md);font-weight:600;color:var(--p);cursor:pointer;overflow-wrap:anywhere}
+.anx-nome:hover{text-decoration:underline}
+.anx-nome:focus-visible{outline:none;box-shadow:var(--ring);border-radius:var(--rs)}
+.anx-meta{font-size:var(--fs-xs);color:var(--mt);margin-top:2px}
+.anx-del{background:none;border:1px solid transparent;border-radius:var(--rs);color:var(--mt2);font-size:14px;line-height:1;cursor:pointer;padding:7px 9px;flex-shrink:0;transition:all .15s}
+.anx-del:hover{background:var(--er2);color:var(--er);border-color:var(--er)}
+.anx-del:focus-visible{outline:none;box-shadow:var(--ring)}
+@media(max-width:768px){
+  .anx-item{padding:13px 0}
+  .anx-del{min-width:44px;min-height:44px}
+  #anx-btn{min-height:44px}
+}

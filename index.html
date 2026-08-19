@@ -777,6 +777,7 @@
       <button class="btn bg sm" id="cot-cancelar-btn" onclick="cancelarProposta()" title="Cancela esta proposta" style="display:none">🚫 Cancelar</button>
       <button class="btn bg sm" id="cot-reabrir-btn" onclick="reabrirProposta()" title="Volta para Em andamento" style="display:none">↶ Reabrir</button>
       <button class="btn bd sm admin-only" id="cot-excluir-btn" onclick="excluirProposta()" title="Excluir proposta definitivamente (só admin)" style="display:none">🗑 Excluir</button>
+      <button class="btn bg sm" onclick="abrirAnexos()" title="Arquivos anexados a este pedido">📎 Anexos <span class="cot-anx-badge" id="cot-anx-badge" style="display:none"></span></button>
       <button class="btn bg sm" id="cot-pcom-btn" onclick="abrirModalPedidoComercial()" title="Confirmação formal do pedido, com o nº de OC do cliente" style="display:none">📄 Pedido Comercial</button>
       <button class="btn bg sm" onclick="abrirModalPedidoProducao()" title="Gera versao sem valores pra mandar pra fabrica">📋 Pedido de Produção</button>
       <button class="btn bg sm" onclick="window.print()">🖨 Imprimir / PDF</button>
@@ -825,6 +826,28 @@
      escondido atras de um documento que talvez nem gerem.
      "Depois" e obrigatorio: as vezes a OC chega dias depois, e forcar faria o
      vendedor evitar marcar como Pedido — o que seria muito pior. -->
+<!-- ANEXOS DO PEDIDO (O4) -->
+<div class="mo" id="anx-m" style="z-index:311">
+  <div class="md" style="max-width:560px">
+    <div class="mh">
+      <h3>Anexos do pedido</h3>
+      <button class="mx" type="button" onclick="fecharAnexos()" aria-label="Fechar">✕</button>
+    </div>
+    <div class="anx-aviso">
+      A OC assinada e o comprovante ficam aqui, junto do pedido — e não na caixa
+      de e-mail de quem recebeu. <b>PDF, JPG, PNG ou WebP, até 10 MB.</b>
+    </div>
+    <div id="anx-lista"></div>
+    <div class="ma" style="justify-content:flex-start">
+      <label class="btn bac sm" id="anx-btn" style="cursor:pointer">
+        📎 Anexar arquivo
+        <input type="file" id="anx-input" accept="application/pdf,image/jpeg,image/png,image/webp"
+               onchange="enviarAnexo(this)" style="display:none">
+      </label>
+    </div>
+  </div>
+</div>
+
 <div class="mo" id="oc-m" style="z-index:312">
   <div class="md" style="max-width:440px">
     <div class="mh">
@@ -1282,6 +1305,7 @@
 <script src="js/format.js"></script>
 <script src="js/documentos.js"></script>
 <script src="js/propostas.js"></script>
+<script src="js/anexos.js"></script>
 <script src="js/catalogo.js"></script>
 
 <script>
@@ -1536,7 +1560,8 @@ async function bulkExcluir() {
     async () => {
       try {
         const idsList = ids.map(i => `"${i}"`).join(',');
-        await apiDelete('companies', `id=in.(${idsList})`);
+        await apagarAnexosDaEmpresa(ids);
+      await apiDelete('companies', `id=in.(${idsList})`);
         toast('Excluídas', `${ids.length} empresa(s) removida(s)`, 'success');
         bulkLimpar();
         CL = await fetchCl(); renderCl();
@@ -2826,6 +2851,10 @@ function fechaModal() { document.getElementById('cm').classList.remove('op'); EI
 function abrDel(id, nome) {
   conf('Excluir empresa','Tem certeza que deseja excluir "'+nome+'"? Contatos, oportunidades, produtos, propostas e histórico de interações relacionados também serão removidos.', async () => {
     try {
+      // Anexos primeiro: cascata de banco nao alcanca objeto no Storage, e a
+      // OC guardada la tem CNPJ e endereco. Vale pros tres caminhos que
+      // apagam empresa, nao so pro fluxo LGPD.
+      await apagarAnexosDaEmpresa(id);
       await delCl(id);
       CL = CL.filter(c=>c.id!==id);
       try { localStorage.setItem('crm_cl',JSON.stringify(CL)); } catch {}
@@ -3212,6 +3241,7 @@ document.addEventListener('keydown', e => {
   if (document.getElementById('cat-m')?.classList.contains('op')) { fecharNovoProduto(); return; }
   if (document.getElementById('cat-page')?.classList.contains('op')) { fecharCatalogo(); return; }
   if (document.getElementById('oc-m')?.classList.contains('op')) { fecharPerguntaOC(); return; }
+  if (document.getElementById('anx-m')?.classList.contains('op')) { fecharAnexos(); return; }
   if (document.getElementById('pcom-m')?.classList.contains('op')) { document.getElementById('pcom-m').classList.remove('op'); return; }
   if (document.getElementById('pcom-page')?.classList.contains('op')) { fecharPedidoComercial(); return; }
   if (document.getElementById('cm').classList.contains('op')) { fechaModal(); return; }
@@ -5257,7 +5287,15 @@ async function executarExclusaoLgpd() {
     async () => {
       try {
         await logLgpd(EID, c.razao_social, 'exclusao_executada', 'Exclusão LGPD executada pelo CRM');
+        // ANTES de apagar a empresa: cascata de banco nunca alcanca objeto no
+        // Storage. Sem isto o metadado sumiria e a OC — com CNPJ, endereco e
+        // nome de pessoa — continuaria no bucket. Pior: proposals.company_id e
+        // ON DELETE SET NULL, entao a proposta nem e apagada junto.
+        // Erro aqui ABORTA a exclusao de proposito: melhor falhar visivelmente
+        // do que dizer que apagou sem ter apagado.
+        const nAnexos = await apagarAnexosDaEmpresa(EID);
         await apiDelete('companies', `id=eq.${EID}`);
+        if (nAnexos) console.log('[lgpd] ' + nAnexos + ' anexo(s) removido(s) do Storage');
         toast('Empresa excluída definitivamente','','success');
         document.getElementById('cm').classList.remove('op');
         EID = null;

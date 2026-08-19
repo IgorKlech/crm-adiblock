@@ -513,23 +513,29 @@ imutável — enfiar dado de entrega nele obrigaria a reescrever documento fecha
 | 9.0 | Design doc multi-tenant (`docs/MULTI-TENANT.md`) — só documento | 8fc80dd |
 | 9.1 | Multi-tenant etapas D/F: NOT NULL + índices compostos + numeração por org, policies RLS por org | 404eb33 + 7b83512 |
 | 9.3 | Auditoria de UX: logo/favicon, recuperação de senha, cores do tema escuro, mover estágio sem arrastar, navbar mobile | 0e0d841 |
+| 8.1g | Modularização: `js/agenda.js` (tarefas + Hoje/Agenda + .ics) + rótulos de acessibilidade (85 campos e 16 botões sem nome → zero) | 06e13b7 |
 
 ---
 
 ### Em andamento / não concluídos
 
-- **Sprint 8.1 (modularização) — em andamento.** Já extraídos: `css/app.css`,
-  `js/format.js`, `js/config.js`, `js/api.js`. Os órfãos `app.js`/`style.css`
-  foram apagados em 17/08/2026. Faltam `state.js`, `js/views/*`, `modals.js` e
-  `main.js` — o `<script>` inline ainda tem **5.781 linhas**, e é aí que está o
-  ganho de verdade; config e api somaram só ~100 linhas.
-  **28% do JS já está em módulo**, em 8 arquivos. O padrão que funciona: extrair por **domínio
-  contíguo**, não por tamanho — `documentos.js` rendeu 9% e `propostas.js` 12%
-  num passo cada, enquanto `config`+`api` renderam 1,7%. Fronteira boa vale mais
-  que volume.
-  As views ainda são o pedaço difícil: dependem de tudo e não dá pra verificar sem
-  **abrir o app entre cada extração**. Análise estática pega sintaxe e ordem de
-  carga, não pega "a tela não renderiza mais".
+- **Sprint 8.1 (modularização) — em andamento, e PAUSADA de propósito.**
+  **35% do JS está em módulo**, em 9 arquivos; o `<script>` inline caiu para
+  **3.901 linhas**. O padrão que funciona: extrair por **domínio contíguo**,
+  não por tamanho — `documentos.js` rendeu 9%, `propostas.js` 12% e
+  `agenda.js` 7% num passo cada, enquanto `config`+`api` renderam 1,7%.
+  Fronteira boa vale mais que volume.
+
+  **Por que pausou:** o que sobrou são blocos de 200–250 linhas que rendem
+  4–6% cada e custam um ciclo de teste do Igor. Os dois maiores restantes são
+  **2FA (304) e recuperação de senha (226)** — o caminho de login, onde
+  quebrar significa ninguém entrar no sistema. Não vale o risco por
+  percentual enquanto houver trabalho de valor real parado. Retomar só com
+  motivo melhor que "falta pouco".
+
+  As views seguem sendo o pedaço difícil: dependem de tudo e não dá pra
+  verificar sem **abrir o app entre cada extração**. Análise estática pega
+  sintaxe e ordem de carga, não pega "a tela não renderiza mais".
 
 > **O que checar depois de extrair um módulo** (a análise estática cobre isto,
 > e só isto): sintaxe de cada arquivo; **colisão de declaração no escopo global**
@@ -591,6 +597,27 @@ O evento `TOKEN_REFRESHED` do Supabase Auth dispara ~a cada hora e era tratado c
 ### Por que audit_log.company_id sem FK?
 
 Requisito LGPD: o log de auditoria deve sobreviver à exclusão da empresa. Com FK normal (`ON DELETE SET NULL` já está no código), o `DELETE` em `companies` disparava violação de constraint. Removida a FK; o `company_id` é apenas um atalho de filtro, não integridade referencial.
+
+### O ponto cego do audit_log: 3 campos, e o efeito colateral (2026-08-19)
+
+`log_audit_changes()` **ignora** `updated_at`, `estagio_changed_at` e
+`closed_at` ao montar o diff. Faz sentido: os três mudam sozinhos, e logá-los
+encheria o histórico de ruído a cada save.
+
+O que não é óbvio é a consequência. Quando `jsonb_array_length(v_changes) = 0`,
+o trigger **retorna antes do INSERT** — não grava nem uma linha. Então um
+UPDATE que mexa **só** nesses três campos é *completamente invisível* na
+auditoria. Não é "logado sem detalhe": é como se não tivesse acontecido.
+
+> Isso apareceu ao preparar a migration do `closed_at` retroativo. O
+> `audit_log` é citado no CLAUDE.md como a terceira camada da rede de
+> segurança (Regra de Ouro nº 2) — e para essa classe de mudança ele **não é
+> rede nenhuma**. Por isso aquela migration guarda os ids afetados numa tabela
+> antes de escrever, em vez de confiar no log.
+
+**Regra prática:** migration que escreve em `updated_at`, `estagio_changed_at`
+ou `closed_at` — e só neles — tem que criar a própria rede. Nas outras, o
+`audit_log` cobre.
 
 ### "Produtos Vendidos" conta PEDIDO, não oportunidade (2026-08-17)
 
@@ -736,14 +763,15 @@ crm-adiblock/
 │   ├── perfil.js       ← página de perfil da empresa e suas 5 abas (8.1f)
 │   ├── anexos.js       ← arquivos do pedido no Supabase Storage (O4)
 │   ├── catalogo.js     ← cadastro de produtos/embalagens/preços (só admin)
+│   ├── agenda.js       ← tarefas livres + tela Hoje/Agenda + export .ics (8.1g)
 │   └── vendor/         ← supabase-js 2.39.3 (arquivo local, ver seção 2)
 ├── supabase_setup.sql  ← schema completo (DROP destrutivo COMENTADO — Regra de Ouro)
 ├── migrations/         ← mudanças de schema datadas (AAAA-MM-DD-*.sql)
 │   ├── 2026-06-03-embalagens-reais.sql
 │   ├── 2026-08-14-revisao-pedidos.sql
 │   ├── 2026-08-14-pedido-comercial.sql
-│   ├── 2026-08-17-closed-at-retroativo.sql
-│   └── 2026-08-17-anexos-storage.sql
+│   ├── 2026-08-17-closed-at-retroativo.sql  ← APLICADA em 19/08/2026 (60 linhas)
+│   └── 2026-08-17-anexos-storage.sql        ← APLICADA em 17/08/2026
 ├── docs/
 │   ├── RESTORE.md      ← guia de restauração de backup
 │   ├── diagnostico-banco.sql ← 6 blocos SÓ-LEITURA de checagem do banco

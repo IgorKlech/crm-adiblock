@@ -148,7 +148,7 @@
         <span class="bell-cnt" id="bell-cnt" style="display:none">0</span>
         <div class="bell-pop" id="bell-pop"></div>
       </div>
-      <button class="theme-toggle" id="theme-toggle" onclick="toggleTheme()" title="Alternar tema (Ctrl+Shift+L)">🌙</button>
+      <button aria-label="Alternar tema claro e escuro" class="theme-toggle" id="theme-toggle" onclick="toggleTheme()" title="Alternar tema (Ctrl+Shift+L)">🌙</button>
       <!-- SVG e nao o caractere ⌨ (U+2328): o Windows nao tem esse glifo no
            font stack e o botao aparecia como um quadrado vazio na navbar. -->
       <button class="theme-toggle" id="kbd-btn" onclick="abrirAjudaAtalhos()" title="Atalhos de teclado (?)" aria-label="Atalhos de teclado" style="margin-left:6px"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><rect x="2" y="6" width="20" height="12" rx="2"/><path d="M6 10h.01M10 10h.01M14 10h.01M18 10h.01M8 14h8"/></svg></button>
@@ -158,7 +158,7 @@
           <div class="un" id="unm">-</div>
       <div class="vs-wrap">
             <div class="vs-dot vs-disp" id="vs-dot"></div>
-            <select class="vs-sel" id="vs-sel" onchange="atualizarStatus(this.value)">
+            <select aria-label="Meu status de disponibilidade" class="vs-sel" id="vs-sel" onchange="atualizarStatus(this.value)">
               <option value="Disponível">Disponível</option>
               <option value="Em ligação">Em ligação</option>
               <option value="Ausente">Ausente</option>
@@ -196,7 +196,7 @@
             <button class="td-sw" data-view="mes" onclick="setTodayView('mes')">Mês</button>
           </div>
           <label class="td-filtro-wrap">
-            <input type="checkbox" id="td-meus" checked> <span>Só os meus</span>
+            <input aria-label="Mostrar só os meus compromissos" type="checkbox" id="td-meus" checked> <span>Só os meus</span>
           </label>
           <button class="btn bg sm write-only" onclick="abrTaskNova()">+ Nova Tarefa</button>
           <button class="btn bg sm" onclick="exportarICS()" title="Baixa um arquivo .ics pra importar no Google Calendar/Outlook">📥 Exportar .ics</button>
@@ -219,9 +219,9 @@
       <div class="fb">
         <div class="sw">
           <span class="si"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="8.5" cy="8.5" r="5.5"/><path d="M15 15l-3-3"/></svg></span>
-          <input type="text" class="sb" id="srch" placeholder="Buscar por razão social, CNPJ, email...">
+          <input aria-label="Buscar empresa" type="text" class="sb" id="srch" placeholder="Buscar por razão social, CNPJ, email...">
         </div>
-        <select class="fs2" id="stf" onchange="renderCl()">
+        <select aria-label="Filtrar por classificação" class="fs2" id="stf" onchange="renderCl()">
           <option value="">Todas as classificações</option>
           <optgroup label="Classificação manual">
             <option value="m:lead_novo">Lead novo</option>
@@ -236,17 +236,17 @@
             <option value="conta">Conta (auto)</option>
           </optgroup>
         </select>
-        <input type="text" class="fi" id="svf" placeholder="Filtrar por vendedor..." oninput="renderCl()">
+        <input aria-label="Filtrar por vendedor" type="text" class="fi" id="svf" placeholder="Filtrar por vendedor..." oninput="renderCl()">
         <div class="period-btns">
           <button class="pdb ac" data-d="0" onclick="setPeriodo(0)">Todos</button>
           <button class="pdb" data-d="7" onclick="setPeriodo(7)">7 dias</button>
           <button class="pdb" data-d="30" onclick="setPeriodo(30)">30 dias</button>
           <button class="pdb" data-d="90" onclick="setPeriodo(90)">90 dias</button>
         </div>
-        <select class="fs2" id="visao-sel" onchange="aplicarVisao(this.value)" title="Visões salvas">
+        <select aria-label="Aplicar visão salva" class="fs2" id="visao-sel" onchange="aplicarVisao(this.value)" title="Visões salvas">
           <option value="">— Visão —</option>
         </select>
-        <button class="btn bg sm" onclick="salvarVisaoAtual()" title="Salvar filtros atuais como nova visão">💾</button>
+        <button aria-label="Salvar filtros como visão" class="btn bg sm" onclick="salvarVisaoAtual()" title="Salvar filtros atuais como nova visão">💾</button>
       </div>
       <!-- Barra de ações em massa (aparece quando algo selecionado) -->
       <div id="bulk-bar" style="display:none">
@@ -259,7 +259,7 @@
         <table>
           <thead>
             <tr>
-              <th style="width:32px"><input type="checkbox" id="bulk-master" onchange="toggleSelecionarTodos(this.checked)" title="Selecionar todas visíveis"></th>
+              <th style="width:32px"><input aria-label="Selecionar todas as empresas" type="checkbox" id="bulk-master" onchange="toggleSelecionarTodos(this.checked)" title="Selecionar todas visíveis"></th>
               <th class="so" data-col="name">Empresa <span class="sa">↕</span></th>
               <th>Cidade/UF</th>
               <th>CNPJ</th>
@@ -282,7 +282,7 @@
       <div class="ph">
         <div><h2>Pipeline</h2><span class="ps" id="kb-stats">—</span></div>
         <div class="pa">
-          <select class="fs2" id="kb-vend" onchange="renderKanban()" style="margin-right:6px">
+          <select aria-label="Filtrar pipeline por vendedor" class="fs2" id="kb-vend" onchange="renderKanban()" style="margin-right:6px">
             <option value="">Todos vendedores</option>
           </select>
           <button class="btn bg sm" onclick="renderKanban()">↺ Atualizar</button>
@@ -303,10 +303,10 @@
             <button class="td-sw" data-st="cancelada" onclick="setPrStatus('cancelada')">Canceladas</button>
           </div>
           <label class="td-filtro-wrap">
-            <input type="checkbox" id="pr-meus" checked> <span>Só os meus</span>
+            <input aria-label="Mostrar só as minhas propostas" type="checkbox" id="pr-meus" checked> <span>Só os meus</span>
           </label>
           <label class="td-filtro-wrap">Período
-            <select id="pr-periodo" onchange="setPrPeriodo(this.value)">
+            <select aria-label="Período das propostas" id="pr-periodo" onchange="setPrPeriodo(this.value)">
               <option value="0">Todos</option>
               <option value="30">30 dias</option>
               <option value="60">60 dias</option>
@@ -315,9 +315,9 @@
             </select>
           </label>
           <span id="pr-custom" class="pr-custom-range" style="display:none">
-            <input type="date" id="pr-de" onchange="renderPropostas()" title="De">
+            <input aria-label="Propostas a partir de" type="date" id="pr-de" onchange="renderPropostas()" title="De">
             <span style="color:var(--mt)">até</span>
-            <input type="date" id="pr-ate" onchange="renderPropostas()" title="Até">
+            <input aria-label="Propostas até" type="date" id="pr-ate" onchange="renderPropostas()" title="Até">
           </span>
           <button class="btn bg sm" onclick="renderPropostas()">↺ Atualizar</button>
         </div>
@@ -331,7 +331,7 @@
         <div><h2>Radar de Reativação</h2><span class="ps" id="rd-stats">—</span></div>
         <div class="pa" style="gap:10px;flex-wrap:wrap">
           <label class="td-filtro-wrap">Dormente há mais de
-            <select id="rd-dias" onchange="renderRadar()">
+            <select aria-label="Dormente há mais de" id="rd-dias" onchange="renderRadar()">
               <option value="30">30 dias</option>
               <option value="90">90 dias</option>
               <option value="180" selected>180 dias</option>
@@ -344,7 +344,7 @@
       <div style="padding:0 24px 30px">
         <div id="rd-hero" class="rd-hero"></div>
         <div class="rd-msg-box">
-          <label style="font-size:12px;font-weight:600;color:var(--tx2);display:block;margin-bottom:6px">
+          <label style="font-size:12px;font-weight:600;color:var(--tx2);display:block;margin-bottom:6px" for="rd-msg">
             Mensagem do WhatsApp <span style="font-weight:400;color:var(--mt)">— use {nome_contato} e {empresa}</span>
           </label>
           <textarea id="rd-msg" rows="2" oninput="salvarRadarMsg()" placeholder="Olá {nome_contato}, ..."></textarea>
@@ -394,7 +394,7 @@
                avisava. Numero de faturamento tem que declarar de onde vem. -->
           <h3>Produtos Vendidos <span class="prod-rep-fonte">pedidos fechados · sem IPI</span></h3>
           <div class="prod-rep-filters">
-            <select id="prod-rep-vend" onchange="renderProdRep()">
+            <select aria-label="Filtrar relatório por vendedor" id="prod-rep-vend" onchange="renderProdRep()">
               <option value="">Todos os vendedores</option>
             </select>
             <div class="prod-rep-periods">
@@ -448,13 +448,13 @@
 <!-- MODAL EDITAR PERFIL DE VENDEDOR (Sprint 4.3) -->
 <div class="mo" id="eq-m">
   <div class="md" style="max-width:560px">
-    <div class="mh"><h3 id="eq-mtit">Editar Vendedor</h3><button class="mx" onclick="fechaEqEdit()">✕</button></div>
+    <div class="mh"><h3 id="eq-mtit">Editar Vendedor</h3><button aria-label="Fechar" class="mx" onclick="fechaEqEdit()">✕</button></div>
     <form id="eq-f">
-      <div class="fg"><label>Nome <span class="req">*</span></label><input type="text" id="eq-nome" required></div>
-      <div class="fg"><label>Email</label><input type="email" id="eq-email" disabled style="opacity:.6;cursor:not-allowed" title="Email só muda via Supabase Auth"></div>
+      <div class="fg"><label for="eq-nome">Nome <span class="req">*</span></label><input type="text" id="eq-nome" required></div>
+      <div class="fg"><label for="eq-email">Email</label><input type="email" id="eq-email" disabled style="opacity:.6;cursor:not-allowed" title="Email só muda via Supabase Auth"></div>
       <div class="fr">
-        <div class="fg"><label>Telefone pessoal</label><input type="text" id="eq-tel"></div>
-        <div class="fg"><label>Papel <span style="font-weight:400;color:var(--mt);font-size:11px" id="eq-role-note"></span></label>
+        <div class="fg"><label for="eq-tel">Telefone pessoal</label><input type="text" id="eq-tel"></div>
+        <div class="fg"><label for="eq-role">Papel <span style="font-weight:400;color:var(--mt);font-size:11px" id="eq-role-note"></span></label>
           <select id="eq-role">
             <option value="vendedor">Vendedor</option>
             <option value="admin">Admin</option>
@@ -463,10 +463,10 @@
         </div>
       </div>
       <div class="fs"><div class="fsl">Contato Office <span style="font-weight:400;color:var(--mt);font-size:11px">— aparece nas propostas geradas</span></div>
-        <div class="fg"><label>Nome</label><input type="text" id="eq-off-nome" placeholder="Ex: Laiz Oliveira"></div>
+        <div class="fg"><label for="eq-off-nome">Nome</label><input type="text" id="eq-off-nome" placeholder="Ex: Laiz Oliveira"></div>
         <div class="fr">
-          <div class="fg"><label>Email</label><input type="email" id="eq-off-email" placeholder="comercial@adiblock.online"></div>
-          <div class="fg"><label>Telefone</label><input type="text" id="eq-off-tel" placeholder="(21) 99591-5422"></div>
+          <div class="fg"><label for="eq-off-email">Email</label><input type="email" id="eq-off-email" placeholder="comercial@adiblock.online"></div>
+          <div class="fg"><label for="eq-off-tel">Telefone</label><input type="text" id="eq-off-tel" placeholder="(21) 99591-5422"></div>
         </div>
       </div>
       <div class="ma">
@@ -483,7 +483,7 @@
 <!-- SIDE PANEL -->
 <div id="sp">
   <div class="ph2">
-    <div class="pcl"><button class="pxb" id="pxb">✕</button></div>
+    <div class="pcl"><button aria-label="Fechar painel" class="pxb" id="pxb">✕</button></div>
     <div class="pc">
       <div class="pav" id="pav">C</div>
       <div><div class="pn" id="pnm">-</div><div class="pm" id="pin">-</div></div>
@@ -494,7 +494,7 @@
       <div class="at">Registrar Contato</div>
       <form id="cf">
         <div class="fr">
-          <div class="fg"><label>Resultado *</label>
+          <div class="fg"><label for="cr">Resultado *</label>
             <select id="cr" required>
               <option value="">Selecione...</option>
               <option>Falou</option><option>Nao atendeu</option><option>Caixa postal</option>
@@ -502,9 +502,9 @@
               <option>Nao tem interesse</option><option>Ligar de volta</option>
             </select>
           </div>
-          <div class="fg"><label>Próximo retorno</label><input type="date" id="cnc"></div>
+          <div class="fg"><label for="cnc">Próximo retorno</label><input type="date" id="cnc"></div>
         </div>
-        <div class="fg"><label>Anotação</label><textarea id="cno" placeholder="O que foi conversado..."></textarea></div>
+        <div class="fg"><label for="cno">Anotação</label><textarea id="cno" placeholder="O que foi conversado..."></textarea></div>
         <button type="submit" class="btn bp bl" id="csb">Registrar Contato</button>
       </form>
     </div>
@@ -516,17 +516,17 @@
 <!-- MODAL EMPRESA (Sprint 3) -->
 <div class="mo" id="cm">
   <div class="md">
-    <div class="mh"><h3 id="mtit">Nova Empresa</h3><button class="mx" id="mcl">✕</button></div>
+    <div class="mh"><h3 id="mtit">Nova Empresa</h3><button aria-label="Fechar" class="mx" id="mcl">✕</button></div>
     <form id="clf">
       <div class="fs"><div class="fsl">Identificação</div>
-        <div class="fg"><label>Razão Social <span class="req">*</span></label><input type="text" id="fn" placeholder="Razão social da empresa"><div class="ferr" id="fn-err">Razão social é obrigatória</div></div>
+        <div class="fg"><label for="fn">Razão Social <span class="req">*</span></label><input type="text" id="fn" placeholder="Razão social da empresa"><div class="ferr" id="fn-err">Razão social é obrigatória</div></div>
         <div class="fr">
-          <div class="fg"><label>Nome Fantasia</label><input type="text" id="f-fantasia" placeholder="Nome fantasia (opcional)"></div>
-          <div class="fg"><label>CNPJ</label><input type="text" id="f-cnpj" placeholder="00.000.000/0000-00"></div>
+          <div class="fg"><label for="f-fantasia">Nome Fantasia</label><input type="text" id="f-fantasia" placeholder="Nome fantasia (opcional)"></div>
+          <div class="fg"><label for="f-cnpj">CNPJ</label><input type="text" id="f-cnpj" placeholder="00.000.000/0000-00"></div>
         </div>
         <div class="fr">
-          <div class="fg"><label>Inscrição Estadual</label><input type="text" id="f-ie" placeholder="—"></div>
-          <div class="fg"><label>Indústria / Segmento</label>
+          <div class="fg"><label for="f-ie">Inscrição Estadual</label><input type="text" id="f-ie" placeholder="—"></div>
+          <div class="fg"><label for="f-industria">Indústria / Segmento</label>
             <input type="text" id="f-industria" placeholder="Ex: Construtora, Pré-fabricado" list="industria-list" autocomplete="off">
             <datalist id="industria-list">
               <option>Construtora</option><option>Pré-fabricado</option><option>Concreteira</option>
@@ -536,7 +536,7 @@
           </div>
         </div>
         <div class="fg">
-          <label>Classificação <span style="font-weight:400;color:var(--mt);font-size:11px">— como o vendedor enxerga a empresa hoje</span></label>
+          <label for="f-classif">Classificação <span style="font-weight:400;color:var(--mt);font-size:11px">— como o vendedor enxerga a empresa hoje</span></label>
           <select id="f-classif">
             <option value="">Não classificada (usa tier automático)</option>
             <option value="lead_novo">Lead novo</option>
@@ -550,35 +550,35 @@
 
       <div class="fs"><div class="fsl">Contato principal</div>
         <div class="fr">
-          <div class="fg"><label>Email</label><input type="email" id="ft-email" placeholder="contato@empresa.com"></div>
-          <div class="fg"><label>Telefone</label><input type="text" id="ft" placeholder="(11) 99999-9999"></div>
+          <div class="fg"><label for="ft-email">Email</label><input type="email" id="ft-email" placeholder="contato@empresa.com"></div>
+          <div class="fg"><label for="ft">Telefone</label><input type="text" id="ft" placeholder="(11) 99999-9999"></div>
         </div>
-        <div class="fg"><label>Website</label><input type="text" id="f-website" placeholder="www.empresa.com.br"></div>
+        <div class="fg"><label for="f-website">Website</label><input type="text" id="f-website" placeholder="www.empresa.com.br"></div>
       </div>
 
       <div class="fs"><div class="fsl">Endereço</div>
-        <div class="fg"><label>Endereço</label><input type="text" id="f-end" placeholder="Rua, número, complemento"></div>
+        <div class="fg"><label for="f-end">Endereço</label><input type="text" id="f-end" placeholder="Rua, número, complemento"></div>
         <div class="fr">
-          <div class="fg" style="flex:2"><label>Cidade</label><input type="text" id="f-cid" placeholder="Cidade"></div>
-          <div class="fg" style="flex:0.5"><label>UF</label><input type="text" id="f-uf" placeholder="RJ" maxlength="2" style="text-transform:uppercase"></div>
-          <div class="fg" style="flex:1"><label>CEP</label><input type="text" id="f-cep" placeholder="00000-000"></div>
+          <div class="fg" style="flex:2"><label for="f-cid">Cidade</label><input type="text" id="f-cid" placeholder="Cidade"></div>
+          <div class="fg" style="flex:0.5"><label for="f-uf">UF</label><input type="text" id="f-uf" placeholder="RJ" maxlength="2" style="text-transform:uppercase"></div>
+          <div class="fg" style="flex:1"><label for="f-cep">CEP</label><input type="text" id="f-cep" placeholder="00000-000"></div>
         </div>
       </div>
 
       <div class="fs"><div class="fsl">Comercial</div>
         <div class="fr">
-          <div class="fg"><label>Vendedor responsável <span style="font-weight:400;color:var(--mt);font-size:11px">— quem cuida desta empresa</span></label>
+          <div class="fg"><label for="f-vendedor">Vendedor responsável <span style="font-weight:400;color:var(--mt);font-size:11px">— quem cuida desta empresa</span></label>
             <select id="f-vendedor"><option value="">—</option></select>
           </div>
-          <div class="fg"><label>Faturamento estimado (R$/ano)</label><input type="number" id="f-fat" placeholder="0,00" step="1000" min="0"></div>
+          <div class="fg"><label for="f-fat">Faturamento estimado (R$/ano)</label><input type="number" id="f-fat" placeholder="0,00" step="1000" min="0"></div>
         </div>
-        <div class="fg"><label>Observações</label><textarea id="fob" placeholder="Notas sobre a empresa, contexto da operação..."></textarea></div>
+        <div class="fg"><label for="fob">Observações</label><textarea id="fob" placeholder="Notas sobre a empresa, contexto da operação..."></textarea></div>
       </div>
 
       <div class="fs"><div class="fsl">Privacidade (LGPD)</div>
         <div class="lgpd-row">
           <label class="lgpd-check">
-            <input type="checkbox" id="f-lgpd-consent">
+            <input aria-label="Cliente autorizou o contato (LGPD)" type="checkbox" id="f-lgpd-consent">
             <span>Empresa autorizou contato comercial e armazenamento dos dados</span>
           </label>
           <div id="f-lgpd-info" style="font-size:11px;color:var(--mt);margin-top:6px"></div>
@@ -603,7 +603,7 @@
 <!-- MODAL GERAR COTACAO -->
 <div class="mo" id="gcm">
   <div class="md" style="max-width:780px">
-    <div class="mh"><h3>Gerar Proposta Comercial</h3><button class="mx" onclick="document.getElementById('gcm').classList.remove('op')">✕</button></div>
+    <div class="mh"><h3>Gerar Proposta Comercial</h3><button aria-label="Fechar" class="mx" onclick="document.getElementById('gcm').classList.remove('op')">✕</button></div>
     <form id="gcf">
       <div class="fs"><div class="fsl" id="gc-cli-title">Cliente</div>
         <div id="gc-cli-resumo" style="font-size:13px;color:var(--mt);line-height:1.6"></div>
@@ -613,14 +613,14 @@
       </div>
       <div class="fs"><div class="fsl">Condições comerciais</div>
         <div class="fr">
-          <div class="fg"><label>Prazo de pagamento</label><input type="text" id="gc-pgto" placeholder="Ex: 35DD" value="30DD"></div>
-          <div class="fg"><label>Frete</label>
+          <div class="fg"><label for="gc-pgto">Prazo de pagamento</label><input type="text" id="gc-pgto" placeholder="Ex: 35DD" value="30DD"></div>
+          <div class="fg"><label for="gc-frete">Frete</label>
             <select id="gc-frete"><option>FOB</option><option>CIF</option></select>
           </div>
-          <div class="fg"><label>Valor do frete (R$)</label><input type="number" id="gc-frete-val" step="0.01" min="0" placeholder="0,00"></div>
-          <div class="fg"><label>Validade (dias)</label><input type="number" id="gc-val" min="1" value="30"></div>
+          <div class="fg"><label for="gc-frete-val">Valor do frete (R$)</label><input type="number" id="gc-frete-val" step="0.01" min="0" placeholder="0,00"></div>
+          <div class="fg"><label for="gc-val">Validade (dias)</label><input type="number" id="gc-val" min="1" value="30"></div>
         </div>
-        <div class="fg"><label>Observações adicionais</label><textarea id="gc-obs" placeholder="Ex: local de entrega, condições especiais..." rows="2"></textarea></div>
+        <div class="fg"><label for="gc-obs">Observações adicionais</label><textarea id="gc-obs" placeholder="Ex: local de entrega, condições especiais..." rows="2"></textarea></div>
       </div>
       <div class="ma">
         <button type="button" class="btn bg" onclick="document.getElementById('gcm').classList.remove('op')">Cancelar</button>
@@ -664,7 +664,7 @@
       <div class="fs">
         <div class="fsl">Motivo da alteração <span style="font-weight:400;color:var(--er);font-size:11px">— obrigatório</span></div>
         <div class="fg">
-          <input type="text" id="edp-motivo" required maxlength="200"
+          <input aria-label="Motivo da revisão" type="text" id="edp-motivo" required maxlength="200"
                  placeholder="Ex: cliente trocou 30DD por 45DD e pediu 5% de desconto">
           <div style="font-size:11px;color:var(--mt);margin-top:5px;line-height:1.5">
             É isto que responde “por que este pedido saiu mais barato?” daqui a seis meses.
@@ -694,16 +694,16 @@
 <!-- MODAL MINHAS CONFIGURACOES -->
 <div class="mo" id="cfgm">
   <div class="md">
-    <div class="mh"><h3>Minhas Configurações</h3><button class="mx" onclick="document.getElementById('cfgm').classList.remove('op')">✕</button></div>
+    <div class="mh"><h3>Minhas Configurações</h3><button aria-label="Fechar" class="mx" onclick="document.getElementById('cfgm').classList.remove('op')">✕</button></div>
     <form id="cfgf">
       <div class="fs"><div class="fsl">Seus dados <span style="font-weight:400;color:var(--mt);font-size:11px">— aparecem na cotação como Consultor</span></div>
-        <div class="fg"><label>Telefone</label><input type="text" id="cfg-tel" placeholder="(11) 99999-9999"></div>
+        <div class="fg"><label for="cfg-tel">Telefone</label><input type="text" id="cfg-tel" placeholder="(11) 99999-9999"></div>
       </div>
       <div class="fs"><div class="fsl">Contato Office <span style="font-weight:400;color:var(--mt);font-size:11px">— bloco "Office" da proposta</span></div>
-        <div class="fg"><label>Nome</label><input type="text" id="cfg-off-nome" placeholder="Ex: Laiz Oliveira"></div>
+        <div class="fg"><label for="cfg-off-nome">Nome</label><input type="text" id="cfg-off-nome" placeholder="Ex: Laiz Oliveira"></div>
         <div class="fr">
-          <div class="fg"><label>Email</label><input type="email" id="cfg-off-email" placeholder="comercial@adiblock.online"></div>
-          <div class="fg"><label>Telefone</label><input type="text" id="cfg-off-tel" placeholder="(21) 99591-5422"></div>
+          <div class="fg"><label for="cfg-off-email">Email</label><input type="email" id="cfg-off-email" placeholder="comercial@adiblock.online"></div>
+          <div class="fg"><label for="cfg-off-tel">Telefone</label><input type="text" id="cfg-off-tel" placeholder="(21) 99591-5422"></div>
         </div>
       </div>
       <div class="fs"><div class="fsl">Segurança</div>
@@ -715,7 +715,7 @@
           <div style="font-size:11px;color:var(--mt);text-align:center;word-break:break-all;margin-bottom:12px">Segredo (caso o QR não funcione): <code id="mfa-secret"></code></div>
           <div style="font-size:12.5px;color:var(--tx);margin-bottom:6px"><b>Passo 2:</b> Digite o código de 6 dígitos do app:</div>
           <div style="display:flex;gap:8px">
-            <input type="text" id="mfa-code" maxlength="6" placeholder="000000" style="font-family:ui-monospace,Consolas,monospace;font-size:16px;letter-spacing:.2em;text-align:center;flex:1">
+            <input aria-label="Código de 6 dígitos do aplicativo" type="text" id="mfa-code" maxlength="6" placeholder="000000" style="font-family:ui-monospace,Consolas,monospace;font-size:16px;letter-spacing:.2em;text-align:center;flex:1">
             <button type="button" class="btn bp" onclick="confirmarMfa()">Confirmar</button>
             <button type="button" class="btn bg" onclick="cancelarMfa()">Cancelar</button>
           </div>
@@ -767,7 +767,7 @@
       <span id="cot-status-badge" class="pr-st" style="display:none"></span>
       <!-- Revisao de pedido: so aparece a partir da rev. 2, e clicar abre o
            historico. Na rev. 1 nao ha o que mostrar. -->
-      <button id="cot-rev-badge" class="cot-rev-badge" onclick="abrirHistoricoRevisoes()"
+      <button aria-label="Ver histórico de revisões" id="cot-rev-badge" class="cot-rev-badge" onclick="abrirHistoricoRevisoes()"
               title="Ver histórico de alterações" style="display:none"></button>
     </div>
     <div style="display:flex;gap:8px" id="cot-acoes">
@@ -841,7 +841,7 @@
     <div class="ma" style="justify-content:flex-start">
       <label class="btn bac sm" id="anx-btn" style="cursor:pointer">
         📎 Anexar arquivo
-        <input type="file" id="anx-input" accept="application/pdf,image/jpeg,image/png,image/webp"
+        <input aria-label="Escolher arquivo para anexar" type="file" id="anx-input" accept="application/pdf,image/jpeg,image/png,image/webp"
                onchange="enviarAnexo(this)" style="display:none">
       </label>
     </div>
@@ -905,11 +905,11 @@
 <!-- Modal: solicita 'Quem solicitou' e observacoes da producao -->
 <div class="mo" id="prod-req-m" style="z-index:310">
   <div class="md" style="max-width:480px">
-    <div class="mh"><h3>Gerar Pedido de Produção</h3><button class="mx" onclick="document.getElementById('prod-req-m').classList.remove('op')">✕</button></div>
+    <div class="mh"><h3>Gerar Pedido de Produção</h3><button aria-label="Fechar" class="mx" onclick="document.getElementById('prod-req-m').classList.remove('op')">✕</button></div>
     <form id="prod-req-f">
-      <div class="fg"><label>Quem solicitou (interno) <span style="color:var(--mt);font-weight:400;font-size:11px">— ex: ANA, vendedor de office</span></label>
+      <div class="fg"><label for="prod-req-solic">Quem solicitou (interno) <span style="color:var(--mt);font-weight:400;font-size:11px">— ex: ANA, vendedor de office</span></label>
         <input type="text" id="prod-req-solic" placeholder="Nome da pessoa" required></div>
-      <div class="fg"><label>Observações para a produção <span style="color:var(--mt);font-weight:400;font-size:11px">— opcional</span></label>
+      <div class="fg"><label for="prod-req-obs">Observações para a produção <span style="color:var(--mt);font-weight:400;font-size:11px">— opcional</span></label>
         <textarea id="prod-req-obs" rows="3" placeholder="Instruções de embalagem, rotulagem, prazo etc."></textarea></div>
       <div class="ma">
         <button type="button" class="btn bg" onclick="document.getElementById('prod-req-m').classList.remove('op')">Cancelar</button>
@@ -924,15 +924,15 @@
   <div class="md" style="max-width:460px">
     <div class="mh">
       <h3>Registrar Expedição</h3>
-      <button class="mx" onclick="document.getElementById('expedicao-m').classList.remove('op')">✕</button>
+      <button aria-label="Fechar" class="mx" onclick="document.getElementById('expedicao-m').classList.remove('op')">✕</button>
     </div>
     <form id="expedicao-f">
       <div class="fg">
-        <label>Número da Nota Fiscal <span style="color:var(--er)">*</span></label>
+        <label for="exp-nf">Número da Nota Fiscal <span style="color:var(--er)">*</span></label>
         <input type="text" id="exp-nf" placeholder="Ex: 001234" required>
       </div>
       <div class="fg">
-        <label>Transportadora <span style="color:var(--mt);font-weight:400;font-size:11px">— opcional</span></label>
+        <label for="exp-transp">Transportadora <span style="color:var(--mt);font-weight:400;font-size:11px">— opcional</span></label>
         <input type="text" id="exp-transp" placeholder="Ex: Jadlog, Correios, retirada...">
       </div>
       <div class="ma">
@@ -967,7 +967,7 @@
       Os preços daqui são a <b>sugestão</b> que aparece ao montar uma proposta.
       Proposta já gerada <b>não muda</b> — ela guarda os valores do dia em que foi feita.
     </div>
-    <input type="search" id="cat-busca" class="cat-busca" placeholder="Buscar produto ou embalagem..." oninput="renderCatalogo()" autocomplete="off">
+    <input aria-label="Buscar produto ou embalagem" type="search" id="cat-busca" class="cat-busca" placeholder="Buscar produto ou embalagem..." oninput="renderCatalogo()" autocomplete="off">
     <div id="cat-lista"></div>
   </div>
 </div>
@@ -1053,12 +1053,12 @@
 <!-- MODAL CONTATO (Sprint 3.3) -->
 <div class="mo" id="cont-m">
   <div class="md" style="max-width:560px">
-    <div class="mh"><h3 id="cont-mtit">Novo Contato</h3><button class="mx" onclick="fechaContato()">✕</button></div>
+    <div class="mh"><h3 id="cont-mtit">Novo Contato</h3><button aria-label="Fechar" class="mx" onclick="fechaContato()">✕</button></div>
     <form id="cont-f">
-      <div class="fg"><label>Nome <span class="req">*</span></label><input type="text" id="cont-nome" required></div>
+      <div class="fg"><label for="cont-nome">Nome <span class="req">*</span></label><input type="text" id="cont-nome" required></div>
       <div class="fr">
-        <div class="fg"><label>Cargo</label><input type="text" id="cont-cargo" placeholder="Ex: Engenheiro de Obra"></div>
-        <div class="fg"><label>Papel</label>
+        <div class="fg"><label for="cont-cargo">Cargo</label><input type="text" id="cont-cargo" placeholder="Ex: Engenheiro de Obra"></div>
+        <div class="fg"><label for="cont-papel">Papel</label>
           <select id="cont-papel">
             <option value="">—</option>
             <option value="comprador">Comprador</option>
@@ -1071,11 +1071,11 @@
         </div>
       </div>
       <div class="fr">
-        <div class="fg"><label>Email</label><input type="email" id="cont-email"></div>
-        <div class="fg"><label>Telefone</label><input type="text" id="cont-tel"></div>
+        <div class="fg"><label for="cont-email">Email</label><input type="email" id="cont-email"></div>
+        <div class="fg"><label for="cont-tel">Telefone</label><input type="text" id="cont-tel"></div>
       </div>
-      <div class="fg"><label><input type="checkbox" id="cont-principal" style="margin-right:6px">Contato principal da empresa</label></div>
-      <div class="fg"><label>Observações</label><textarea id="cont-obs" rows="2"></textarea></div>
+      <div class="fg"><label><input aria-label="Contato principal da empresa" type="checkbox" id="cont-principal" style="margin-right:6px">Contato principal da empresa</label></div>
+      <div class="fg"><label for="cont-obs">Observações</label><textarea id="cont-obs" rows="2"></textarea></div>
       <div class="ma">
         <button type="button" class="btn bg" onclick="fechaContato()">Cancelar</button>
         <button type="submit" class="btn bp">Salvar</button>
@@ -1087,18 +1087,18 @@
 <!-- MODAL OPORTUNIDADE (Sprint 3.3) -->
 <div class="mo" id="opp-m">
   <div class="md">
-    <div class="mh"><h3 id="opp-mtit">Nova Oportunidade</h3><button class="mx" onclick="fechaOpp()">✕</button></div>
+    <div class="mh"><h3 id="opp-mtit">Nova Oportunidade</h3><button aria-label="Fechar" class="mx" onclick="fechaOpp()">✕</button></div>
     <form id="opp-f">
       <div class="fs"><div class="fsl">Identificação</div>
-        <div class="fg"><label>Título <span class="req">*</span></label><input type="text" id="opp-titulo" placeholder="Ex: Aditivo p/ Obra Mirataia" required></div>
+        <div class="fg"><label for="opp-titulo">Título <span class="req">*</span></label><input type="text" id="opp-titulo" placeholder="Ex: Aditivo p/ Obra Mirataia" required></div>
         <div class="fr">
-          <div class="fg"><label>Obra</label><input type="text" id="opp-obra" placeholder="Nome da obra"></div>
-          <div class="fg"><label>Contato responsável</label><select id="opp-contato"><option value="">—</option></select></div>
+          <div class="fg"><label for="opp-obra">Obra</label><input type="text" id="opp-obra" placeholder="Nome da obra"></div>
+          <div class="fg"><label for="opp-contato">Contato responsável</label><select id="opp-contato"><option value="">—</option></select></div>
         </div>
       </div>
       <div class="fs"><div class="fsl">Estágio do funil</div>
         <div class="fr">
-          <div class="fg"><label>Estágio</label>
+          <div class="fg"><label for="opp-estagio">Estágio</label>
             <select id="opp-estagio">
               <option value="lead">Lead</option>
               <option value="qualificado">Qualificado</option>
@@ -1108,13 +1108,13 @@
               <option value="perdida">Perdida</option>
             </select>
           </div>
-          <div class="fg"><label>Vendedor</label>
+          <div class="fg"><label for="opp-vend">Vendedor</label>
             <input type="text" id="opp-vend" list="opp-vlist" autocomplete="off">
             <datalist id="opp-vlist"></datalist>
           </div>
         </div>
         <div class="fg" id="opp-perda-wrap" style="display:none">
-          <label>Motivo da perda</label>
+          <label for="opp-perda">Motivo da perda</label>
           <select id="opp-perda">
             <option value="">Selecione...</option>
             <option>Preço alto</option>
@@ -1127,9 +1127,9 @@
           </select>
         </div>
         <div class="fr">
-          <div class="fg"><label>Próximo retorno</label><input type="datetime-local" id="opp-cb"></div>
+          <div class="fg"><label for="opp-cb">Próximo retorno</label><input type="datetime-local" id="opp-cb"></div>
           <div class="fg">
-            <label>Valor Estimado R$ <span id="opp-vl-auto" style="font-weight:400;color:var(--mt);font-size:11px;display:none">— calculado dos produtos</span></label>
+            <label for="opp-vl">Valor Estimado R$ <span id="opp-vl-auto" style="font-weight:400;color:var(--mt);font-size:11px;display:none">— calculado dos produtos</span></label>
             <input type="number" id="opp-vl" placeholder="0,00" step="0.01" min="0">
           </div>
         </div>
@@ -1146,7 +1146,7 @@
         <div id="prod-lista"></div>
         <button type="button" class="prod-add-btn" onclick="addProdRow()">+ Adicionar Produto</button>
       </div>
-      <div class="fs"><div class="fg"><label>Observação</label><textarea id="opp-obs" rows="2"></textarea></div></div>
+      <div class="fs"><div class="fg"><label for="opp-obs">Observação</label><textarea id="opp-obs" rows="2"></textarea></div></div>
       <div class="fa">
         <p id="opp-err" class="em" style="flex:1;margin:0;align-self:center"></p>
         <button type="button" class="btn bg" onclick="fechaOpp()">Cancelar</button>
@@ -1159,11 +1159,11 @@
 <!-- MODAL REGISTRAR INTERAÇÃO (Sprint 3.3) -->
 <div class="mo" id="int-m">
   <div class="md" style="max-width:560px">
-    <div class="mh"><h3>Registrar Interação</h3><button class="mx" onclick="fechaInteracao()">✕</button></div>
+    <div class="mh"><h3>Registrar Interação</h3><button aria-label="Fechar" class="mx" onclick="fechaInteracao()">✕</button></div>
     <form id="int-f">
       <div class="fg" id="int-opp-info" style="font-size:13px;color:var(--mt);padding:8px 12px;background:var(--bg);border-radius:6px"></div>
       <div class="fr">
-        <div class="fg"><label>Resultado <span class="req">*</span></label>
+        <div class="fg"><label for="int-res">Resultado <span class="req">*</span></label>
           <select id="int-res" required>
             <option value="">Selecione...</option>
             <option>Falou</option><option>Nao atendeu</option><option>Caixa postal</option>
@@ -1187,10 +1187,10 @@
           </div>
           <input type="datetime-local" id="int-cb" oninput="limpaIntErro();document.querySelectorAll('.ret-rapido button').forEach(b=>b.classList.remove('ac'))"></div>
       </div>
-      <div class="fg"><label>Contato com quem falou</label><select id="int-contato"><option value="">—</option></select></div>
-      <div class="fg"><label>Anotação</label><textarea id="int-notes" placeholder="O que foi conversado..." rows="3"></textarea></div>
+      <div class="fg"><label for="int-contato">Contato com quem falou</label><select id="int-contato"><option value="">—</option></select></div>
+      <div class="fg"><label for="int-notes">Anotação</label><textarea id="int-notes" placeholder="O que foi conversado..." rows="3"></textarea></div>
       <div class="fg">
-        <label>Encerrar oportunidade <span style="font-weight:400;color:var(--mt);font-size:11px">— em vez de agendar retorno</span></label>
+        <label for="int-encerrar">Encerrar oportunidade <span style="font-weight:400;color:var(--mt);font-size:11px">— em vez de agendar retorno</span></label>
         <select id="int-encerrar" onchange="limpaIntErro()">
           <option value="">Não encerrar (vou agendar o retorno)</option>
           <option value="ganha">✓ Ganhou</option>
@@ -1213,7 +1213,7 @@
 <!-- MODAL DRILL-DOWN DO DASHBOARD (Sprint 6.6) -->
 <div class="mo" id="drill-m" style="z-index:300">
   <div class="md" style="max-width:560px">
-    <div class="mh"><h3 id="drill-titulo">Detalhes</h3><button class="mx" onclick="document.getElementById('drill-m').classList.remove('op')">✕</button></div>
+    <div class="mh"><h3 id="drill-titulo">Detalhes</h3><button aria-label="Fechar" class="mx" onclick="document.getElementById('drill-m').classList.remove('op')">✕</button></div>
     <div id="drill-body"></div>
   </div>
 </div>
@@ -1221,16 +1221,16 @@
 <!-- MODAL TAREFA (Sprint 6.2) -->
 <div class="mo" id="task-m">
   <div class="md" style="max-width:540px">
-    <div class="mh"><h3 id="task-m-titulo">Nova Tarefa</h3><button class="mx" onclick="fechaTask()">✕</button></div>
+    <div class="mh"><h3 id="task-m-titulo">Nova Tarefa</h3><button aria-label="Fechar" class="mx" onclick="fechaTask()">✕</button></div>
     <form id="task-f">
-      <div class="fg"><label>Título</label><input type="text" id="task-tit" placeholder="Ex: Ligar pro fornecedor X" required></div>
+      <div class="fg"><label for="task-tit">Título</label><input type="text" id="task-tit" placeholder="Ex: Ligar pro fornecedor X" required></div>
       <div class="fr">
-        <div class="fg"><label>Prazo</label><input type="datetime-local" id="task-due" required></div>
-        <div class="fg"><label>Empresa (opcional)</label>
+        <div class="fg"><label for="task-due">Prazo</label><input type="datetime-local" id="task-due" required></div>
+        <div class="fg"><label for="task-emp">Empresa (opcional)</label>
           <select id="task-emp"><option value="">— Sem empresa —</option></select>
         </div>
       </div>
-      <div class="fg"><label>Descrição (opcional)</label><textarea id="task-desc" rows="3" placeholder="Detalhes..."></textarea></div>
+      <div class="fg"><label for="task-desc">Descrição (opcional)</label><textarea id="task-desc" rows="3" placeholder="Detalhes..."></textarea></div>
       <div class="ma">
         <button type="button" class="btn bg" id="task-del-btn" onclick="deletarTask()" style="display:none;margin-right:auto;color:var(--er);border-color:var(--er)">Excluir</button>
         <button type="button" class="btn bg" onclick="fechaTask()">Cancelar</button>
@@ -1243,13 +1243,13 @@
 <!-- MODAL IMPORTAR CSV — Sprint 4.5 reescrito para empresas -->
 <div class="mo" id="im">
   <div class="md" style="max-width:780px">
-    <div class="mh"><h3>Importar Empresas via CSV</h3><button class="mx" onclick="fechaImport()">✕</button></div>
+    <div class="mh"><h3>Importar Empresas via CSV</h3><button aria-label="Fechar" class="mx" onclick="fechaImport()">✕</button></div>
     <div id="im-s1">
       <div class="im-drop" id="im-drop">
         <div style="font-size:32px;margin-bottom:12px">📄</div>
         <p>Arraste um arquivo <strong>.csv</strong> aqui ou</p>
         <button class="btn bp sm" onclick="document.getElementById('im-file').click()">Escolher arquivo</button>
-        <input type="file" id="im-file" accept=".csv,.txt" style="display:none">
+        <input aria-label="Escolher arquivo CSV" type="file" id="im-file" accept=".csv,.txt" style="display:none">
         <p style="font-size:11px;margin-top:14px;color:var(--mt);line-height:1.6">
           <b>Colunas reconhecidas automaticamente</b> (qualquer ordem, headers em PT-BR ou EN):<br>
           <code>razao_social</code>, <code>nome_fantasia</code>, <code>cnpj</code>, <code>ie</code>, <code>email</code>, <code>telefone</code>, <code>website</code>, <code>industria</code>, <code>endereco</code>, <code>cidade</code>, <code>uf</code>, <code>cep</code>, <code>classificacao</code><br>
@@ -1285,7 +1285,7 @@
   <div id="gs-box">
     <div id="gs-input-wrap">
       <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2"><circle cx="8.5" cy="8.5" r="5.5"/><path d="M15 15l-3-3"/></svg>
-      <input id="gs-input" placeholder="Buscar empresa, contato ou proposta (Nº/ano)..." autocomplete="off">
+      <input aria-label="Busca global" id="gs-input" placeholder="Buscar empresa, contato ou proposta (Nº/ano)..." autocomplete="off">
       <span id="gs-kbd">ESC para fechar</span>
     </div>
     <div id="gs-results"></div>
@@ -1308,6 +1308,7 @@
 <script src="js/perfil.js"></script>
 <script src="js/anexos.js"></script>
 <script src="js/catalogo.js"></script>
+<script src="js/agenda.js"></script>
 
 <script>
 // ── Estado ────────────────────────────────────────────────────────────────
@@ -1924,361 +1925,7 @@ document.addEventListener('click', (e) => {
   if (w && !w.contains(e.target)) fecharBell();
 });
 
-// ── Sprint 6.2: CRUD de Tarefas livres ────────────────────────────────────
-let TASK_EID = null;
-
-function popularTaskEmpresas() {
-  const sel = document.getElementById('task-emp');
-  if (!sel) return;
-  const cur = sel.value;
-  sel.innerHTML = '<option value="">— Sem empresa —</option>' +
-    CL.map(c => `<option value="${c.id}">${escHtml(c.razao_social)}</option>`).join('');
-  sel.value = cur || '';
-}
-
-function abrTaskNova(preDate) {
-  TASK_EID = null;
-  document.getElementById('task-m-titulo').textContent = 'Nova Tarefa';
-  document.getElementById('task-del-btn').style.display = 'none';
-  document.getElementById('task-tit').value = '';
-  document.getElementById('task-desc').value = '';
-  document.getElementById('task-emp').value = '';
-  // default: hoje 17:00 (ou data sugerida 09:00)
-  const d = preDate ? new Date(preDate) : new Date();
-  if (!preDate) d.setHours(17,0,0,0); else d.setHours(9,0,0,0);
-  document.getElementById('task-due').value = dtToInput(d.toISOString());
-  popularTaskEmpresas();
-  document.getElementById('task-m').classList.add('op');
-  setTimeout(()=>document.getElementById('task-tit').focus(), 100);
-}
-
-function abrTaskEdit(id) {
-  const t = TASKS.find(x => x.id === id);
-  if (!t) return;
-  TASK_EID = id;
-  document.getElementById('task-m-titulo').textContent = 'Editar Tarefa';
-  document.getElementById('task-del-btn').style.display = (t.seller_id === ME?.id || ME?.role === 'admin') ? '' : 'none';
-  document.getElementById('task-tit').value = t.titulo || '';
-  document.getElementById('task-desc').value = t.descricao || '';
-  popularTaskEmpresas();
-  document.getElementById('task-emp').value = t.company_id || '';
-  document.getElementById('task-due').value = dtToInput(t.due_at);
-  document.getElementById('task-m').classList.add('op');
-}
-
-function fechaTask() {
-  document.getElementById('task-m').classList.remove('op');
-  TASK_EID = null;
-}
-
-document.getElementById('task-f').addEventListener('submit', async e => {
-  e.preventDefault();
-  const btn = document.getElementById('task-sub');
-  btn.disabled = true; btn.textContent = 'Salvando...';
-  const payload = {
-    titulo:     document.getElementById('task-tit').value.trim(),
-    descricao:  document.getElementById('task-desc').value.trim() || null,
-    due_at:     inputToISO(document.getElementById('task-due').value),
-    company_id: document.getElementById('task-emp').value || null,
-  };
-  try {
-    if (TASK_EID) {
-      await api('PATCH','tasks',`id=eq.${TASK_EID}`, payload);
-    } else {
-      await api('POST','tasks',null, { ...payload, seller_id: ME.id });
-    }
-    TASKS = await fetchTasks();
-    fechaTask();
-    renderToday();
-    updateBell();
-    toast(TASK_EID ? 'Tarefa atualizada' : 'Tarefa criada', '', 'success');
-  } catch(err) {
-    toast('Erro ao salvar tarefa', err.message||'', 'warning');
-  } finally {
-    btn.disabled = false; btn.textContent = 'Salvar';
-  }
-});
-
-async function toggleTaskDone(id, done) {
-  try {
-    await api('PATCH','tasks',`id=eq.${id}`, { done });
-    TASKS = await fetchTasks();
-    renderToday();
-    updateBell();
-  } catch(err) {
-    toast('Erro ao atualizar tarefa', err.message||'', 'warning');
-  }
-}
-
-function deletarTask() {
-  if (!TASK_EID) return;
-  const id = TASK_EID;
-  const t  = TASKS.find(x => x.id === id);
-  const tit = t?.titulo || 'tarefa';
-  // Esconde da UI imediatamente; deleta no DB so apos 7s se nao desfizer
-  TASKS = TASKS.filter(x => x.id !== id);
-  fechaTask();
-  renderToday(); updateBell();
-  deferComUndo('Tarefa excluída', tit, async () => {
-    await api('DELETE','tasks',`id=eq.${id}`);
-    TASKS = await fetchTasks();
-    renderToday(); updateBell();
-  }, 'Exclusão cancelada');
-}
-
-// ── Sprint 6.1+6.2: Tela "Hoje/Agenda" — Lista ou Calendario Mensal ───────
-let TD_VIEW = 'lista';
-let CAL_REF = null; // 1o dia do mes que esta sendo exibido no calendario
-
-function setTodayView(v) {
-  TD_VIEW = v;
-  document.querySelectorAll('.td-sw').forEach(b => b.classList.toggle('ac', b.dataset.view === v));
-  renderToday();
-}
-
-// Unifica callbacks de oportunidades + tarefas livres num formato comum,
-// ja filtrado pelo "so meus" se aplicavel.
-function eventosAgenda() {
-  const soMeus = document.getElementById('td-meus')?.checked;
-  const meuId = ME?.id;
-  const meuNome = MEP?.name;
-  const mineSeller = o => !soMeus || (meuId && o.seller_id === meuId) || (meuNome && o.seller_name === meuNome);
-
-  const opps = todasOpps()
-    .filter(o => o.estagio !== 'ganha' && o.estagio !== 'perdida')
-    .filter(o => o.callback_date)
-    .filter(mineSeller)
-    .map(o => ({
-      tipo:        'cb',
-      id:          'o:'+o.id,
-      raw_id:      o.id,
-      at:          new Date(o.callback_date).getTime(),
-      atISO:       o.callback_date,
-      titulo:      o.titulo || '—',
-      empresa:     o.company_nome || '—',
-      company_id:  o.company_id,
-      seller_name: o.seller_name,
-      estagio:     o.estagio,
-      obra:        o.obra,
-      valor:       o.valor_estimado,
-      done:        false,
-    }));
-
-  const tks = (TASKS||[])
-    .filter(t => !soMeus || (meuId && t.seller_id === meuId))
-    .map(t => ({
-      tipo:        'task',
-      id:          't:'+t.id,
-      raw_id:      t.id,
-      at:          new Date(t.due_at).getTime(),
-      atISO:       t.due_at,
-      titulo:      t.titulo,
-      descricao:   t.descricao,
-      empresa:     t.company?.razao_social || null,
-      company_id:  t.company_id,
-      seller_name: t.seller?.name,
-      seller_id:   t.seller_id,
-      done:        !!t.done,
-    }));
-
-  return [...opps, ...tks];
-}
-
-function renderToday() {
-  const saud = document.getElementById('td-saud');
-  const dataEl = document.getElementById('td-data');
-  const body = document.getElementById('td-body');
-  if (!body) return;
-
-  // Saudacao por hora do dia
-  const agora = new Date();
-  const h = agora.getHours();
-  const eu  = (MEP?.name || ME?.email || '').split(/[\s@]/)[0];
-  const cum = h < 12 ? 'Bom dia' : (h < 18 ? 'Boa tarde' : 'Boa noite');
-  saud.textContent = `${cum}${eu?', '+eu:''}!`;
-  dataEl.textContent = agora.toLocaleDateString('pt-BR', { weekday:'long', day:'2-digit', month:'long', year:'numeric' });
-
-  if (TD_VIEW === 'mes') renderCalendarioMes(body);
-  else renderListaHoje(body);
-}
-
-// Sprint 7.1: normaliza telefone pra link do WhatsApp.
-// Prefixa 55 (Brasil) por COMPRIMENTO, nao por prefixo — evita confundir o
-// codigo do pais 55 com o DDD 55 (RS). 10/11 digitos = falta cod. pais.
-function foneParaWa(fone) {
-  if (!fone) return null;
-  const d = String(fone).replace(/\D/g, '');
-  if (d.length < 10) return null;          // incompleto
-  return d.length <= 11 ? '55' + d : d;    // 10/11 = DDD+numero; 12/13 = ja tem 55
-}
-
-// Sprint 7.1: telefone do contato principal de uma empresa (ou 1o com telefone)
-function contatoPrincipalFone(companyId) {
-  const c = CL.find(x => x.id === companyId);
-  if (!c) return null;
-  const cts = c.contatos || [];
-  const ct = cts.find(x => x.principal && x.telefone) || cts.find(x => x.telefone);
-  return ct?.telefone || null;
-}
-
-function renderListaHoje(body) {
-  const evs = eventosAgenda();
-  const agoraMs = Date.now();
-  const fimHoje = new Date(); fimHoje.setHours(23,59,59,999);
-  const fimHojeMs = fimHoje.getTime();
-  const fim3d = new Date(fimHojeMs + 3*86400000).getTime();
-
-  const atrasados = evs.filter(e => !e.done && e.at < agoraMs).sort((a,b)=>b.at-a.at);
-  const hoje      = evs.filter(e => !e.done && e.at >= agoraMs && e.at <= fimHojeMs).sort((a,b)=>a.at-b.at);
-  const proximos  = evs.filter(e => !e.done && e.at > fimHojeMs && e.at <= fim3d).sort((a,b)=>a.at-b.at);
-
-  const linha = (e, late=false) => {
-    const dt = new Date(e.at);
-    const horaTxt = dt.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
-    const diaTxt = dt.toLocaleDateString('pt-BR',{day:'2-digit',month:'2-digit'});
-    const mostraDia = late || (e.at > fimHojeMs);
-    if (e.tipo === 'task') {
-      return `<div class="td-row td-task ${e.done?'done':''}">
-        <input type="checkbox" class="td-task-check" ${e.done?'checked':''} onclick="event.stopPropagation();toggleTaskDone('${e.raw_id}',this.checked)" title="Marcar como concluida">
-        <div class="td-time ${late?'td-late-time':''}">${horaTxt}<small>${mostraDia?diaTxt:'hoje'}</small></div>
-        <div class="td-info" onclick="abrTaskEdit('${e.raw_id}')" style="cursor:pointer">
-          <div class="td-emp"><span class="td-tipo">Tarefa</span>${escHtml(e.titulo)}</div>
-          ${e.empresa?`<div class="td-tit">${escHtml(e.empresa)}</div>`:''}
-          <div class="td-meta">
-            <span>${escHtml(e.seller_name||'—')}</span>
-            ${e.descricao?`<span>${escHtml(e.descricao.slice(0,60))}${e.descricao.length>60?'...':''}</span>`:''}
-            ${late?`<span style="color:var(--er);font-weight:600">${fRel(e.atISO)}</span>`:''}
-          </div>
-        </div>
-        <button class="td-task-edit" onclick="event.stopPropagation();abrTaskEdit('${e.raw_id}')">Editar</button>
-      </div>`;
-    }
-    // callback de oportunidade — Sprint 7.1: acoes rapidas que nao disparam o onclick da linha
-    const fone = contatoPrincipalFone(e.company_id);
-    const wa = foneParaWa(fone);
-    const waSvg = '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M.057 24l1.687-6.163c-1.041-1.804-1.588-3.849-1.587-5.946.003-6.556 5.338-11.891 11.893-11.891 3.181.001 6.167 1.24 8.413 3.488 2.245 2.248 3.481 5.236 3.48 8.414-.003 6.557-5.338 11.892-11.893 11.892-1.99-.001-3.951-.5-5.688-1.448l-6.305 1.654zm6.597-3.807c1.676.995 3.276 1.591 5.392 1.592 5.448 0 9.886-4.434 9.889-9.885.002-5.462-4.415-9.89-9.881-9.892-5.452 0-9.887 4.434-9.889 9.884-.001 2.225.651 3.891 1.746 5.634l-.999 3.648 3.742-.981zm11.387-5.464c-.074-.124-.272-.198-.57-.347-.297-.149-1.758-.868-2.031-.967-.272-.099-.47-.149-.669.149-.198.297-.768.967-.941 1.165-.173.198-.347.223-.644.074-.297-.149-1.255-.462-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.297-.347.446-.521.151-.172.2-.296.3-.495.099-.198.05-.372-.025-.521-.075-.148-.669-1.611-.916-2.206-.242-.579-.487-.501-.669-.51l-.57-.01c-.198 0-.52.074-.792.372s-1.04 1.016-1.04 2.479 1.065 2.876 1.213 3.074c.149.198 2.096 3.2 5.077 4.487.709.306 1.263.489 1.694.626.712.226 1.36.194 1.872.118.571-.085 1.758-.719 2.006-1.413.248-.695.248-1.29.173-1.414z"/></svg>';
-    const acoes = `<div class="td-acoes">
-      ${wa?`<a class="td-act td-act-wa" href="https://wa.me/${wa}" target="_blank" rel="noopener" onclick="event.stopPropagation()" title="WhatsApp ${escHtml(fone)}">${waSvg}</a>`:''}
-      ${wa?`<a class="td-act" href="tel:+${wa}" onclick="event.stopPropagation()" title="Ligar ${escHtml(fone)}">📞</a>`:''}
-      <button class="td-act td-act-reg" onclick="event.stopPropagation();abrInteracao('${e.raw_id}','${e.company_id}','hoje')" title="Registrar interação">✓</button>
-    </div>`;
-    return `<div class="td-row" onclick="abrPerfil('${e.company_id}')">
-      <div class="td-time ${late?'td-late-time':''}">${horaTxt}<small>${mostraDia?diaTxt:'hoje'}</small></div>
-      <div class="td-info">
-        <div class="td-emp"><span class="td-tipo cb">Retorno</span>${escHtml(e.empresa)} <span class="td-est">${ESTAGIO_LBL?.[e.estagio]||e.estagio}</span></div>
-        <div class="td-tit">${escHtml(e.titulo)}</div>
-        <div class="td-meta">
-          <span>${escHtml(e.seller_name||'Sem vendedor')}</span>
-          ${e.obra?`<span>Obra: ${escHtml(e.obra)}</span>`:''}
-          ${e.valor!=null?`<span>${fMoeda(e.valor)}</span>`:''}
-          ${late?`<span style="color:var(--er);font-weight:600">${fRel(e.atISO)}</span>`:''}
-        </div>
-      </div>
-      ${acoes}
-    </div>`;
-  };
-
-  // Secao vazia fica COMPACTA: titulo e mensagem na mesma linha. Do jeito
-  // antigo cada bloco vazio comia ~116px de altura pra dizer que nao havia
-  // nada, e num dia calmo os dois somavam ~230px da primeira tela — a tela
-  // que a equipe abre primeiro todo dia. A informacao continua ali; o que sai
-  // e o espaco em branco.
-  const sec = (titulo, lista, badgeCls, vazia) => `
-    <div class="td-sec${lista.length ? '' : ' td-sec-vazia'}">
-      <div class="td-sec-h">
-        <h3>${titulo} <span class="td-badge ${badgeCls}">${lista.length}</span></h3>
-        ${lista.length ? '' : `<span class="td-vazia-msg">${vazia}</span>`}
-      </div>
-      ${lista.length ? lista.map(e=>linha(e, badgeCls==='td-late')).join('') : ''}
-    </div>`;
-
-  body.innerHTML =
-    sec('⚠ Atrasados', atrasados, 'td-late', 'Nenhum retorno atrasado. ') +
-    sec('Hoje', hoje, 'td-now', 'Nenhum retorno agendado pra hoje.') +
-    sec('Próximos 3 dias', proximos, 'td-soon', 'Agenda livre nos próximos 3 dias.');
-}
-
-function renderCalendarioMes(body) {
-  if (!CAL_REF) {
-    CAL_REF = new Date();
-    CAL_REF.setDate(1); CAL_REF.setHours(0,0,0,0);
-  }
-  const ano = CAL_REF.getFullYear();
-  const mes = CAL_REF.getMonth();
-  const primDia = new Date(ano, mes, 1);
-  const ultDia  = new Date(ano, mes+1, 0);
-  // Comeca no domingo da semana do dia 1
-  const inicio = new Date(primDia);
-  inicio.setDate(inicio.getDate() - inicio.getDay());
-  // Termina no sabado da semana do ultimo dia
-  const fim = new Date(ultDia);
-  fim.setDate(fim.getDate() + (6 - fim.getDay()));
-
-  // Agrupa eventos por dia YYYY-MM-DD
-  const evs = eventosAgenda();
-  const porDia = new Map();
-  evs.forEach(e => {
-    const d = new Date(e.at);
-    const k = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
-    if (!porDia.has(k)) porDia.set(k, []);
-    porDia.get(k).push(e);
-  });
-
-  const hojeKey = (()=>{ const t=new Date(); return `${t.getFullYear()}-${String(t.getMonth()+1).padStart(2,'0')}-${String(t.getDate()).padStart(2,'0')}`;})();
-  const agoraMs = Date.now();
-
-  const dows = ['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'];
-  let html = `<div class="cal-wrap">
-    <div class="cal-nav">
-      <h3>${primDia.toLocaleDateString('pt-BR',{month:'long',year:'numeric'})}</h3>
-      <div class="cal-nav-btns">
-        <button class="cal-nav-btn" onclick="calNav(-1)" title="Mês anterior">‹</button>
-        <button class="cal-nav-btn cal-nav-today" onclick="calNav(0)" title="Hoje">Hoje</button>
-        <button class="cal-nav-btn" onclick="calNav(1)" title="Próximo mês">›</button>
-      </div>
-    </div>
-    <div class="cal-grid">
-      ${dows.map(d=>`<div class="cal-dow">${d}</div>`).join('')}`;
-
-  const cur = new Date(inicio);
-  while (cur <= fim) {
-    const k = `${cur.getFullYear()}-${String(cur.getMonth()+1).padStart(2,'0')}-${String(cur.getDate()).padStart(2,'0')}`;
-    const outroMes = cur.getMonth() !== mes;
-    const eHoje = k === hojeKey;
-    const eventosDia = (porDia.get(k) || []).sort((a,b)=>a.at-b.at);
-    const top3 = eventosDia.slice(0,3);
-    const extra = eventosDia.length - top3.length;
-    const evHtml = top3.map(e => {
-      const cls = e.done ? 'ev-done' : (e.tipo==='task' ? 'ev-task' : (e.at < agoraMs ? 'ev-late' : ''));
-      const tipoCls = e.tipo === 'task' ? 'ev-task' : '';
-      const t = new Date(e.at).toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
-      const click = e.tipo==='task' ? `abrTaskEdit('${e.raw_id}')` : `abrPerfil('${e.company_id}')`;
-      return `<div class="cal-ev ${cls||tipoCls}" onclick="event.stopPropagation();${click}" title="${escHtml(e.empresa||e.titulo)}">${t} ${escHtml(e.tipo==='task'?e.titulo:(e.empresa||e.titulo))}</div>`;
-    }).join('');
-    const moreLink = extra > 0 ? `<div class="cal-ev-more">+${extra}</div>` : '';
-    const cellCls = ['cal-cell', outroMes?'cal-other':'', eHoje?'cal-today':''].filter(Boolean).join(' ');
-    html += `<div class="${cellCls}" onclick="abrTaskNova('${cur.toISOString()}')" title="Clique pra criar tarefa">
-      <div class="cal-day">${cur.getDate()}</div>
-      ${evHtml}${moreLink}
-    </div>`;
-    cur.setDate(cur.getDate()+1);
-  }
-
-  html += `</div></div>`;
-  body.innerHTML = html;
-}
-
-function calNav(dir) {
-  if (!CAL_REF) { CAL_REF = new Date(); CAL_REF.setDate(1); CAL_REF.setHours(0,0,0,0); }
-  if (dir === 0) {
-    CAL_REF = new Date(); CAL_REF.setDate(1); CAL_REF.setHours(0,0,0,0);
-  } else {
-    CAL_REF.setMonth(CAL_REF.getMonth() + dir);
-  }
-  renderToday();
-}
-
-// ── Sprint 6.2: Export .ics (Google Calendar / Outlook / Apple Calendar) ──
+// ── Sprint 6.9: backup manual completo ────────────────────────
 // Sprint 6.9: backup manual completo (plano Free do Supabase nao tem backup
 // restauravel). Baixa um JSON com tudo pro usuario guardar no PC.
 // Busca a tabela INTEIRA, em paginas, ate a ultima vir curta.
@@ -2362,65 +2009,6 @@ async function baixarBackup() {
   } catch(err) {
     toast('Erro ao gerar backup', err.message||'', 'warning');
   }
-}
-
-function exportarICS() {
-  const evs = eventosAgenda().filter(e => !e.done);
-  if (!evs.length) {
-    toast('Nada pra exportar', 'Sem retornos nem tarefas pendentes', 'warning');
-    return;
-  }
-  // ICS exige UTC no formato YYYYMMDDTHHMMSSZ
-  const toICS = ts => {
-    const d = new Date(ts);
-    const pad = n => String(n).padStart(2,'0');
-    return `${d.getUTCFullYear()}${pad(d.getUTCMonth()+1)}${pad(d.getUTCDate())}T${pad(d.getUTCHours())}${pad(d.getUTCMinutes())}${pad(d.getUTCSeconds())}Z`;
-  };
-  // Escapa caracteres especiais segundo RFC 5545
-  const esc = s => String(s||'').replace(/\\/g,'\\\\').replace(/;/g,'\\;').replace(/,/g,'\\,').replace(/\n/g,'\\n');
-
-  const now = toICS(Date.now());
-  const ev = evs.map(e => {
-    const start = e.at;
-    const end   = start + 30*60*1000; // 30 min default
-    const titulo = e.tipo === 'task'
-      ? `[Tarefa] ${e.titulo}`
-      : `[Retorno] ${e.empresa} — ${e.titulo}`;
-    const desc = e.tipo === 'task'
-      ? (e.descricao || '') + (e.empresa ? `\\nEmpresa: ${e.empresa}` : '')
-      : `Oportunidade: ${e.titulo}\\nVendedor: ${e.seller_name||'—'}${e.obra?`\\nObra: ${e.obra}`:''}`;
-    return `BEGIN:VEVENT
-UID:${e.id}@adiblock-crm
-DTSTAMP:${now}
-DTSTART:${toICS(start)}
-DTEND:${toICS(end)}
-SUMMARY:${esc(titulo)}
-DESCRIPTION:${esc(desc)}
-${e.empresa ? 'LOCATION:'+esc(e.empresa) : ''}
-END:VEVENT`;
-  }).join('\n');
-
-  const ics = `BEGIN:VCALENDAR
-VERSION:2.0
-PRODID:-//Adiblock//CRM Comercial//PT-BR
-CALSCALE:GREGORIAN
-METHOD:PUBLISH
-X-WR-CALNAME:Agenda Adiblock${MEP?.name?' — '+MEP.name:''}
-X-WR-TIMEZONE:America/Sao_Paulo
-${ev}
-END:VCALENDAR`;
-
-  const blob = new Blob([ics], { type: 'text/calendar;charset=utf-8' });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url;
-  const stamp = new Date().toISOString().slice(0,10);
-  a.download = `agenda-adiblock-${stamp}.ics`;
-  document.body.appendChild(a);
-  a.click();
-  document.body.removeChild(a);
-  URL.revokeObjectURL(url);
-  toast('Agenda exportada', `${evs.length} evento(s) no .ics`, 'success');
 }
 
 async function renderDb() {

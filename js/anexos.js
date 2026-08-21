@@ -52,7 +52,8 @@ async function abrirAnexos() {
   const p = PROP_ATUAL;
   if (!p) { toast('Sem pedido carregado', '', 'warning'); return; }
   document.getElementById('anx-m').classList.add('op');
-  document.getElementById('anx-input').value = '';
+  const inp = document.getElementById('anx-input');
+  if (inp) { inp.value = ''; inp.disabled = false; }
   await carregarAnexos(p.id);
 }
 
@@ -100,59 +101,105 @@ function renderAnexos() {
 }
 
 // ── Enviar ───────────────────────────────────────────────────────────────
+// Envia TODOS os arquivos escolhidos, um de cada vez.
+//
+// ⚠ O texto do botao vai no <span id="anx-btn-txt">, NUNCA no proprio <label>.
+// O <input type=file> e filho do label, e atribuir textContent num elemento
+// SUBSTITUI todos os nos filhos — era assim que o campo de arquivo sumia do
+// DOM depois do primeiro envio, e por isso so dava pra anexar uma vez. O
+// mesmo motivo derrubava abrirAnexos() na vez seguinte, ao procurar um
+// #anx-input que nao existia mais.
+//
+// Sequencial, nao em paralelo: o progresso ("2 de 5") so e honesto assim, e
+// evita abrir varias conexoes de upload de uma vez num projeto do plano Free.
+// Um arquivo que falha NAO aborta os outros — o resumo no fim diz quais foram.
+const ANEXO_MAX_LOTE = 20;
+
 async function enviarAnexo(input) {
   const p = PROP_ATUAL;
-  const file = input.files && input.files[0];
-  if (!p || !file) return;
+  const escolhidos = Array.from(input.files || []);
+  if (!p || !escolhidos.length) return;
 
-  // O bucket ja recusa tamanho e tipo errados, mas o erro dele e cru. Checar
-  // aqui e so pra dizer o que houve em portugues.
-  if (file.size > ANEXO_MAX_BYTES) {
-    toast('Arquivo grande demais', `Máximo 10 MB — este tem ${anexoTamanho(file.size)}.`, 'warning');
-    input.value = ''; return;
-  }
-  if (file.type && !ANEXO_TIPOS.includes(file.type)) {
-    toast('Tipo não aceito', 'Só PDF, JPG, PNG ou WebP.', 'warning');
-    input.value = ''; return;
-  }
   const org = MEP?.org_id;
-  if (!org) { toast('Perfil sem organização', 'Recarregue a página.', 'warning'); return; }
+  if (!org) { toast('Perfil sem organização', 'Recarregue a página.', 'warning'); input.value = ''; return; }
+
+  if (escolhidos.length > ANEXO_MAX_LOTE) {
+    toast('Muitos arquivos de uma vez',
+          `Envie no máximo ${ANEXO_MAX_LOTE} por vez — você escolheu ${escolhidos.length}.`, 'warning');
+    input.value = ''; return;
+  }
+
+  // Peneira antes de subir qualquer coisa: o bucket ja recusa tamanho e tipo
+  // errados, mas o erro dele e cru. Aqui da pra dizer o que houve, e por
+  // arquivo — num lote, "falhou" sem nome nao ajuda ninguem.
+  const validos = [], recusados = [];
+  for (const f of escolhidos) {
+    if (f.size > ANEXO_MAX_BYTES) recusados.push(`${f.name} (${anexoTamanho(f.size)}, máx. 10 MB)`);
+    else if (f.type && !ANEXO_TIPOS.includes(f.type)) recusados.push(`${f.name} (tipo não aceito)`);
+    else validos.push(f);
+  }
 
   const btn = document.getElementById('anx-btn');
-  const antes = btn.textContent;
-  btn.disabled = true; btn.textContent = 'Enviando...';
+  const txt = document.getElementById('anx-btn-txt');
+  const antes = txt ? txt.textContent : '';
+  // <label> nao aceita disabled — quem trava o clique e o input desabilitado
+  // mais o pointer-events da classe .busy.
+  btn?.classList.add('busy');
+  input.disabled = true;
 
-  const caminho = `${org}/proposals/${p.id}/${crypto.randomUUID()}-${anexoNomeSeguro(file.name)}`;
+  const enviados = [], falhas = [];
   try {
-    const { error: errUp } = await sb.storage.from('anexos')
-      .upload(caminho, file, { contentType: file.type || 'application/octet-stream', upsert: false });
-    if (errUp) throw errUp;
+    for (let i = 0; i < validos.length; i++) {
+      const file = validos[i];
+      if (txt) txt.textContent = validos.length > 1
+        ? `Enviando ${i + 1} de ${validos.length}...`
+        : 'Enviando...';
 
-    // ORDEM: arquivo primeiro, metadado depois. Se o metadado falhar, sobra um
-    // arquivo sem linha — invisivel, mas recuperavel pelo painel do Supabase.
-    // Na ordem inversa, a linha apontaria pra um arquivo que nunca existiu.
-    try {
-      await api('POST', 'attachments', null, {
-        proposal_id: p.id, caminho,
-        nome_original: file.name, mime: file.type || null, tamanho: file.size,
-        created_by: ME?.id || null,
-      });
-    } catch (errMeta) {
-      await sb.storage.from('anexos').remove([caminho]).catch(() => {});
-      throw errMeta;
+      const caminho = `${org}/proposals/${p.id}/${crypto.randomUUID()}-${anexoNomeSeguro(file.name)}`;
+      try {
+        const { error: errUp } = await sb.storage.from('anexos')
+          .upload(caminho, file, { contentType: file.type || 'application/octet-stream', upsert: false });
+        if (errUp) throw errUp;
+
+        // ORDEM: arquivo primeiro, metadado depois. Se o metadado falhar, sobra
+        // um arquivo sem linha — invisivel, mas recuperavel pelo painel do
+        // Supabase. Na ordem inversa, a linha apontaria pra um arquivo que
+        // nunca existiu.
+        try {
+          await api('POST', 'attachments', null, {
+            proposal_id: p.id, caminho,
+            nome_original: file.name, mime: file.type || null, tamanho: file.size,
+            created_by: ME?.id || null,
+          });
+        } catch (errMeta) {
+          await sb.storage.from('anexos').remove([caminho]).catch(() => {});
+          throw errMeta;
+        }
+        enviados.push(file.name);
+      } catch (err) {
+        console.error('enviarAnexo:', file.name, err);
+        falhas.push(`${file.name} — ` + (/row-level security|policy/i.test(err.message || '')
+          ? 'sem permissão' : (err.message || 'falha no envio')));
+      }
     }
-
-    input.value = '';
-    await carregarAnexos(p.id);
-    toast('Arquivo anexado', escHtml(file.name), 'success');
-  } catch (err) {
-    console.error('enviarAnexo:', err);
-    const msg = /row-level security|policy/i.test(err.message || '')
-      ? 'Sem permissão para anexar neste pedido.'
-      : (err.message || 'Falha no envio.');
-    toast('Não foi possível anexar', msg, 'warning');
   } finally {
-    btn.disabled = false; btn.textContent = antes;
+    input.value = '';                       // permite reescolher o MESMO arquivo
+    input.disabled = false;
+    btn?.classList.remove('busy');
+    if (txt) txt.textContent = antes;       // so o <span>: o input segue intacto
+  }
+
+  if (enviados.length) await carregarAnexos(p.id);
+
+  const problemas = [...recusados, ...falhas];
+  if (enviados.length && !problemas.length) {
+    toast(enviados.length > 1 ? `${enviados.length} arquivos anexados` : 'Arquivo anexado',
+          enviados.length > 1 ? '' : enviados[0], 'success');
+  } else if (enviados.length && problemas.length) {
+    toast(`${enviados.length} de ${enviados.length + problemas.length} anexados`,
+          'Não entraram: ' + problemas.join('; '), 'warning');
+  } else {
+    toast('Não foi possível anexar', problemas.join('; ') || 'Nenhum arquivo válido.', 'warning');
   }
 }
 

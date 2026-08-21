@@ -419,15 +419,37 @@ function fecharEditarPedido() {
 
 // Catalogo (PRODS) pro <select> de "acrescentar produto". Cada opcao carrega
 // o preco sugerido no dataset pra preencher o campo sem uma segunda busca.
+// "PRODUTO — Embalagem", o rotulo que o <select> usa como value. Uma funcao
+// so pra montar e pra comparar: era aqui que estava o bug — a lista era
+// preenchida com `it.produto` (so o nome) e comparada com opcoes que valem
+// "nome — embalagem", entao NADA casava e o select voltava pra "escolha".
+function edpRotulo(it) {
+  if (!it || !String(it.produto || '').trim()) return '';
+  return it.produto + (it.embalagem ? ' — ' + it.embalagem : '');
+}
+
+// Recebe o ROTULO COMPLETO da linha (nao so o nome).
+// `nome` e `embalagem` vao no dataset porque separar por " — " quebraria em
+// produto cujo proprio nome tenha esse tracinho.
 function edpOpcoesCatalogo(sel) {
+  const rotulos = [];
   const opts = (PRODS || []).map(pr => {
     const rot = pr.nome + (pr.embalagem ? ' — ' + pr.embalagem : '');
+    rotulos.push(rot);
     return `<option value="${escHtml(rot)}" ${rot === sel ? 'selected' : ''}
+             data-nome="${escHtml(pr.nome)}" data-emb="${escHtml(pr.embalagem || '')}"
              data-preco="${pr.preco_pj != null ? pr.preco_pj : ''}">${escHtml(rot)}</option>`;
   }).join('');
+  // Produto que esta no pedido mas saiu do catalogo (ou foi digitado a mao)
+  // ganha a propria opcao. Sem isto ele sumiria da tela e o vendedor acharia
+  // que o item foi apagado — quando na verdade o dado continua no snapshot.
+  const forfe = (sel && !rotulos.includes(sel))
+    ? `<option value="${escHtml(sel)}" selected data-fora="1">${escHtml(sel)} (fora do catálogo)</option>`
+    : '';
   // "Outro" cobre o produto que ainda nao esta no catalogo — o vendedor nao
   // pode ficar travado esperando o cadastro pra fechar o pedido.
-  return `<option value="">— escolha —</option>${opts}<option value="__outro__">Outro (digitar)</option>`;
+  return `<option value="" ${sel ? '' : 'selected'}>— escolha —</option>`
+       + forfe + opts + `<option value="__outro__">Outro (digitar)</option>`;
 }
 
 function edpRenderLinhas() {
@@ -440,15 +462,19 @@ function edpRenderLinhas() {
       <div>Produto</div><div class="num">Qtd (kg)</div><div class="num">R$/kg</div>
       <div class="num">IPI %</div><div class="num">Total</div><div></div>
     </div>` + EDP_LINHAS.map((it, i) => {
+    // TODA linha e editavel, inclusive as que vieram do pedido original. Antes
+    // so as novas tinham <select> e as antigas eram texto fixo — nao havia
+    // como trocar a EMBALAGEM de um item ja fechado, que e justamente o que o
+    // cliente pede ("manda em bombona em vez de tambor"). O jeito de contornar
+    // seria apagar e reincluir, e isso perde o historico da linha.
     const novo = !!it._novo;
-    const nomeCel = novo
-      ? `<div class="edp-novo-wrap">
-           <select class="edp-prod-sel" onchange="edpTrocaProduto(${i}, this)">${edpOpcoesCatalogo(it.produto)}</select>
+    const nomeCel = `<div class="edp-novo-wrap">
+           <select class="edp-prod-sel" aria-label="Produto e embalagem da linha ${i + 1}"
+                   onchange="edpTrocaProduto(${i}, this)">${edpOpcoesCatalogo(edpRotulo(it))}</select>
            ${it._livre ? `<input class="edp-prod-livre" placeholder="Nome do produto"
                                  value="${escHtml(it.produto||'')}" oninput="EDP_LINHAS[${i}].produto=this.value">` : ''}
-           <span class="edp-tag-novo">novo</span>
-         </div>`
-      : `<div><b>${escHtml(it.produto || '—')}</b>${it.embalagem ? `<div class="edp-emb">${escHtml(it.embalagem)}</div>` : ''}</div>`;
+           ${novo ? '<span class="edp-tag-novo">novo</span>' : ''}
+         </div>`;
     // Cada campo carrega o proprio rotulo num <label>. No desktop ele fica
     // escondido (o cabecalho da tabela ja diz), no celular o cabecalho some e
     // o rotulo aparece — senao vira uma fileira de caixas sem identificacao.
@@ -479,14 +505,27 @@ function edpTrocaProduto(i, sel) {
     EDP_LINHAS[i]._livre = true;
     EDP_LINHAS[i].produto = '';
     EDP_LINHAS[i].embalagem = null;
+  } else if (v === '') {
+    // Voltou pra "— escolha —": limpa, senao a linha ficaria com o produto
+    // antigo no dado e vazia na tela.
+    EDP_LINHAS[i]._livre = false;
+    EDP_LINHAS[i].produto = '';
+    EDP_LINHAS[i].embalagem = null;
   } else {
     const opt = sel.selectedOptions[0];
     EDP_LINHAS[i]._livre = false;
-    // O rotulo do catalogo e "Nome — Embalagem"; guarda separado no snapshot
-    // porque o pedido de producao le a embalagem pra calcular peso por volume.
-    const partes = v.split(' — ');
-    EDP_LINHAS[i].produto   = partes[0] || v;
-    EDP_LINHAS[i].embalagem = partes[1] || null;
+    // Nome e embalagem saem do DATASET da opcao, nao de split(' — '): produto
+    // cujo nome contenha o tracinho quebraria a divisao. A opcao "fora do
+    // catalogo" nao tem dataset — nela o rotulo inteiro e o nome.
+    if (opt?.dataset.fora) {
+      EDP_LINHAS[i].produto   = v;
+      EDP_LINHAS[i].embalagem = null;
+    } else {
+      EDP_LINHAS[i].produto   = opt?.dataset.nome || v;
+      EDP_LINHAS[i].embalagem = opt?.dataset.emb || null;
+    }
+    // So sugere preco se a linha ainda nao tem um. Preco negociado nao pode
+    // ser sobrescrito por troca de embalagem.
     const preco = opt?.dataset.preco;
     if (preco && EDP_LINHAS[i].preco_kg == null) EDP_LINHAS[i].preco_kg = Number(preco);
   }

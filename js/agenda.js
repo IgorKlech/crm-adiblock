@@ -387,45 +387,86 @@ function exportarICS() {
     const pad = n => String(n).padStart(2,'0');
     return `${d.getUTCFullYear()}${pad(d.getUTCMonth()+1)}${pad(d.getUTCDate())}T${pad(d.getUTCHours())}${pad(d.getUTCMinutes())}${pad(d.getUTCSeconds())}Z`;
   };
-  // Escapa caracteres especiais segundo RFC 5545
-  const esc = s => String(s||'').replace(/\\/g,'\\\\').replace(/;/g,'\\;').replace(/,/g,'\\,').replace(/\n/g,'\\n');
+
+  // Escapa segundo RFC 5545 secao 3.3.11. A ORDEM importa: a barra invertida
+  // vem PRIMEIRO, senao ela escaparia as barras que as regras seguintes
+  // acabaram de inserir.
+  //
+  // ATENCAO: quem monta o texto passa quebra de linha DE VERDADE. E aqui que
+  // ela vira a sequencia de duas letras que o formato pede. Antes o texto ja
+  // chegava com as duas letras e o escape da barra as dobrava — o calendario
+  // mostrava a sequencia crua no meio da descricao de TODOS os eventos.
+  const esc = s => String(s || '')
+    .replace(/\\/g, '\\\\')
+    .replace(/;/g, '\\;')
+    .replace(/,/g, '\\,')
+    .replace(/\r\n|\r|\n/g, '\\n');
+
+  // Dobra linha longa: o RFC limita a 75 OCTETOS (nao caracteres) e manda
+  // continuar a proxima com um espaco. Acento ocupa 2 octetos em UTF-8, entao
+  // medir por .length erraria justamente nos nomes em portugues.
+  const enc = new TextEncoder();
+  const dobra = linha => {
+    if (enc.encode(linha).length <= 75) return linha;
+    const partes = [];
+    let atual = '', tam = 0;
+    for (const ch of linha) {                    // itera por CARACTERE, nao por byte
+      const n = enc.encode(ch).length;
+      // 74 na continuacao: o espaco que abre a linha dobrada conta no limite
+      if (tam + n > (partes.length ? 74 : 75)) { partes.push(atual); atual = ''; tam = 0; }
+      atual += ch; tam += n;
+    }
+    if (atual) partes.push(atual);
+    return partes.join('\r\n ');
+  };
 
   const now = toICS(Date.now());
-  const ev = evs.map(e => {
+  const L = [
+    'BEGIN:VCALENDAR',
+    'VERSION:2.0',
+    'PRODID:-//Adiblock//CRM Comercial//PT-BR',
+    'CALSCALE:GREGORIAN',
+    'METHOD:PUBLISH',
+    'X-WR-CALNAME:Agenda Adiblock' + (MEP?.name ? ' — ' + MEP.name : ''),
+    'X-WR-TIMEZONE:America/Sao_Paulo',
+  ];
+
+  evs.forEach(e => {
     const start = e.at;
-    const end   = start + 30*60*1000; // 30 min default
+    const end   = start + 30 * 60 * 1000;        // 30 min default
     const titulo = e.tipo === 'task'
       ? `[Tarefa] ${e.titulo}`
       : `[Retorno] ${e.empresa} — ${e.titulo}`;
+    // Quebra de linha REAL aqui; o esc() converte pro formato.
     const desc = e.tipo === 'task'
-      ? (e.descricao || '') + (e.empresa ? `\\nEmpresa: ${e.empresa}` : '')
-      : `Oportunidade: ${e.titulo}\\nVendedor: ${e.seller_name||'—'}${e.obra?`\\nObra: ${e.obra}`:''}`;
-    return `BEGIN:VEVENT
-UID:${e.id}@adiblock-crm
-DTSTAMP:${now}
-DTSTART:${toICS(start)}
-DTEND:${toICS(end)}
-SUMMARY:${esc(titulo)}
-DESCRIPTION:${esc(desc)}
-${e.empresa ? 'LOCATION:'+esc(e.empresa) : ''}
-END:VEVENT`;
-  }).join('\n');
+      ? (e.descricao || '') + (e.empresa ? `\nEmpresa: ${e.empresa}` : '')
+      : `Oportunidade: ${e.titulo}\nVendedor: ${e.seller_name || '—'}` + (e.obra ? `\nObra: ${e.obra}` : '');
 
-  const ics = `BEGIN:VCALENDAR
-VERSION:2.0
-PRODID:-//Adiblock//CRM Comercial//PT-BR
-CALSCALE:GREGORIAN
-METHOD:PUBLISH
-X-WR-CALNAME:Agenda Adiblock${MEP?.name?' — '+MEP.name:''}
-X-WR-TIMEZONE:America/Sao_Paulo
-${ev}
-END:VCALENDAR`;
+    L.push('BEGIN:VEVENT');
+    L.push(`UID:${e.id}@adiblock-crm`);
+    L.push(`DTSTAMP:${now}`);
+    L.push(`DTSTART:${toICS(start)}`);
+    L.push(`DTEND:${toICS(end)}`);
+    L.push(`SUMMARY:${esc(titulo)}`);
+    if (desc.trim()) L.push(`DESCRIPTION:${esc(desc)}`);
+    // So entra se houver empresa. Antes saia uma LINHA VAZIA no lugar, e linha
+    // vazia dentro do VEVENT quebra o arquivo — batia justamente na tarefa
+    // livre sem empresa, que e o caso comum.
+    if (e.empresa) L.push(`LOCATION:${esc(e.empresa)}`);
+    L.push('END:VEVENT');
+  });
+
+  L.push('END:VCALENDAR');
+
+  // CRLF, exigido pelo RFC 5545 secao 3.1. Google tolera LF; Outlook e Apple
+  // nem sempre — e o arquivo e feito pra sair daqui.
+  const ics = L.map(dobra).join('\r\n') + '\r\n';
 
   const blob = new Blob([ics], { type: 'text/calendar;charset=utf-8' });
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
   a.href = url;
-  const stamp = new Date().toISOString().slice(0,10);
+  const stamp = new Date().toISOString().slice(0, 10);
   a.download = `agenda-adiblock-${stamp}.ics`;
   document.body.appendChild(a);
   a.click();

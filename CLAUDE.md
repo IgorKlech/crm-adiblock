@@ -371,29 +371,50 @@ as duas, porque precisa descolar do fundo. Cards clicáveis ganham a sombra no
 | D | Dashboard | `db` | `renderDb()` |
 | — | Equipe | `eq` | `renderEquipe()` |
 
-### Pages sobrepostas (position:fixed, z-index)
+### Camadas (position:fixed, z-index) — auditado em 21/08/2026
 
 ```
-600  — kbd-help, gs-overlay
-500  — gs-overlay
+950  — #tc (toasts)            ┐ RESPONDEDORES GLOBAIS
+900  — #co (confirmação)       ┘ acima de tudo, sempre
+600  — mfa-challenge-m
+500  — kbd-help, gs-overlay
 450  — bell-pop
-400  — #tc (toasts), schema-banner
-310  — prod-req-m (modal pedido produção)
-302  — #edp-hist-m (histórico de revisões — abre sobre o editor)
-300  — #co (confirm), drill-m (dashboard drill), #edp-m (editar pedido)
-297  — #pcom-page (pedido comercial)
-296  — #prod-page (pedido produção)
-295  — #cot-page (proposta)
-293  — task-m
-292  — gcm (modal gerar cotação)
-290  — #cont-m, #opp-m, #int-m, #gcm
-280  — #pfpage (perfil empresa), #rel-page
-200  — .mo (modais genéricos)
-150  — #sp (side panel)
+400  — schema-banner
+312  — #oc-m          ┐
+311  — #anx-m         │
+310  — prod-req-m, pcom-m, expedicao-m   │ MODAIS abertos a partir
+302  — #edp-hist-m    │ dos documentos (295-297)
+300  — #edp-m, drill-m, cat-m            ┘
+297  — #pcom-page · 296 — #prod-page · 295 — #cot-page
+290  — #cont-m, #opp-m, #int-m, #gcm, #cm
+280  — #pfpage, #rel-page, #cat-page
+200  — .mo (modais genéricos: task-m, im, eq-m, cfgm, kb-move-m)
+150  — #sp (side panel) · 149 — #po
 100  — #nb (navbar)
 ```
 
-> Regra: modais que abrem por cima do perfil (`#pfpage` z-index 280) precisam de z-index ≥ 290.
+> **Regra 1 — modal fica acima da superfície que o abre.** Quem abre por cima
+> do perfil (`#pfpage` 280) precisa de ≥ 290; quem abre por cima dos documentos
+> (295–297) precisa de ≥ 300.
+
+> ⚠ **Regra 2 — respondedor global não disputa camada com quem o invoca.**
+> `#co` morava em **300**, dentro da faixa dos modais. Qualquer modal acima
+> disso (o de anexos em 311, por exemplo) fazia a confirmação abrir **atrás**
+> dele: a tela travava e o motivo ficava escondido. Pior, empatava com `#cat-m`
+> e `#drill-m` (300), e no empate vence quem vem **depois no DOM** — os dois
+> vinham depois, então a confirmação sumia no catálogo e no drill-down também.
+> Por isso confirmação e toasts subiram para a faixa **900+**. Todo modal novo
+> pode ficar abaixo de 900 sem pensar no assunto.
+
+> ⚠ **`style="z-index:"` inline vence o CSS.** O `#co` tinha o valor inline;
+> enquanto ele estava lá, a regra em `app.css` era ignorada. Camada nova vai no
+> `app.css`, não no atributo — senão o mapa acima vira ficção.
+
+> **Um comentário afirmar que está certo não é verificação.** No `abrEdit` a
+> partir do perfil havia `// modal abre por cima da página de perfil (z-index
+> maior)`. O `#cm` estava em **200**, contra os 280 do perfil — abria atrás,
+> e o comentário sobreviveu meses justamente por parecer que alguém já tinha
+> checado.
 
 ---
 

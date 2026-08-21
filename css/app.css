@@ -331,14 +331,34 @@ td strong{color:var(--tx);font-weight:600}
 .se{text-align:center;padding:48px 24px;color:var(--mt)}
 .se h3{font-size:var(--fs-lg);font-weight:600;color:var(--tx2);margin-bottom:6px}
 
-/* MODAL */
+/* MODAL
+   ─────────────────────────────────────────────────────────────────────────
+   FAIXAS DE EMPILHAMENTO — a regra que evita "a tela abriu atras da outra":
+
+     100-150   cromo da pagina (navbar, painel lateral)
+     280-297   paginas de tela cheia (perfil, catalogo, os 3 documentos)
+     200-312   MODAIS: cada um acima da superficie que o abre
+     500-600   sobreposicoes globais (busca, atalhos, desafio de MFA)
+     900+      RESPONDEDORES GLOBAIS: confirmacao e toasts
+
+   O 900 existe porque #co (a confirmacao) morava em 300 — dentro da faixa
+   dos modais que a chamam. Bastava um modal em 310 pra confirmacao abrir
+   ATRAS dele e o usuario ficar preso: a tela nao responde e o motivo esta
+   escondido. Empatava tambem com #cat-m e #drill-m (300), e ali quem ganhava
+   era o ultimo no DOM — os dois vinham depois, entao a confirmacao sumia.
+   Respondedor global nao pode competir por camada com quem o invoca. */
 .mo{display:none;position:fixed;inset:0;background:rgba(0,0,0,.35);z-index:200;align-items:center;justify-content:center;padding:20px}
-/* Modais que abrem POR CIMA do perfil da empresa (#pfpage z-index 280) */
-#cont-m,#opp-m,#int-m,#gcm{z-index:290}
+/* Modais que abrem POR CIMA do perfil da empresa (#pfpage z-index 280).
+   #cm entrou aqui em 21/08/2026: o botao "Editar" DENTRO do perfil o abria,
+   e em 200 ele ficava atras da propria pagina que o chamou. Havia um
+   comentario no JS afirmando que o z-index era maior — nao era. */
+#cont-m,#opp-m,#int-m,#gcm,#cm{z-index:290}
 /* Editar pedido abre por cima da #cot-page (295), entao 290 nao basta.
    O historico abre por cima do editor. */
 #edp-m{z-index:300}
 #edp-hist-m{z-index:302}
+/* Acima de TUDO: e resposta a uma acao tomada em qualquer camada. */
+#co{z-index:900}
 .mo.op{display:flex}
 .md{background:var(--sur);border-radius:var(--r);padding:28px;width:100%;max-width:600px;max-height:92vh;overflow-y:auto;box-shadow:var(--shl);animation:mIn .18s ease;border:1px solid var(--bdr)}
 @keyframes mIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
@@ -530,7 +550,7 @@ td strong{color:var(--tx);font-weight:600}
 .rb{flex:1}.rbr{height:5px;background:var(--bdr);border-radius:99px;overflow:hidden;margin-top:4px}
 
 /* TOAST */
-#tc{position:fixed;top:66px;right:18px;z-index:400;display:flex;flex-direction:column;gap:8px}
+#tc{position:fixed;top:66px;right:18px;z-index:950;display:flex;flex-direction:column;gap:8px}
 .toast{background:var(--sur);border-radius:var(--r);padding:12px 14px 12px 12px;box-shadow:var(--shm);border:1px solid var(--bdr);border-left:3px solid var(--p);min-width:250px;max-width:340px;animation:tIn .22s ease;display:flex;align-items:flex-start;gap:9px}
 .toast.ts{border-left-color:var(--ok)}.toast.tw{border-left-color:var(--er)}
 .tib{flex:1}
@@ -809,8 +829,11 @@ td strong{color:var(--tx);font-weight:600}
 @media(max-width:1100px){#kb-board{grid-template-columns:repeat(2,1fr)}}
 /* Sprint 9.3 (B-03): no celular 2 colunas x 200px minimos nao cabem em 390px —
    o card ficava cortado e o botao "Mover" com ele. Uma coluna por vez. */
-@media(max-width:560px){#kb-board{grid-template-columns:1fr}.kb-col{min-width:0}}
 .kb-col{background:var(--bg);border:1px solid var(--bdr);border-radius:var(--rs);display:flex;flex-direction:column;min-width:200px}
+/* DEPOIS da regra-base de propósito: @media nao soma especificidade, e por
+   estar ANTES o `min-width:0` era anulado pelos 200px da base — a regra existia
+   e nao valia nada. Ver a nota sobre ordem de codigo no fim do arquivo. */
+@media(max-width:560px){#kb-board{grid-template-columns:1fr}.kb-col{min-width:0}}
 .kb-col-head{padding:10px 12px;border-bottom:1px solid var(--bdr);display:flex;justify-content:space-between;align-items:center;font-size:var(--fs-sm);font-weight:700;text-transform:uppercase;letter-spacing:.04em;color:var(--tx);background:var(--sur);border-top-left-radius:var(--rs);border-top-right-radius:var(--rs)}
 .kb-col-head .kb-col-count{background:var(--p);color:#fff;font-size:var(--fs-2xs);padding:2px 7px;border-radius:99px;font-weight:700}
 .kb-col-body{flex:1;padding:8px;display:flex;flex-direction:column;gap:8px;min-height:120px;transition:background .15s}
@@ -1055,7 +1078,6 @@ body.role-leitor .read-only-banner{display:block}
 .edp-prow input,.edp-prow select{padding:6px 8px;border:1px solid var(--bdr);border-radius:var(--rs);font-size:var(--fs-sm);font-family:inherit;background:var(--sur);color:var(--tx);outline:none;width:100%;box-sizing:border-box}
 .edp-prow input:focus,.edp-prow select:focus{border-color:var(--p)}
 .edp-prow .num{text-align:right}
-.edp-emb{font-size:var(--fs-xs);color:var(--mt);margin-top:1px}
 /* O rotulo de cada campo so aparece no celular, onde o cabecalho some */
 .edp-fld{display:block}
 .edp-fld > span,.edp-lin-tot-lbl{display:none;font-size:var(--fs-2xs);font-weight:600;color:var(--mt);text-transform:uppercase;letter-spacing:.04em;margin-bottom:3px}
@@ -1498,6 +1520,7 @@ body.role-leitor .read-only-banner{display:block}
 .cot-anx-badge{display:inline-flex;align-items:center;justify-content:center;min-width:18px;height:18px;padding:0 5px;margin-left:4px;border-radius:99px;background:var(--ac);color:var(--ac-tx);font-size:var(--fs-2xs);font-weight:800;font-variant-numeric:tabular-nums}
 .anx-aviso{background:var(--ps);border-left:3px solid var(--p);border-radius:var(--rs);padding:10px 14px;font-size:var(--fs-md);line-height:1.55;color:var(--tx2);margin-bottom:14px}
 .anx-vazio{font-size:var(--fs-md);color:var(--mt);text-align:center;padding:22px 0}
+#anx-btn.busy{opacity:.6;pointer-events:none}
 .anx-item{display:flex;align-items:center;gap:11px;padding:10px 0;border-bottom:1px solid var(--bdr)}
 .anx-item:last-child{border-bottom:none}
 .anx-ico{font-size:19px;flex-shrink:0}

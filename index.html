@@ -731,7 +731,7 @@
 </div>
 
 <!-- MODAL CONFIRM -->
-<div class="mo" id="co" style="z-index:300">
+<div class="mo" id="co">
   <div class="md">
     <div class="coi"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg></div>
     <h3 id="cotit">Confirmar exclusão</h3>
@@ -835,13 +835,15 @@
     </div>
     <div class="anx-aviso">
       A OC assinada e o comprovante ficam aqui, junto do pedido — e não na caixa
-      de e-mail de quem recebeu. <b>PDF, JPG, PNG ou WebP, até 10 MB.</b>
+      de e-mail de quem recebeu. <b>PDF, JPG, PNG ou WebP, até 10 MB cada.</b>
+      Dá para escolher vários de uma vez.
     </div>
     <div id="anx-lista"></div>
     <div class="ma" style="justify-content:flex-start">
       <label class="btn bac sm" id="anx-btn" style="cursor:pointer">
-        📎 Anexar arquivo
-        <input aria-label="Escolher arquivo para anexar" type="file" id="anx-input" accept="application/pdf,image/jpeg,image/png,image/webp"
+        <span id="anx-btn-txt">📎 Anexar arquivos</span>
+        <input aria-label="Escolher arquivos para anexar" type="file" id="anx-input" multiple
+               accept="application/pdf,image/jpeg,image/png,image/webp"
                onchange="enviarAnexo(this)" style="display:none">
       </label>
     </div>
@@ -4172,7 +4174,7 @@ let GC_OPP_PRODS = [];
 
 function abrEditFromPerfil() {
   if (!pfClientId) return;
-  abrEdit(pfClientId); // modal abre por cima da página de perfil (z-index maior)
+  abrEdit(pfClientId); // #cm esta em 290 (app.css), acima do #pfpage 280
 }
 
 // Sprint 3.3: renderPfResumo, loadPfHistorico, loadPfNotas, loadPfAlteracoes

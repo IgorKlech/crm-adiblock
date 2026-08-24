@@ -269,9 +269,15 @@ UPDATE public.products SET preco_materia_prima=2.026, preco_office=8.65, preco_p
 UPDATE public.products SET preco_materia_prima=2.026, preco_office=8.98, preco_pj=9.13 WHERE nome='WP TILE PRO' AND embalagem='Bombona 20';
 UPDATE public.products SET preco_materia_prima=2.026, preco_office=8.18, preco_pj=8.33 WHERE nome='WP TILE PRO' AND embalagem='Tambor 200';
 
--- ── 3) Conferencia: ANTES e DEPOIS num resultado so ─────────────────────
--- Num SO select de proposito: o SQL Editor do Supabase mostra apenas o
--- resultado do ULTIMO comando.
+COMMIT;
+
+-- ── 3) Conferencia — DEPOIS do COMMIT, de proposito ─────────────────────
+-- O SQL Editor do Supabase exibe apenas o resultado do ULTIMO comando. Com
+-- este SELECT antes do COMMIT, a saida da tela era o COMMIT — que nao
+-- retorna linha, e o editor dizia "Success. No rows returned". A conferencia
+-- rodava e ficava invisivel. A tabela de backup sobrevive ao COMMIT, entao
+-- da pra conferir depois; se voce ja rodou e nao viu numero, rode so daqui
+-- pra baixo.
 SELECT (SELECT count(*) FROM public._bkp_precos_20260824)                    AS linhas_guardadas,
        (SELECT count(*) FROM public.products p JOIN public._bkp_precos_20260824 b
           ON b.id = p.id WHERE p.preco_office IS DISTINCT FROM b.preco_office
@@ -279,8 +285,6 @@ SELECT (SELECT count(*) FROM public._bkp_precos_20260824)                    AS 
              OR p.preco_materia_prima IS DISTINCT FROM b.preco_materia_prima) AS linhas_alteradas,
        (SELECT count(*) FROM public.products)                                AS total_no_catalogo,
        (SELECT count(*) FROM public.products WHERE preco_pj < preco_office)  AS margem_invertida;
-
-COMMIT;
 
 -- =========================================================================
 -- ESPERADO: linhas_guardadas 233 · linhas_alteradas 229 · total 233

@@ -1,6 +1,16 @@
 -- =========================================================================
 -- 2026-08-24 — Tabela de Preco 2026 nos produtos do catalogo
 -- =========================================================================
+-- ⚠ RODE UM BLOCO DE CADA VEZ. Nao cole o arquivo inteiro.
+--
+--   Na primeira tentativa o arquivo inteiro foi colado e o editor devolveu
+--   "Success. No rows returned" sem ter criado a tabela de backup nem
+--   aplicado um UPDATE sequer — conferido por sondagem em 13 pontos da lista.
+--   Nao sei dizer o que o editor fez com as 392 linhas; sei que nao fez o que
+--   estava escrito. Entao a migration passou a ser tres blocos pequenos, cada
+--   um com resultado visivel na tela. Um bloco que nao roda vira erro na sua
+--   frente, nao silencio.
+--
 -- O QUE FAZ
 --   Atualiza preco_materia_prima, preco_office e preco_pj de 229 linhas de
 --   public.products com os valores da Tabela de Preco 2026.
@@ -12,33 +22,43 @@
 --   que `pesoDaEmbalagem()` tira quantos volumes o Pedido de Producao pede —
 --   renomear quebraria o calculo na fabrica. 78 das 229 linhas caem nesse caso.
 --
--- COMO AS LINHAS FORAM PAREADAS
---   Por produto + tipo de embalagem, alinhando os volumes do MAIOR para o
---   menor. E o que faz `Bombona 60` encontrar `Bombona 50` da tabela, e o que
---   deixa de fora, corretamente, as bombonas de 5 L e 6 L que so o banco tem.
---
 -- ⚠ products NAO TEM TRIGGER DE AUDITORIA
 --   log_audit_changes() roda em companies, contacts, opportunities,
 --   opportunity_products e proposals — products nao esta na lista. Um UPDATE
---   de preco nao deixa rastro nenhum. Por isso o passo 1 guarda os precos
---   atuais numa tabela antes de escrever; sem ela, desfazer exigiria restaurar
---   o banco inteiro por causa de tres colunas.
+--   de preco nao deixa rastro nenhum. Por isso o BLOCO 1 existe e por isso ele
+--   vem antes: sem ele, desfazer exigiria restaurar o banco inteiro por causa
+--   de tres colunas.
 --
 -- ⚠ PROPOSTA JA EMITIDA NAO MUDA. `proposals.snapshot` e imutavel e guarda o
 --   preco do dia da emissao. So proposta NOVA pega o preco novo.
 --
--- ANTES DE RODAR: clique "Baixar Backup" no Dashboard (Regra de Ouro nº 2).
+-- ANTES DE COMECAR: clique "Baixar Backup" no Dashboard (Regra de Ouro nº 2).
 -- =========================================================================
 
-BEGIN;
 
--- ── 1) Rede de seguranca: os precos de hoje ──────────────────────────────
+-- =========================================================================
+-- BLOCO 1 de 3 — a rede de seguranca.  RODE SOZINHO.
+-- =========================================================================
+-- Guarda os precos de HOJE, direto da tabela viva. Tem que devolver uma linha
+-- com a contagem; se devolver erro ou nada, PARE — nao siga para o bloco 2.
+-- =========================================================================
+
 CREATE TABLE IF NOT EXISTS public._bkp_precos_20260824 AS
 SELECT id, nome, embalagem, preco_materia_prima, preco_office, preco_pj, now() AS salvo_em
   FROM public.products;
 
--- ── 2) Os 229 precos ─────────────────────────────────────────────────────
--- Cada UPDATE casa por (nome, embalagem) exatos do BANCO.
+SELECT count(*) AS linhas_guardadas FROM public._bkp_precos_20260824;
+-- ESPERADO: 233
+
+
+-- =========================================================================
+-- BLOCO 2 de 3 — os 229 precos.  SO DEPOIS de o bloco 1 ter devolvido 233.
+-- =========================================================================
+-- Cada UPDATE casa por (nome, embalagem) exatos do BANCO. Onde o nome da
+-- embalagem difere da tabela impressa, o nome dela vai no comentario ao lado.
+-- Seguro repetir: grava valor fixo, nao incrementa.
+-- =========================================================================
+
 UPDATE public.products SET preco_materia_prima=1.486, preco_office=7.18, preco_pj=7.33 WHERE nome='ACCELIK AS' AND embalagem='Bombona 60';   -- tabela: Bombona 50
 UPDATE public.products SET preco_materia_prima=1.486, preco_office=7.50, preco_pj=7.66 WHERE nome='ACCELIK AS' AND embalagem='Bombona 25';   -- tabela: Bombona 20
 UPDATE public.products SET preco_materia_prima=1.486, preco_office=6.89, preco_pj=7.05 WHERE nome='ACCELIK AS' AND embalagem='CNT 1250';   -- tabela: CNT 1000
@@ -269,52 +289,43 @@ UPDATE public.products SET preco_materia_prima=2.026, preco_office=8.65, preco_p
 UPDATE public.products SET preco_materia_prima=2.026, preco_office=8.98, preco_pj=9.13 WHERE nome='WP TILE PRO' AND embalagem='Bombona 20';
 UPDATE public.products SET preco_materia_prima=2.026, preco_office=8.18, preco_pj=8.33 WHERE nome='WP TILE PRO' AND embalagem='Tambor 200';
 
-COMMIT;
 
--- ── 3) Conferencia — DEPOIS do COMMIT, de proposito ─────────────────────
--- O SQL Editor do Supabase exibe apenas o resultado do ULTIMO comando. Com
--- este SELECT antes do COMMIT, a saida da tela era o COMMIT — que nao
--- retorna linha, e o editor dizia "Success. No rows returned". A conferencia
--- rodava e ficava invisivel. A tabela de backup sobrevive ao COMMIT, entao
--- da pra conferir depois; se voce ja rodou e nao viu numero, rode so daqui
--- pra baixo.
+-- =========================================================================
+-- BLOCO 3 de 3 — conferencia.  RODE SOZINHO, depois do bloco 2.
+-- =========================================================================
 SELECT (SELECT count(*) FROM public._bkp_precos_20260824)                    AS linhas_guardadas,
-       (SELECT count(*) FROM public.products p JOIN public._bkp_precos_20260824 b
-          ON b.id = p.id WHERE p.preco_office IS DISTINCT FROM b.preco_office
-             OR p.preco_pj IS DISTINCT FROM b.preco_pj
-             OR p.preco_materia_prima IS DISTINCT FROM b.preco_materia_prima) AS linhas_alteradas,
+       (SELECT count(*) FROM public.products p
+          JOIN public._bkp_precos_20260824 b ON b.id = p.id
+         WHERE p.preco_office        IS DISTINCT FROM b.preco_office
+            OR p.preco_pj            IS DISTINCT FROM b.preco_pj
+            OR p.preco_materia_prima IS DISTINCT FROM b.preco_materia_prima) AS linhas_alteradas,
        (SELECT count(*) FROM public.products)                                AS total_no_catalogo,
        (SELECT count(*) FROM public.products WHERE preco_pj < preco_office)  AS margem_invertida;
 
--- =========================================================================
--- ESPERADO: linhas_guardadas 233 · linhas_alteradas 229 · total 233
---           margem_invertida 1  (ver o bloco B abaixo)
--- =========================================================================
+-- ESPERADO: 233 · 228 · 233 · 1
+--   228 e nao 229 porque o ACCELIK AS Bombona 25 ja estava com o preco de 2026
+--   antes deste bloco (alterado a mao apos o export). O UPDATE dele grava o
+--   mesmo valor, entao ele nao conta como alterado em relacao ao backup.
+--   margem_invertida 1 = LIKTIVE ACEP UF, ver BLOCO B.
 
 
 -- =========================================================================
--- BLOCO A — as 19 linhas da tabela 2026 que NAO existem no catalogo
+-- BLOCO A (opcional) — as 19 linhas da tabela 2026 que NAO existem no catalogo
 -- =========================================================================
--- Rode este bloco separado, e so o que voce decidir cadastrar.
---
--- MORFLOOR HR e VERTICAL CURE: os dois foram apagados pela migration de
---   03/06/2026 ("sairam de linha") e VOLTARAM na tabela 2026, com preco. Sem
---   eles, o vendedor nao acha o produto se o cliente pedir. Recomendo cadastrar.
+-- MORFLOOR HR e VERTICAL CURE: apagados pela migration de 03/06/2026 ("sairam
+--   de linha") e de volta na tabela 2026, com preco. Sem eles, o vendedor nao
+--   acha o produto se o cliente pedir. Recomendo cadastrar.
 --
 -- MINERAL REPAIR / WHITE MINERAL REPAIR Comp.A e Comp.B: hoje so existe o
---   CONJUNTO. A tabela 2026 passou a listar os componentes avulsos. Isso e
---   decisao COMERCIAL, nao tecnica: so cadastre se a equipe pode vender
---   componente separado.
+--   CONJUNTO. Decisao COMERCIAL: so cadastre se a equipe pode vender avulso.
 --
--- PRIME JD: o banco tem `Prime JD Conjunto` (Conjunto 1). A tabela 2026 tem
---   1KG e 5KG. Se for renomear em vez de criar, use o bloco C.
+-- PRIME JD: o banco tem `Prime JD Conjunto`. A tabela 2026 tem 1KG e 5KG. Se
+--   for renomear em vez de criar, veja o BLOCO C.
 --
--- ⚠ org_id: se a sua instalacao tem o trigger set_org_id em products, ele
---   preenche sozinho. Se nao tiver, o INSERT falha — nesse caso acrescente
---   a coluna org_id com o id da Adiblock.
+-- ⚠ org_id: se products tem o trigger set_org_id, ele preenche sozinho. Se nao
+--   tiver, o INSERT falha — acrescente a coluna org_id com o id da Adiblock.
 -- =========================================================================
 /*
-BEGIN;
 INSERT INTO public.products (nome, embalagem, preco_materia_prima, preco_office, preco_pj) VALUES ('ADIGROUT MIX CRYSTAL', 'Saco 10', 9.000, 26.39, 26.54) ON CONFLICT (nome, embalagem) DO NOTHING;
 INSERT INTO public.products (nome, embalagem, preco_materia_prima, preco_office, preco_pj) VALUES ('CONCREMOVER SUPER', 'Bombona 50', 1.761, 7.93, 8.08) ON CONFLICT (nome, embalagem) DO NOTHING;
 INSERT INTO public.products (nome, embalagem, preco_materia_prima, preco_office, preco_pj) VALUES ('MINERAL REPAIR 132 Comp.A', 'Saco 20', 2.362, 8.87, 9.02) ON CONFLICT (nome, embalagem) DO NOTHING;
@@ -334,18 +345,17 @@ INSERT INTO public.products (nome, embalagem, preco_materia_prima, preco_office,
 INSERT INTO public.products (nome, embalagem, preco_materia_prima, preco_office, preco_pj) VALUES ('VERTICAL CURE', 'Tambor 200', 2.430, 9.28, 9.43) ON CONFLICT (nome, embalagem) DO NOTHING;
 INSERT INTO public.products (nome, embalagem, preco_materia_prima, preco_office, preco_pj) VALUES ('WHITE MINERAL REPAIR COMP.A', 'Saco 20', 3.672, 12.77, 12.92) ON CONFLICT (nome, embalagem) DO NOTHING;
 INSERT INTO public.products (nome, embalagem, preco_materia_prima, preco_office, preco_pj) VALUES ('WHITE MINERAL REPAIR COMP.B', 'Bombona 20', 1.708, 8.69, 8.85) ON CONFLICT (nome, embalagem) DO NOTHING;
-COMMIT;
 */
 
 
 -- =========================================================================
--- BLOCO B — a margem invertida do LIKTIVE ACEP UF
+-- BLOCO B (opcional) — a margem invertida do LIKTIVE ACEP UF
 -- =========================================================================
 -- A tabela 2026 traz preco_pj MENOR que preco_office nessa linha (10,30 contra
 -- 10,91): a venda com 10% de comissao sairia mais barata que a sem comissao.
 -- O bloco 2 aplica a tabela COMO ELA E — nao inventei preco. Se voce confirmar
--- que e erro da planilha, este UPDATE corrige, seguindo o mesmo espacamento
--- das outras linhas do produto (office + 0,15).
+-- que e erro da planilha, este UPDATE corrige seguindo o mesmo espacamento das
+-- outras linhas do produto (office + 0,15).
 --
 -- ⚠ Corrigir aqui e nao corrigir na planilha faz o erro voltar no ano que vem.
 -- =========================================================================
@@ -356,7 +366,7 @@ UPDATE public.products SET preco_pj = 11.03
 
 
 -- =========================================================================
--- BLOCO C — as 4 linhas do banco que a tabela 2026 nao lista
+-- BLOCO C (opcional) — as 4 linhas do banco que a tabela 2026 nao lista
 -- =========================================================================
 --   ACCELIK AS               Bombona 6      office     6.98   (mantem o preco atual)
 --   ADIGROUT AR PLUS         Saco 25        office     3.95   (mantem o preco atual)
@@ -366,8 +376,7 @@ UPDATE public.products SET preco_pj = 11.03
 -- Nenhuma precisa ser apagada:
 --   ADIGROUT AR PLUS — a migration de junho ja mandava manter ("continua ativo")
 --   ACCELIK AS Bombona 6 / KOLA Bombona 5 — embalagens pequenas fora da tabela.
---     Hoje custam o mesmo que a bombona seguinte. Para manter essa relacao com
---     o preco novo, descomente:
+--     Hoje custam o mesmo que a bombona seguinte. Pra manter essa relacao:
 --       UPDATE public.products SET preco_materia_prima=1.486, preco_office=7.50, preco_pj=7.66
 --        WHERE nome='ACCELIK AS' AND embalagem='Bombona 6';
 --       UPDATE public.products SET preco_materia_prima=1.708, preco_office=8.11, preco_pj=8.26
@@ -380,16 +389,14 @@ UPDATE public.products SET preco_pj = 11.03
 
 
 -- =========================================================================
--- ROLLBACK EXATO (enquanto a tabela do passo 1 existir)
+-- ROLLBACK EXATO (enquanto _bkp_precos_20260824 existir)
 -- =========================================================================
---   BEGIN;
 --   UPDATE public.products p
 --      SET preco_materia_prima = b.preco_materia_prima,
 --          preco_office        = b.preco_office,
 --          preco_pj            = b.preco_pj
 --     FROM public._bkp_precos_20260824 b
 --    WHERE p.id = b.id;
---   COMMIT;
 --
 -- LIMPEZA (so depois de a equipe usar os precos novos por uma semana):
 --   DROP TABLE public._bkp_precos_20260824;

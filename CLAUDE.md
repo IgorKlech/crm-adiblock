@@ -122,7 +122,7 @@ proposal_revisions  — revisões anteriores de um pedido (imutável: só SELECT
 tasks               — tarefas livres (Sprint 6.2, sem oportunidade)
 audit_log           — log imutável de INSERT/UPDATE/DELETE
 lgpd_requests       — ações LGPD
-products            — catálogo de preços (tabela 2025)
+products            — catálogo de preços (tabela 2026, aplicada em 24/08)
 ```
 
 ### View
@@ -619,6 +619,30 @@ O evento `TOKEN_REFRESHED` do Supabase Auth dispara ~a cada hora e era tratado c
 
 Requisito LGPD: o log de auditoria deve sobreviver à exclusão da empresa. Com FK normal (`ON DELETE SET NULL` já está no código), o `DELETE` em `companies` disparava violação de constraint. Removida a FK; o `company_id` é apenas um atalho de filtro, não integridade referencial.
 
+### O SQL Editor do Supabase é traiçoeiro com script grande (2026-08-24)
+
+A migration da tabela de preço 2026 tinha 392 linhas. Colada inteira, o editor
+respondeu **"Success. No rows returned"** e **não fez nada**: nem criou a tabela
+de backup, nem aplicou um `UPDATE` sequer. Confirmado por sondagem em 13 pontos
+da lista — todos com o preço antigo.
+
+Não sei o que ele fez com as 392 linhas. Sei que não fez o que estava escrito,
+e que **avisou sucesso**. Um arquivo que não roda e ainda diz que deu certo é
+pior que um que falha.
+
+**Três regras que saíram disso:**
+
+1. **Bloco pequeno, com resultado visível.** Cada passo tem que devolver um
+   número na tela — `count(*)`, `UPDATE 229`. "Success" sem número não prova nada.
+2. **O `COMMIT` não pode ser o último comando.** O editor exibe só o resultado do
+   último, e `COMMIT` não retorna linha: a conferência roda e fica invisível.
+   Conferência vai **depois** do `COMMIT`, como comando separado.
+3. **Muitos `UPDATE` viram um `UPDATE ... FROM (VALUES ...)`.** Copiar um
+   intervalo de linhas exato é frágil — na prática falhou. Um comando só é
+   atômico, não tem intervalo pra errar, e devolve a contagem de linhas afetadas.
+
+> Vale para qualquer migration deste projeto daqui pra frente, não só para preço.
+
 ### O ponto cego do audit_log: 3 campos, e o efeito colateral (2026-08-19)
 
 `log_audit_changes()` **ignora** `updated_at`, `estagio_changed_at` e
@@ -792,7 +816,8 @@ crm-adiblock/
 │   ├── 2026-08-14-revisao-pedidos.sql
 │   ├── 2026-08-14-pedido-comercial.sql
 │   ├── 2026-08-17-closed-at-retroativo.sql  ← APLICADA em 19/08/2026 (60 linhas)
-│   └── 2026-08-17-anexos-storage.sql        ← APLICADA em 17/08/2026
+│   ├── 2026-08-17-anexos-storage.sql        ← APLICADA em 17/08/2026
+│   └── 2026-08-24-tabela-preco-2026.sql     ← APLICADA em 24/08/2026 (229 preços)
 ├── docs/
 │   ├── RESTORE.md      ← guia de restauração de backup
 │   ├── diagnostico-banco.sql ← 6 blocos SÓ-LEITURA de checagem do banco

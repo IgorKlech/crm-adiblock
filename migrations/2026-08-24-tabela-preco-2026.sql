@@ -54,240 +54,254 @@ SELECT count(*) AS linhas_guardadas FROM public._bkp_precos_20260824;
 -- =========================================================================
 -- BLOCO 2 de 3 — os 229 precos.  SO DEPOIS de o bloco 1 ter devolvido 233.
 -- =========================================================================
--- Cada UPDATE casa por (nome, embalagem) exatos do BANCO. Onde o nome da
--- embalagem difere da tabela impressa, o nome dela vai no comentario ao lado.
+-- UM COMANDO SO, de proposito. Antes eram 229 UPDATE separados e a copia
+-- por intervalo de linhas se mostrou fragil. Aqui basta selecionar deste
+-- cabecalho ate o ponto-e-virgula final: comentario colado junto e inofensivo,
+-- e o editor devolve 'UPDATE 229' — um numero, nao silencio.
+--
+-- Casa por (nome, embalagem) exatos do BANCO. Onde o nome da embalagem difere
+-- da tabela impressa, o nome dela vai no comentario ao lado da linha.
 -- Seguro repetir: grava valor fixo, nao incrementa.
 -- =========================================================================
 
-UPDATE public.products SET preco_materia_prima=1.486, preco_office=7.18, preco_pj=7.33 WHERE nome='ACCELIK AS' AND embalagem='Bombona 60';   -- tabela: Bombona 50
-UPDATE public.products SET preco_materia_prima=1.486, preco_office=7.50, preco_pj=7.66 WHERE nome='ACCELIK AS' AND embalagem='Bombona 25';   -- tabela: Bombona 20
-UPDATE public.products SET preco_materia_prima=1.486, preco_office=6.89, preco_pj=7.05 WHERE nome='ACCELIK AS' AND embalagem='CNT 1250';   -- tabela: CNT 1000
-UPDATE public.products SET preco_materia_prima=1.486, preco_office=6.70, preco_pj=6.86 WHERE nome='ACCELIK AS' AND embalagem='Tambor 250';   -- tabela: Tambor 200
-UPDATE public.products SET preco_materia_prima=2.746, preco_office=10.62, preco_pj=10.77 WHERE nome='ACCELIK SF' AND embalagem='Bombona 60';   -- tabela: Bombona 50
-UPDATE public.products SET preco_materia_prima=2.746, preco_office=10.94, preco_pj=11.10 WHERE nome='ACCELIK SF' AND embalagem='Bombona 25';   -- tabela: Bombona 20
-UPDATE public.products SET preco_materia_prima=2.746, preco_office=10.33, preco_pj=10.49 WHERE nome='ACCELIK SF' AND embalagem='CNT 1250';   -- tabela: CNT 1000
-UPDATE public.products SET preco_materia_prima=2.746, preco_office=10.14, preco_pj=10.29 WHERE nome='ACCELIK SF' AND embalagem='Tambor 250';   -- tabela: Tambor 200
-UPDATE public.products SET preco_materia_prima=3.084, preco_office=10.24, preco_pj=10.40 WHERE nome='ACCETIVE FC POWDER' AND embalagem='Saco 20';
-UPDATE public.products SET preco_materia_prima=2.746, preco_office=10.62, preco_pj=10.77 WHERE nome='ACEPESS FAST' AND embalagem='Bombona 60';   -- tabela: Bombona 50
-UPDATE public.products SET preco_materia_prima=2.746, preco_office=10.94, preco_pj=11.10 WHERE nome='ACEPESS FAST' AND embalagem='Bombona 24';   -- tabela: Bombona 20
-UPDATE public.products SET preco_materia_prima=2.746, preco_office=10.33, preco_pj=10.49 WHERE nome='ACEPESS FAST' AND embalagem='CNT 1200';   -- tabela: CNT 1000
-UPDATE public.products SET preco_materia_prima=2.746, preco_office=10.14, preco_pj=10.29 WHERE nome='ACEPESS FAST' AND embalagem='Tambor 240';   -- tabela: Tambor 200
-UPDATE public.products SET preco_materia_prima=1.250, preco_office=6.53, preco_pj=6.69 WHERE nome='ACS 800' AND embalagem='Bombona 50';
-UPDATE public.products SET preco_materia_prima=1.250, preco_office=6.86, preco_pj=7.01 WHERE nome='ACS 800' AND embalagem='Bombona 20';
-UPDATE public.products SET preco_materia_prima=1.250, preco_office=6.25, preco_pj=6.40 WHERE nome='ACS 800' AND embalagem='CNT 1000';
-UPDATE public.products SET preco_materia_prima=1.250, preco_office=6.06, preco_pj=6.21 WHERE nome='ACS 800' AND embalagem='Tambor 200';
-UPDATE public.products SET preco_materia_prima=0.989, preco_office=4.52, preco_pj=4.68 WHERE nome='ADIGROUT AR' AND embalagem='Saco 25';
-UPDATE public.products SET preco_materia_prima=0.684, preco_office=3.69, preco_pj=3.85 WHERE nome='ADIGROUT AR COMPLETE' AND embalagem='Saco 25';
-UPDATE public.products SET preco_materia_prima=1.780, preco_office=6.68, preco_pj=6.84 WHERE nome='ADIGROUT MC' AND embalagem='Saco 25';
-UPDATE public.products SET preco_materia_prima=8.000, preco_office=23.66, preco_pj=23.81 WHERE nome='ADIGROUT MIX' AND embalagem='Saco 10';
-UPDATE public.products SET preco_materia_prima=8.400, preco_office=24.75, preco_pj=24.90 WHERE nome='ADIGROUT MIX CONCRETE' AND embalagem='Saco 10';
-UPDATE public.products SET preco_materia_prima=0.942, preco_office=4.43, preco_pj=4.58 WHERE nome='ADIGROUT TIX' AND embalagem='Saco 25';
-UPDATE public.products SET preco_materia_prima=1.987, preco_office=7.25, preco_pj=7.40 WHERE nome='ADIGROUT UFR' AND embalagem='Saco 25';
-UPDATE public.products SET preco_materia_prima=2.514, preco_office=8.69, preco_pj=8.84 WHERE nome='ADIGROUT WHITE' AND embalagem='Saco 25';
-UPDATE public.products SET preco_materia_prima=50.000, preco_office=138.27, preco_pj=138.42 WHERE nome='AGRECON POWDER' AND embalagem='Saco 8';
-UPDATE public.products SET preco_materia_prima=0.950, preco_office=6.46, preco_pj=6.61 WHERE nome='ARGAPOL 592 IC Conjunto' AND embalagem='Conjunto 35,4';   -- tabela: Conjunto 35
-UPDATE public.products SET preco_materia_prima=2.750, preco_office=11.37, preco_pj=11.53 WHERE nome='ARGAPOL 992 Conjunto' AND embalagem='Conjunto 6';
-UPDATE public.products SET preco_materia_prima=1.200, preco_office=7.14, preco_pj=7.30 WHERE nome='ARGAPOL BC Conjunto' AND embalagem='Conjunto 35';
-UPDATE public.products SET preco_materia_prima=1.200, preco_office=5.10, preco_pj=5.25 WHERE nome='ARGAPOL MRI' AND embalagem='Saco 20';
-UPDATE public.products SET preco_materia_prima=1.198, preco_office=5.13, preco_pj=5.28 WHERE nome='ARGAPOL RE 642' AND embalagem='Saco 25';   -- tabela: Saco 20
-UPDATE public.products SET preco_materia_prima=2.500, preco_office=8.65, preco_pj=8.80 WHERE nome='CEPAS INJECT' AND embalagem='Saco 20';
-UPDATE public.products SET preco_materia_prima=3.500, preco_office=11.38, preco_pj=11.53 WHERE nome='CEPAS INJECT BC' AND embalagem='Saco 20';   -- tabela: Saco 30
-UPDATE public.products SET preco_materia_prima=1.390, preco_office=6.92, preco_pj=7.07 WHERE nome='CI 900' AND embalagem='Bombona 50';
-UPDATE public.products SET preco_materia_prima=1.390, preco_office=7.24, preco_pj=7.39 WHERE nome='CI 900' AND embalagem='Bombona 20';
-UPDATE public.products SET preco_materia_prima=1.390, preco_office=6.63, preco_pj=6.79 WHERE nome='CI 900' AND embalagem='CNT 1000';
-UPDATE public.products SET preco_materia_prima=1.390, preco_office=6.44, preco_pj=6.59 WHERE nome='CI 900' AND embalagem='Tambor 200';
-UPDATE public.products SET preco_materia_prima=2.412, preco_office=9.71, preco_pj=9.86 WHERE nome='CURE CA' AND embalagem='Bombona 50';
-UPDATE public.products SET preco_materia_prima=2.412, preco_office=10.03, preco_pj=10.18 WHERE nome='CURE CA' AND embalagem='Bombona 20';
-UPDATE public.products SET preco_materia_prima=2.412, preco_office=9.42, preco_pj=9.58 WHERE nome='CURE CA' AND embalagem='CNT 1000';
-UPDATE public.products SET preco_materia_prima=2.412, preco_office=9.23, preco_pj=9.38 WHERE nome='CURE CA' AND embalagem='Tambor 200';
-UPDATE public.products SET preco_materia_prima=4.796, preco_office=14.91, preco_pj=15.07 WHERE nome='DRAMOR POWDER' AND embalagem='Saco 20';
-UPDATE public.products SET preco_materia_prima=3.781, preco_office=13.44, preco_pj=13.59 WHERE nome='EDIMPER M' AND embalagem='Bombona 50';
-UPDATE public.products SET preco_materia_prima=3.781, preco_office=13.77, preco_pj=13.92 WHERE nome='EDIMPER M' AND embalagem='Bombona 20';
-UPDATE public.products SET preco_materia_prima=3.781, preco_office=13.16, preco_pj=13.31 WHERE nome='EDIMPER M' AND embalagem='CNT 1000';
-UPDATE public.products SET preco_materia_prima=3.781, preco_office=12.97, preco_pj=13.12 WHERE nome='EDIMPER M' AND embalagem='Tambor 200';
-UPDATE public.products SET preco_materia_prima=4.462, preco_office=15.30, preco_pj=15.45 WHERE nome='EDIMPER PLUS' AND embalagem='Bombona 60';   -- tabela: Bombona 50
-UPDATE public.products SET preco_materia_prima=4.462, preco_office=15.62, preco_pj=15.78 WHERE nome='EDIMPER PLUS' AND embalagem='Bombona 25';   -- tabela: Bombona 20
-UPDATE public.products SET preco_materia_prima=4.462, preco_office=15.01, preco_pj=15.17 WHERE nome='EDIMPER PLUS' AND embalagem='CNT 1250';   -- tabela: CNT 1000
-UPDATE public.products SET preco_materia_prima=4.462, preco_office=14.82, preco_pj=14.98 WHERE nome='EDIMPER PLUS' AND embalagem='Tambor 250';   -- tabela: Tambor 200
-UPDATE public.products SET preco_materia_prima=2.350, preco_office=8.37, preco_pj=8.53 WHERE nome='EXPANDER 2019' AND embalagem='Saco 10';
-UPDATE public.products SET preco_materia_prima=5.022, preco_office=15.66, preco_pj=15.82 WHERE nome='EXPANFLUID IC' AND embalagem='Saco 10';
-UPDATE public.products SET preco_materia_prima=1.134, preco_office=6.22, preco_pj=6.37 WHERE nome='FASTER' AND embalagem='Bombona 60';   -- tabela: Bombona 50
-UPDATE public.products SET preco_materia_prima=1.134, preco_office=6.54, preco_pj=6.70 WHERE nome='FASTER' AND embalagem='Bombona 24';   -- tabela: Bombona 20
-UPDATE public.products SET preco_materia_prima=1.134, preco_office=5.93, preco_pj=6.09 WHERE nome='FASTER' AND embalagem='CNT 1200';   -- tabela: CNT 1000
-UPDATE public.products SET preco_materia_prima=1.134, preco_office=5.74, preco_pj=5.90 WHERE nome='FASTER' AND embalagem='Tambor 240';   -- tabela: Tambor 200
-UPDATE public.products SET preco_materia_prima=22.000, preco_office=71.02, preco_pj=71.18 WHERE nome='FLUXYGROUT HMR CONJUNTO' AND embalagem='Conjunto 22';   -- tabela: Conjunto 20
-UPDATE public.products SET preco_materia_prima=17.000, preco_office=57.38, preco_pj=57.53 WHERE nome='FLUXYGROUT SOFT CONJUNTO' AND embalagem='Conjunto 28';   -- tabela: Conjunto 20
-UPDATE public.products SET preco_materia_prima=30.000, preco_office=84.99, preco_pj=85.14 WHERE nome='HYDROFLEX RR' AND embalagem='Bombona 50';
-UPDATE public.products SET preco_materia_prima=30.000, preco_office=85.31, preco_pj=85.47 WHERE nome='HYDROFLEX RR' AND embalagem='Bombona 20';
-UPDATE public.products SET preco_materia_prima=30.000, preco_office=84.70, preco_pj=84.86 WHERE nome='HYDROFLEX RR' AND embalagem='CNT 1000';
-UPDATE public.products SET preco_materia_prima=30.000, preco_office=84.51, preco_pj=84.67 WHERE nome='HYDROFLEX RR' AND embalagem='Tambor 200';
-UPDATE public.products SET preco_materia_prima=4.032, preco_office=14.13, preco_pj=14.28 WHERE nome='HYDROFLEX RS' AND embalagem='Bombona 50';
-UPDATE public.products SET preco_materia_prima=4.032, preco_office=14.45, preco_pj=14.61 WHERE nome='HYDROFLEX RS' AND embalagem='Bombona 20';
-UPDATE public.products SET preco_materia_prima=4.032, preco_office=13.84, preco_pj=14.00 WHERE nome='HYDROFLEX RS' AND embalagem='CNT 1000';
-UPDATE public.products SET preco_materia_prima=4.032, preco_office=13.65, preco_pj=13.80 WHERE nome='HYDROFLEX RS' AND embalagem='Tambor 200';
-UPDATE public.products SET preco_materia_prima=19.799, preco_office=57.15, preco_pj=57.31 WHERE nome='HYDROFLEX S' AND embalagem='Bombona 50';
-UPDATE public.products SET preco_materia_prima=19.799, preco_office=57.48, preco_pj=57.63 WHERE nome='HYDROFLEX S' AND embalagem='Bombona 20';
-UPDATE public.products SET preco_materia_prima=19.799, preco_office=56.87, preco_pj=57.02 WHERE nome='HYDROFLEX S' AND embalagem='CNT 1000';
-UPDATE public.products SET preco_materia_prima=19.799, preco_office=56.68, preco_pj=56.83 WHERE nome='HYDROFLEX S' AND embalagem='Tambor 200';
-UPDATE public.products SET preco_materia_prima=0.850, preco_office=5.44, preco_pj=5.60 WHERE nome='HYDROFLEX S A' AND embalagem='Bombona 50';
-UPDATE public.products SET preco_materia_prima=0.850, preco_office=5.77, preco_pj=5.92 WHERE nome='HYDROFLEX S A' AND embalagem='Bombona 20';
-UPDATE public.products SET preco_materia_prima=0.850, preco_office=5.16, preco_pj=5.31 WHERE nome='HYDROFLEX S A' AND embalagem='CNT 1000';
-UPDATE public.products SET preco_materia_prima=0.850, preco_office=4.97, preco_pj=5.12 WHERE nome='HYDROFLEX S A' AND embalagem='Tambor 200';
-UPDATE public.products SET preco_materia_prima=6.151, preco_office=19.91, preco_pj=20.06 WHERE nome='HYDROFLEX SEL' AND embalagem='Bombona 50';
-UPDATE public.products SET preco_materia_prima=6.151, preco_office=20.23, preco_pj=20.39 WHERE nome='HYDROFLEX SEL' AND embalagem='Bombona 20';
-UPDATE public.products SET preco_materia_prima=5.707, preco_office=18.70, preco_pj=18.85 WHERE nome='HYDROFLEX V2' AND embalagem='Bombona 50';
-UPDATE public.products SET preco_materia_prima=5.707, preco_office=19.02, preco_pj=19.17 WHERE nome='HYDROFLEX V2' AND embalagem='Bombona 20';
-UPDATE public.products SET preco_materia_prima=1.438, preco_office=7.05, preco_pj=7.20 WHERE nome='INCORPOR BS PLUS' AND embalagem='Bombona 50';
-UPDATE public.products SET preco_materia_prima=1.438, preco_office=7.37, preco_pj=7.53 WHERE nome='INCORPOR BS PLUS' AND embalagem='Bombona 20';
-UPDATE public.products SET preco_materia_prima=1.438, preco_office=6.76, preco_pj=6.92 WHERE nome='INCORPOR BS PLUS' AND embalagem='CNT 1000';
-UPDATE public.products SET preco_materia_prima=1.438, preco_office=6.57, preco_pj=6.73 WHERE nome='INCORPOR BS PLUS' AND embalagem='Tambor 200';
-UPDATE public.products SET preco_materia_prima=0.727, preco_office=5.11, preco_pj=5.26 WHERE nome='INCORPOR BS-D' AND embalagem='Bombona 50';
-UPDATE public.products SET preco_materia_prima=0.727, preco_office=5.43, preco_pj=5.59 WHERE nome='INCORPOR BS-D' AND embalagem='Bombona 20';
-UPDATE public.products SET preco_materia_prima=0.727, preco_office=4.82, preco_pj=4.98 WHERE nome='INCORPOR BS-D' AND embalagem='CNT 1000';
-UPDATE public.products SET preco_materia_prima=0.727, preco_office=4.63, preco_pj=4.79 WHERE nome='INCORPOR BS-D' AND embalagem='Tambor 200';
-UPDATE public.products SET preco_materia_prima=1.708, preco_office=7.79, preco_pj=7.94 WHERE nome='KOLA' AND embalagem='Bombona 50';
-UPDATE public.products SET preco_materia_prima=1.708, preco_office=8.11, preco_pj=8.26 WHERE nome='KOLA' AND embalagem='Bombona 20';
-UPDATE public.products SET preco_materia_prima=1.708, preco_office=7.50, preco_pj=7.65 WHERE nome='KOLA' AND embalagem='CNT 1000';
-UPDATE public.products SET preco_materia_prima=1.708, preco_office=7.31, preco_pj=7.46 WHERE nome='KOLA' AND embalagem='Tambor 200';
-UPDATE public.products SET preco_materia_prima=6.965, preco_office=22.13, preco_pj=22.28 WHERE nome='KOLA PLUS TIX' AND embalagem='Bombona 50';
-UPDATE public.products SET preco_materia_prima=6.965, preco_office=22.46, preco_pj=22.61 WHERE nome='KOLA PLUS TIX' AND embalagem='Bombona 20';
-UPDATE public.products SET preco_materia_prima=6.965, preco_office=21.85, preco_pj=22.00 WHERE nome='KOLA PLUS TIX' AND embalagem='CNT 1000';
-UPDATE public.products SET preco_materia_prima=6.965, preco_office=21.65, preco_pj=21.81 WHERE nome='KOLA PLUS TIX' AND embalagem='Tambor 200';
-UPDATE public.products SET preco_materia_prima=0.630, preco_office=4.84, preco_pj=5.00 WHERE nome='KOLA PVA' AND embalagem='Bombona 50';
-UPDATE public.products SET preco_materia_prima=0.630, preco_office=5.17, preco_pj=5.32 WHERE nome='KOLA PVA' AND embalagem='Bombona 20';
-UPDATE public.products SET preco_materia_prima=0.630, preco_office=4.37, preco_pj=4.52 WHERE nome='KOLA PVA' AND embalagem='Tambor 200';
-UPDATE public.products SET preco_materia_prima=3.513, preco_office=12.71, preco_pj=12.86 WHERE nome='KOLA SBR' AND embalagem='Bombona 50';
-UPDATE public.products SET preco_materia_prima=3.513, preco_office=13.04, preco_pj=13.19 WHERE nome='KOLA SBR' AND embalagem='Bombona 20';
-UPDATE public.products SET preco_materia_prima=3.513, preco_office=12.43, preco_pj=12.58 WHERE nome='KOLA SBR' AND embalagem='CNT 1000';
-UPDATE public.products SET preco_materia_prima=3.513, preco_office=12.23, preco_pj=12.39 WHERE nome='KOLA SBR' AND embalagem='Tambor 200';
-UPDATE public.products SET preco_materia_prima=6.965, preco_office=22.13, preco_pj=22.28 WHERE nome='KOLA SUPER' AND embalagem='Bombona 50';
-UPDATE public.products SET preco_materia_prima=6.965, preco_office=22.46, preco_pj=22.61 WHERE nome='KOLA SUPER' AND embalagem='Bombona 20';
-UPDATE public.products SET preco_materia_prima=6.965, preco_office=21.85, preco_pj=22.00 WHERE nome='KOLA SUPER' AND embalagem='CNT 1000';
-UPDATE public.products SET preco_materia_prima=6.965, preco_office=21.65, preco_pj=21.81 WHERE nome='KOLA SUPER' AND embalagem='Tambor 200';
-UPDATE public.products SET preco_materia_prima=2.454, preco_office=9.82, preco_pj=9.97 WHERE nome='LIKTIVE ACEP UF' AND embalagem='Bombona 60';   -- tabela: Bombona 50
-UPDATE public.products SET preco_materia_prima=2.454, preco_office=10.91, preco_pj=10.30 WHERE nome='LIKTIVE ACEP UF' AND embalagem='Bombona 25';   -- tabela: Bombona 20
-UPDATE public.products SET preco_materia_prima=2.454, preco_office=9.34, preco_pj=9.50 WHERE nome='LIKTIVE ACEP UF' AND embalagem='Tambor 250';   -- tabela: Tambor 200
-UPDATE public.products SET preco_materia_prima=2.035, preco_office=8.00, preco_pj=8.80 WHERE nome='MINERAL REPAIR 132 Conjunto' AND embalagem='Conjunto 40';
-UPDATE public.products SET preco_materia_prima=2.014, preco_office=8.40, preco_pj=9.24 WHERE nome='MINERAL REPAIR 333 Conjunto' AND embalagem='Conjunto 40';
-UPDATE public.products SET preco_materia_prima=2.690, preco_office=8.00, preco_pj=8.80 WHERE nome='MINERAL REPAIR 499 Conjunto' AND embalagem='Conjunto 40';
-UPDATE public.products SET preco_materia_prima=1.701, preco_office=7.76, preco_pj=7.92 WHERE nome='PLASTICIZER BINDER' AND embalagem='Bombona 50';
-UPDATE public.products SET preco_materia_prima=1.701, preco_office=8.09, preco_pj=8.24 WHERE nome='PLASTICIZER BINDER' AND embalagem='Bombona 20';
-UPDATE public.products SET preco_materia_prima=1.701, preco_office=7.48, preco_pj=7.63 WHERE nome='PLASTICIZER BINDER' AND embalagem='CNT 1000';
-UPDATE public.products SET preco_materia_prima=1.701, preco_office=7.29, preco_pj=7.44 WHERE nome='PLASTICIZER BINDER' AND embalagem='Tambor 200';
-UPDATE public.products SET preco_materia_prima=4.334, preco_office=14.95, preco_pj=15.10 WHERE nome='PLASTICIZER CW' AND embalagem='Bombona 50';
-UPDATE public.products SET preco_materia_prima=4.334, preco_office=15.27, preco_pj=15.43 WHERE nome='PLASTICIZER CW' AND embalagem='Bombona 20';
-UPDATE public.products SET preco_materia_prima=4.334, preco_office=14.66, preco_pj=14.82 WHERE nome='PLASTICIZER CW' AND embalagem='CNT 1000';
-UPDATE public.products SET preco_materia_prima=4.334, preco_office=14.47, preco_pj=14.63 WHERE nome='PLASTICIZER CW' AND embalagem='Tambor 200';
-UPDATE public.products SET preco_materia_prima=3.386, preco_office=12.36, preco_pj=12.52 WHERE nome='PLASTICIZER HC' AND embalagem='Bombona 50';
-UPDATE public.products SET preco_materia_prima=3.386, preco_office=12.69, preco_pj=12.84 WHERE nome='PLASTICIZER HC' AND embalagem='Bombona 20';
-UPDATE public.products SET preco_materia_prima=3.386, preco_office=12.08, preco_pj=12.23 WHERE nome='PLASTICIZER HC' AND embalagem='CNT 1000';
-UPDATE public.products SET preco_materia_prima=3.386, preco_office=12.23, preco_pj=12.38 WHERE nome='PLASTICIZER HC' AND embalagem='Tambor 200';
-UPDATE public.products SET preco_materia_prima=1.843, preco_office=8.15, preco_pj=8.31 WHERE nome='PLASTICIZER PREMIUM' AND embalagem='Bombona 50';
-UPDATE public.products SET preco_materia_prima=1.843, preco_office=8.48, preco_pj=8.63 WHERE nome='PLASTICIZER PREMIUM' AND embalagem='Bombona 20';
-UPDATE public.products SET preco_materia_prima=1.843, preco_office=7.87, preco_pj=8.02 WHERE nome='PLASTICIZER PREMIUM' AND embalagem='CNT 1000';
-UPDATE public.products SET preco_materia_prima=1.843, preco_office=7.68, preco_pj=7.83 WHERE nome='PLASTICIZER PREMIUM' AND embalagem='Tambor 200';
-UPDATE public.products SET preco_materia_prima=1.810, preco_office=8.06, preco_pj=8.22 WHERE nome='PLASTICIZER SAD' AND embalagem='Bombona 50';
-UPDATE public.products SET preco_materia_prima=1.810, preco_office=8.39, preco_pj=8.54 WHERE nome='PLASTICIZER SAD' AND embalagem='Bombona 20';
-UPDATE public.products SET preco_materia_prima=1.810, preco_office=7.78, preco_pj=7.93 WHERE nome='PLASTICIZER SAD' AND embalagem='CNT 1000';
-UPDATE public.products SET preco_materia_prima=1.810, preco_office=7.59, preco_pj=7.74 WHERE nome='PLASTICIZER SAD' AND embalagem='Tambor 200';
-UPDATE public.products SET preco_materia_prima=1.270, preco_office=6.59, preco_pj=6.74 WHERE nome='PLASTICIZER SAD 20' AND embalagem='Bombona 50';
-UPDATE public.products SET preco_materia_prima=1.270, preco_office=6.91, preco_pj=7.07 WHERE nome='PLASTICIZER SAD 20' AND embalagem='Bombona 20';
-UPDATE public.products SET preco_materia_prima=1.270, preco_office=6.30, preco_pj=6.46 WHERE nome='PLASTICIZER SAD 20' AND embalagem='CNT 1000';
-UPDATE public.products SET preco_materia_prima=1.270, preco_office=6.11, preco_pj=6.27 WHERE nome='PLASTICIZER SAD 20' AND embalagem='Tambor 200';
-UPDATE public.products SET preco_materia_prima=3.543, preco_office=12.79, preco_pj=12.94 WHERE nome='POLYPLAST 146' AND embalagem='Bombona 60';   -- tabela: Bombona 50
-UPDATE public.products SET preco_materia_prima=3.543, preco_office=13.12, preco_pj=13.27 WHERE nome='POLYPLAST 146' AND embalagem='Bombona 24';   -- tabela: Bombona 20
-UPDATE public.products SET preco_materia_prima=3.543, preco_office=12.51, preco_pj=12.66 WHERE nome='POLYPLAST 146' AND embalagem='CNT 1200';   -- tabela: CNT 1000
-UPDATE public.products SET preco_materia_prima=3.543, preco_office=12.32, preco_pj=12.47 WHERE nome='POLYPLAST 146' AND embalagem='Tambor 240';   -- tabela: Tambor 200
-UPDATE public.products SET preco_materia_prima=3.576, preco_office=12.88, preco_pj=13.03 WHERE nome='POLYPLAST 151' AND embalagem='Bombona 60';   -- tabela: Bombona 50
-UPDATE public.products SET preco_materia_prima=3.576, preco_office=13.21, preco_pj=13.36 WHERE nome='POLYPLAST 151' AND embalagem='Bombona 24';   -- tabela: Bombona 20
-UPDATE public.products SET preco_materia_prima=3.576, preco_office=12.60, preco_pj=12.75 WHERE nome='POLYPLAST 151' AND embalagem='CNT 1200';   -- tabela: CNT 1000
-UPDATE public.products SET preco_materia_prima=3.576, preco_office=12.41, preco_pj=12.56 WHERE nome='POLYPLAST 151' AND embalagem='Tambor 240';   -- tabela: Tambor 200
-UPDATE public.products SET preco_materia_prima=2.745, preco_office=10.61, preco_pj=10.77 WHERE nome='POLYPLAST 167' AND embalagem='Bombona 60';   -- tabela: Bombona 50
-UPDATE public.products SET preco_materia_prima=2.745, preco_office=10.94, preco_pj=11.09 WHERE nome='POLYPLAST 167' AND embalagem='Bombona 24';   -- tabela: Bombona 20
-UPDATE public.products SET preco_materia_prima=2.745, preco_office=10.33, preco_pj=10.48 WHERE nome='POLYPLAST 167' AND embalagem='CNT 1200';   -- tabela: CNT 1000
-UPDATE public.products SET preco_materia_prima=2.745, preco_office=10.14, preco_pj=10.29 WHERE nome='POLYPLAST 167' AND embalagem='Tambor 240';   -- tabela: Tambor 200
-UPDATE public.products SET preco_materia_prima=2.400, preco_office=9.67, preco_pj=9.82 WHERE nome='POLYPLAST 170 D' AND embalagem='Bombona 60';   -- tabela: Bombona 50
-UPDATE public.products SET preco_materia_prima=2.400, preco_office=10.00, preco_pj=10.15 WHERE nome='POLYPLAST 170 D' AND embalagem='Bombona 24';   -- tabela: Bombona 20
-UPDATE public.products SET preco_materia_prima=2.400, preco_office=9.39, preco_pj=9.54 WHERE nome='POLYPLAST 170 D' AND embalagem='CNT 1200';   -- tabela: CNT 1000
-UPDATE public.products SET preco_materia_prima=2.400, preco_office=9.20, preco_pj=9.35 WHERE nome='POLYPLAST 170 D' AND embalagem='Tambor 240';   -- tabela: Tambor 200
-UPDATE public.products SET preco_materia_prima=2.550, preco_office=10.08, preco_pj=10.24 WHERE nome='POLYPLAST 170 PLUS' AND embalagem='Bombona 60';   -- tabela: Bombona 50
-UPDATE public.products SET preco_materia_prima=2.550, preco_office=10.41, preco_pj=10.56 WHERE nome='POLYPLAST 170 PLUS' AND embalagem='Bombona 24';   -- tabela: Bombona 20
-UPDATE public.products SET preco_materia_prima=2.550, preco_office=9.80, preco_pj=9.95 WHERE nome='POLYPLAST 170 PLUS' AND embalagem='CNT 1200';   -- tabela: CNT 1000
-UPDATE public.products SET preco_materia_prima=2.550, preco_office=9.61, preco_pj=9.76 WHERE nome='POLYPLAST 170 PLUS' AND embalagem='Tambor 240';   -- tabela: Tambor 200
-UPDATE public.products SET preco_materia_prima=3.589, preco_office=12.92, preco_pj=13.07 WHERE nome='POLYPLAST 4300' AND embalagem='Bombona 60';   -- tabela: Bombona 50
-UPDATE public.products SET preco_materia_prima=3.589, preco_office=13.24, preco_pj=13.40 WHERE nome='POLYPLAST 4300' AND embalagem='Bombona 24';   -- tabela: Bombona 20
-UPDATE public.products SET preco_materia_prima=3.589, preco_office=12.63, preco_pj=12.79 WHERE nome='POLYPLAST 4300' AND embalagem='CNT 1200';   -- tabela: CNT 1000
-UPDATE public.products SET preco_materia_prima=3.589, preco_office=12.44, preco_pj=12.59 WHERE nome='POLYPLAST 4300' AND embalagem='Tambor 240';   -- tabela: Tambor 200
-UPDATE public.products SET preco_materia_prima=85.000, preco_office=241.64, preco_pj=241.79 WHERE nome='POLYSEL CONJUNTO' AND embalagem='Conjunto 5';
-UPDATE public.products SET preco_materia_prima=7.812, preco_office=25.44, preco_pj=25.59 WHERE nome='RELEASE WAX' AND embalagem='Balde 18';   -- tabela: Balde 14
-UPDATE public.products SET preco_materia_prima=6.400, preco_office=20.59, preco_pj=20.74 WHERE nome='RELENT' AND embalagem='Bombona 50';
-UPDATE public.products SET preco_materia_prima=6.400, preco_office=20.91, preco_pj=21.07 WHERE nome='RELENT' AND embalagem='Bombona 20';
-UPDATE public.products SET preco_materia_prima=6.400, preco_office=20.30, preco_pj=20.46 WHERE nome='RELENT' AND embalagem='CNT 1000';
-UPDATE public.products SET preco_materia_prima=6.400, preco_office=20.11, preco_pj=20.27 WHERE nome='RELENT' AND embalagem='Tambor 200';
-UPDATE public.products SET preco_materia_prima=23.060, preco_office=66.05, preco_pj=66.20 WHERE nome='RELENT AD' AND embalagem='Bombona 50';
-UPDATE public.products SET preco_materia_prima=14.870, preco_office=44.03, preco_pj=44.18 WHERE nome='RELENT AD' AND embalagem='Bombona 20';
-UPDATE public.products SET preco_materia_prima=23.060, preco_office=65.77, preco_pj=65.92 WHERE nome='RELENT AD' AND embalagem='CNT 1000';
-UPDATE public.products SET preco_materia_prima=14.870, preco_office=43.23, preco_pj=43.38 WHERE nome='RELENT AD' AND embalagem='Tambor 200';
-UPDATE public.products SET preco_materia_prima=17.000, preco_office=48.84, preco_pj=48.99 WHERE nome='RELENT BASE' AND embalagem='Tambor 200';
-UPDATE public.products SET preco_materia_prima=7.535, preco_office=23.69, preco_pj=23.84 WHERE nome='RELENT BIO-VO' AND embalagem='Bombona 50';
-UPDATE public.products SET preco_materia_prima=7.535, preco_office=24.01, preco_pj=24.16 WHERE nome='RELENT BIO-VO' AND embalagem='Bombona 20';
-UPDATE public.products SET preco_materia_prima=7.535, preco_office=23.40, preco_pj=23.56 WHERE nome='RELENT BIO-VO' AND embalagem='CNT 1000';
-UPDATE public.products SET preco_materia_prima=7.535, preco_office=23.21, preco_pj=23.36 WHERE nome='RELENT BIO-VO' AND embalagem='Tambor 200';
-UPDATE public.products SET preco_materia_prima=18.000, preco_office=52.24, preco_pj=52.40 WHERE nome='RELENT CONCENTRATE' AND embalagem='Bombona 50';
-UPDATE public.products SET preco_materia_prima=18.000, preco_office=52.57, preco_pj=52.72 WHERE nome='RELENT CONCENTRATE' AND embalagem='Bombona 20';
-UPDATE public.products SET preco_materia_prima=18.000, preco_office=51.96, preco_pj=52.11 WHERE nome='RELENT CONCENTRATE' AND embalagem='CNT 1000';
-UPDATE public.products SET preco_materia_prima=18.000, preco_office=51.77, preco_pj=51.92 WHERE nome='RELENT CONCENTRATE' AND embalagem='Tambor 200';
-UPDATE public.products SET preco_materia_prima=1.011, preco_office=5.88, preco_pj=6.04 WHERE nome='RELENT RTU' AND embalagem='Bombona 50';
-UPDATE public.products SET preco_materia_prima=1.011, preco_office=6.21, preco_pj=6.36 WHERE nome='RELENT RTU' AND embalagem='Bombona 20';
-UPDATE public.products SET preco_materia_prima=1.011, preco_office=5.60, preco_pj=5.75 WHERE nome='RELENT RTU' AND embalagem='CNT 1000';
-UPDATE public.products SET preco_materia_prima=1.011, preco_office=5.41, preco_pj=5.56 WHERE nome='RELENT RTU' AND embalagem='Tambor 200';
-UPDATE public.products SET preco_materia_prima=2.202, preco_office=9.13, preco_pj=9.28 WHERE nome='RELENT S' AND embalagem='Bombona 50';
-UPDATE public.products SET preco_materia_prima=2.202, preco_office=9.46, preco_pj=9.61 WHERE nome='RELENT S' AND embalagem='Bombona 20';
-UPDATE public.products SET preco_materia_prima=2.202, preco_office=8.46, preco_pj=8.61 WHERE nome='RELENT S' AND embalagem='Tambor 200';
-UPDATE public.products SET preco_materia_prima=6.378, preco_office=20.53, preco_pj=20.68 WHERE nome='RELENT SMO' AND embalagem='Bombona 50';
-UPDATE public.products SET preco_materia_prima=6.378, preco_office=20.85, preco_pj=21.01 WHERE nome='RELENT SMO' AND embalagem='Bombona 20';
-UPDATE public.products SET preco_materia_prima=6.378, preco_office=20.05, preco_pj=20.21 WHERE nome='RELENT SMO' AND embalagem='Tambor 200';
-UPDATE public.products SET preco_materia_prima=10.842, preco_office=32.71, preco_pj=32.86 WHERE nome='RELENT SUPER' AND embalagem='Bombona 50';
-UPDATE public.products SET preco_materia_prima=10.842, preco_office=33.03, preco_pj=33.19 WHERE nome='RELENT SUPER' AND embalagem='Bombona 20';
-UPDATE public.products SET preco_materia_prima=10.842, preco_office=32.23, preco_pj=32.39 WHERE nome='RELENT SUPER' AND embalagem='Tambor 200';
-UPDATE public.products SET preco_materia_prima=6.401, preco_office=20.59, preco_pj=20.75 WHERE nome='RELENT W' AND embalagem='Bombona 50';
-UPDATE public.products SET preco_materia_prima=6.401, preco_office=20.92, preco_pj=21.07 WHERE nome='RELENT W' AND embalagem='Bombona 20';
-UPDATE public.products SET preco_materia_prima=6.401, preco_office=20.12, preco_pj=20.27 WHERE nome='RELENT W' AND embalagem='Tambor 200';
-UPDATE public.products SET preco_materia_prima=4.741, preco_office=16.06, preco_pj=16.21 WHERE nome='RETARPEG S' AND embalagem='Bombona 60';   -- tabela: Bombona 50
-UPDATE public.products SET preco_materia_prima=4.741, preco_office=16.38, preco_pj=16.54 WHERE nome='RETARPEG S' AND embalagem='Bombona 24';   -- tabela: Bombona 20
-UPDATE public.products SET preco_materia_prima=4.741, preco_office=15.58, preco_pj=15.74 WHERE nome='RETARPEG S' AND embalagem='Tambor 240';   -- tabela: Tambor 200
-UPDATE public.products SET preco_materia_prima=2.744, preco_office=10.61, preco_pj=10.76 WHERE nome='RETARTIVE WR 2010' AND embalagem='Bombona 60';   -- tabela: Bombona 50
-UPDATE public.products SET preco_materia_prima=2.744, preco_office=10.93, preco_pj=11.09 WHERE nome='RETARTIVE WR 2010' AND embalagem='Bombona 24';   -- tabela: Bombona 20
-UPDATE public.products SET preco_materia_prima=2.744, preco_office=10.33, preco_pj=10.48 WHERE nome='RETARTIVE WR 2010' AND embalagem='CNT 1200';   -- tabela: CNT 1000
-UPDATE public.products SET preco_materia_prima=2.744, preco_office=10.13, preco_pj=10.29 WHERE nome='RETARTIVE WR 2010' AND embalagem='Tambor 240';   -- tabela: Tambor 200
-UPDATE public.products SET preco_materia_prima=2.873, preco_office=10.96, preco_pj=11.12 WHERE nome='RETARTIVE WR 2048' AND embalagem='Bombona 55';   -- tabela: Bombona 50
-UPDATE public.products SET preco_materia_prima=2.873, preco_office=11.29, preco_pj=11.44 WHERE nome='RETARTIVE WR 2048' AND embalagem='Bombona 22';   -- tabela: Bombona 20
-UPDATE public.products SET preco_materia_prima=2.873, preco_office=10.68, preco_pj=10.83 WHERE nome='RETARTIVE WR 2048' AND embalagem='CNT 1100';   -- tabela: CNT 1000
-UPDATE public.products SET preco_materia_prima=2.873, preco_office=10.49, preco_pj=10.64 WHERE nome='RETARTIVE WR 2048' AND embalagem='Tambor 220';   -- tabela: Tambor 200
-UPDATE public.products SET preco_materia_prima=8.655, preco_office=26.74, preco_pj=26.89 WHERE nome='RUST CONVERTER' AND embalagem='Bombona 60';   -- tabela: Bombona 50
-UPDATE public.products SET preco_materia_prima=8.655, preco_office=27.07, preco_pj=27.22 WHERE nome='RUST CONVERTER' AND embalagem='Bombona 25';   -- tabela: Bombona 20
-UPDATE public.products SET preco_materia_prima=17.070, preco_office=56.16, preco_pj=56.31 WHERE nome='STRUCTURAL AD CONJUNTO' AND embalagem='Conjunto 1';
-UPDATE public.products SET preco_materia_prima=43.492, preco_office=128.26, preco_pj=128.42 WHERE nome='STRUCTURAL TF CONJUNTO' AND embalagem='Conjunto 1';
-UPDATE public.products SET preco_materia_prima=7.018, preco_office=22.54, preco_pj=22.70 WHERE nome='SUFLEX GREY RA' AND embalagem='Balde 18';   -- tabela: Balde 20
-UPDATE public.products SET preco_materia_prima=7.018, preco_office=22.54, preco_pj=22.70 WHERE nome='SUFLEXIBLE RA' AND embalagem='Balde 18';   -- tabela: Balde 20
-UPDATE public.products SET preco_materia_prima=3.802, preco_office=13.50, preco_pj=13.65 WHERE nome='SUPERFLUID AC' AND embalagem='Bombona 60';   -- tabela: Bombona 50
-UPDATE public.products SET preco_materia_prima=3.802, preco_office=13.82, preco_pj=13.98 WHERE nome='SUPERFLUID AC' AND embalagem='Bombona 24';   -- tabela: Bombona 20
-UPDATE public.products SET preco_materia_prima=3.802, preco_office=13.21, preco_pj=13.37 WHERE nome='SUPERFLUID AC' AND embalagem='CNT 1200';   -- tabela: CNT 1000
-UPDATE public.products SET preco_materia_prima=3.802, preco_office=13.02, preco_pj=13.18 WHERE nome='SUPERFLUID AC' AND embalagem='Tambor 240';   -- tabela: Tambor 200
-UPDATE public.products SET preco_materia_prima=1.071, preco_office=7.36, preco_pj=7.51 WHERE nome='SUPROFLEX CONJUNTO' AND embalagem='Conjunto 20';   -- tabela: Conjunto 18
-UPDATE public.products SET preco_materia_prima=5.500, preco_office=18.59, preco_pj=18.74 WHERE nome='WHITE MINERAL REPAIR CONJUNTO' AND embalagem='Conjunto 40';
-UPDATE public.products SET preco_materia_prima=0.493, preco_office=4.47, preco_pj=4.62 WHERE nome='WP ARCON' AND embalagem='Bombona 50';
-UPDATE public.products SET preco_materia_prima=0.493, preco_office=4.79, preco_pj=4.95 WHERE nome='WP ARCON' AND embalagem='Bombona 20';
-UPDATE public.products SET preco_materia_prima=0.493, preco_office=3.99, preco_pj=4.15 WHERE nome='WP ARCON' AND embalagem='Tambor 200';
-UPDATE public.products SET preco_materia_prima=1.320, preco_office=5.43, preco_pj=5.58 WHERE nome='WP ARPOMON' AND embalagem='Saco 20';
-UPDATE public.products SET preco_materia_prima=3.053, preco_office=10.16, preco_pj=10.31 WHERE nome='WP CRYSTAL' AND embalagem='Saco 20';   -- tabela: Saco 25
-UPDATE public.products SET preco_materia_prima=6.457, preco_office=20.74, preco_pj=20.90 WHERE nome='WP FLEXIBLE' AND embalagem='Bombona 42';   -- tabela: Bombona 50
-UPDATE public.products SET preco_materia_prima=6.457, preco_office=21.07, preco_pj=21.22 WHERE nome='WP FLEXIBLE' AND embalagem='Bombona 18';   -- tabela: Bombona 20
-UPDATE public.products SET preco_materia_prima=6.457, preco_office=20.27, preco_pj=20.42 WHERE nome='WP FLEXIBLE' AND embalagem='Tambor 180';   -- tabela: Tambor 200
-UPDATE public.products SET preco_materia_prima=4.298, preco_office=13.55, preco_pj=13.71 WHERE nome='WP HYDRACEM UF' AND embalagem='Saco 20';   -- tabela: Saco 25
-UPDATE public.products SET preco_materia_prima=2.026, preco_office=8.65, preco_pj=8.81 WHERE nome='WP TILE PRO' AND embalagem='Bombona 50';
-UPDATE public.products SET preco_materia_prima=2.026, preco_office=8.98, preco_pj=9.13 WHERE nome='WP TILE PRO' AND embalagem='Bombona 20';
-UPDATE public.products SET preco_materia_prima=2.026, preco_office=8.18, preco_pj=8.33 WHERE nome='WP TILE PRO' AND embalagem='Tambor 200';
+UPDATE public.products p
+   SET preco_materia_prima = v.mp,
+       preco_office        = v.of,
+       preco_pj            = v.pj
+  FROM (VALUES
+    ('ACCELIK AS', 'Bombona 60', 1.486, 7.18, 7.33),   -- tabela: Bombona 50
+    ('ACCELIK AS', 'Bombona 25', 1.486, 7.50, 7.66),   -- tabela: Bombona 20
+    ('ACCELIK AS', 'CNT 1250', 1.486, 6.89, 7.05),   -- tabela: CNT 1000
+    ('ACCELIK AS', 'Tambor 250', 1.486, 6.70, 6.86),   -- tabela: Tambor 200
+    ('ACCELIK SF', 'Bombona 60', 2.746, 10.62, 10.77),   -- tabela: Bombona 50
+    ('ACCELIK SF', 'Bombona 25', 2.746, 10.94, 11.10),   -- tabela: Bombona 20
+    ('ACCELIK SF', 'CNT 1250', 2.746, 10.33, 10.49),   -- tabela: CNT 1000
+    ('ACCELIK SF', 'Tambor 250', 2.746, 10.14, 10.29),   -- tabela: Tambor 200
+    ('ACCETIVE FC POWDER', 'Saco 20', 3.084, 10.24, 10.40),
+    ('ACEPESS FAST', 'Bombona 60', 2.746, 10.62, 10.77),   -- tabela: Bombona 50
+    ('ACEPESS FAST', 'Bombona 24', 2.746, 10.94, 11.10),   -- tabela: Bombona 20
+    ('ACEPESS FAST', 'CNT 1200', 2.746, 10.33, 10.49),   -- tabela: CNT 1000
+    ('ACEPESS FAST', 'Tambor 240', 2.746, 10.14, 10.29),   -- tabela: Tambor 200
+    ('ACS 800', 'Bombona 50', 1.250, 6.53, 6.69),
+    ('ACS 800', 'Bombona 20', 1.250, 6.86, 7.01),
+    ('ACS 800', 'CNT 1000', 1.250, 6.25, 6.40),
+    ('ACS 800', 'Tambor 200', 1.250, 6.06, 6.21),
+    ('ADIGROUT AR', 'Saco 25', 0.989, 4.52, 4.68),
+    ('ADIGROUT AR COMPLETE', 'Saco 25', 0.684, 3.69, 3.85),
+    ('ADIGROUT MC', 'Saco 25', 1.780, 6.68, 6.84),
+    ('ADIGROUT MIX', 'Saco 10', 8.000, 23.66, 23.81),
+    ('ADIGROUT MIX CONCRETE', 'Saco 10', 8.400, 24.75, 24.90),
+    ('ADIGROUT TIX', 'Saco 25', 0.942, 4.43, 4.58),
+    ('ADIGROUT UFR', 'Saco 25', 1.987, 7.25, 7.40),
+    ('ADIGROUT WHITE', 'Saco 25', 2.514, 8.69, 8.84),
+    ('AGRECON POWDER', 'Saco 8', 50.000, 138.27, 138.42),
+    ('ARGAPOL 592 IC Conjunto', 'Conjunto 35,4', 0.950, 6.46, 6.61),   -- tabela: Conjunto 35
+    ('ARGAPOL 992 Conjunto', 'Conjunto 6', 2.750, 11.37, 11.53),
+    ('ARGAPOL BC Conjunto', 'Conjunto 35', 1.200, 7.14, 7.30),
+    ('ARGAPOL MRI', 'Saco 20', 1.200, 5.10, 5.25),
+    ('ARGAPOL RE 642', 'Saco 25', 1.198, 5.13, 5.28),   -- tabela: Saco 20
+    ('CEPAS INJECT', 'Saco 20', 2.500, 8.65, 8.80),
+    ('CEPAS INJECT BC', 'Saco 20', 3.500, 11.38, 11.53),   -- tabela: Saco 30
+    ('CI 900', 'Bombona 50', 1.390, 6.92, 7.07),
+    ('CI 900', 'Bombona 20', 1.390, 7.24, 7.39),
+    ('CI 900', 'CNT 1000', 1.390, 6.63, 6.79),
+    ('CI 900', 'Tambor 200', 1.390, 6.44, 6.59),
+    ('CURE CA', 'Bombona 50', 2.412, 9.71, 9.86),
+    ('CURE CA', 'Bombona 20', 2.412, 10.03, 10.18),
+    ('CURE CA', 'CNT 1000', 2.412, 9.42, 9.58),
+    ('CURE CA', 'Tambor 200', 2.412, 9.23, 9.38),
+    ('DRAMOR POWDER', 'Saco 20', 4.796, 14.91, 15.07),
+    ('EDIMPER M', 'Bombona 50', 3.781, 13.44, 13.59),
+    ('EDIMPER M', 'Bombona 20', 3.781, 13.77, 13.92),
+    ('EDIMPER M', 'CNT 1000', 3.781, 13.16, 13.31),
+    ('EDIMPER M', 'Tambor 200', 3.781, 12.97, 13.12),
+    ('EDIMPER PLUS', 'Bombona 60', 4.462, 15.30, 15.45),   -- tabela: Bombona 50
+    ('EDIMPER PLUS', 'Bombona 25', 4.462, 15.62, 15.78),   -- tabela: Bombona 20
+    ('EDIMPER PLUS', 'CNT 1250', 4.462, 15.01, 15.17),   -- tabela: CNT 1000
+    ('EDIMPER PLUS', 'Tambor 250', 4.462, 14.82, 14.98),   -- tabela: Tambor 200
+    ('EXPANDER 2019', 'Saco 10', 2.350, 8.37, 8.53),
+    ('EXPANFLUID IC', 'Saco 10', 5.022, 15.66, 15.82),
+    ('FASTER', 'Bombona 60', 1.134, 6.22, 6.37),   -- tabela: Bombona 50
+    ('FASTER', 'Bombona 24', 1.134, 6.54, 6.70),   -- tabela: Bombona 20
+    ('FASTER', 'CNT 1200', 1.134, 5.93, 6.09),   -- tabela: CNT 1000
+    ('FASTER', 'Tambor 240', 1.134, 5.74, 5.90),   -- tabela: Tambor 200
+    ('FLUXYGROUT HMR CONJUNTO', 'Conjunto 22', 22.000, 71.02, 71.18),   -- tabela: Conjunto 20
+    ('FLUXYGROUT SOFT CONJUNTO', 'Conjunto 28', 17.000, 57.38, 57.53),   -- tabela: Conjunto 20
+    ('HYDROFLEX RR', 'Bombona 50', 30.000, 84.99, 85.14),
+    ('HYDROFLEX RR', 'Bombona 20', 30.000, 85.31, 85.47),
+    ('HYDROFLEX RR', 'CNT 1000', 30.000, 84.70, 84.86),
+    ('HYDROFLEX RR', 'Tambor 200', 30.000, 84.51, 84.67),
+    ('HYDROFLEX RS', 'Bombona 50', 4.032, 14.13, 14.28),
+    ('HYDROFLEX RS', 'Bombona 20', 4.032, 14.45, 14.61),
+    ('HYDROFLEX RS', 'CNT 1000', 4.032, 13.84, 14.00),
+    ('HYDROFLEX RS', 'Tambor 200', 4.032, 13.65, 13.80),
+    ('HYDROFLEX S', 'Bombona 50', 19.799, 57.15, 57.31),
+    ('HYDROFLEX S', 'Bombona 20', 19.799, 57.48, 57.63),
+    ('HYDROFLEX S', 'CNT 1000', 19.799, 56.87, 57.02),
+    ('HYDROFLEX S', 'Tambor 200', 19.799, 56.68, 56.83),
+    ('HYDROFLEX S A', 'Bombona 50', 0.850, 5.44, 5.60),
+    ('HYDROFLEX S A', 'Bombona 20', 0.850, 5.77, 5.92),
+    ('HYDROFLEX S A', 'CNT 1000', 0.850, 5.16, 5.31),
+    ('HYDROFLEX S A', 'Tambor 200', 0.850, 4.97, 5.12),
+    ('HYDROFLEX SEL', 'Bombona 50', 6.151, 19.91, 20.06),
+    ('HYDROFLEX SEL', 'Bombona 20', 6.151, 20.23, 20.39),
+    ('HYDROFLEX V2', 'Bombona 50', 5.707, 18.70, 18.85),
+    ('HYDROFLEX V2', 'Bombona 20', 5.707, 19.02, 19.17),
+    ('INCORPOR BS PLUS', 'Bombona 50', 1.438, 7.05, 7.20),
+    ('INCORPOR BS PLUS', 'Bombona 20', 1.438, 7.37, 7.53),
+    ('INCORPOR BS PLUS', 'CNT 1000', 1.438, 6.76, 6.92),
+    ('INCORPOR BS PLUS', 'Tambor 200', 1.438, 6.57, 6.73),
+    ('INCORPOR BS-D', 'Bombona 50', 0.727, 5.11, 5.26),
+    ('INCORPOR BS-D', 'Bombona 20', 0.727, 5.43, 5.59),
+    ('INCORPOR BS-D', 'CNT 1000', 0.727, 4.82, 4.98),
+    ('INCORPOR BS-D', 'Tambor 200', 0.727, 4.63, 4.79),
+    ('KOLA', 'Bombona 50', 1.708, 7.79, 7.94),
+    ('KOLA', 'Bombona 20', 1.708, 8.11, 8.26),
+    ('KOLA', 'CNT 1000', 1.708, 7.50, 7.65),
+    ('KOLA', 'Tambor 200', 1.708, 7.31, 7.46),
+    ('KOLA PLUS TIX', 'Bombona 50', 6.965, 22.13, 22.28),
+    ('KOLA PLUS TIX', 'Bombona 20', 6.965, 22.46, 22.61),
+    ('KOLA PLUS TIX', 'CNT 1000', 6.965, 21.85, 22.00),
+    ('KOLA PLUS TIX', 'Tambor 200', 6.965, 21.65, 21.81),
+    ('KOLA PVA', 'Bombona 50', 0.630, 4.84, 5.00),
+    ('KOLA PVA', 'Bombona 20', 0.630, 5.17, 5.32),
+    ('KOLA PVA', 'Tambor 200', 0.630, 4.37, 4.52),
+    ('KOLA SBR', 'Bombona 50', 3.513, 12.71, 12.86),
+    ('KOLA SBR', 'Bombona 20', 3.513, 13.04, 13.19),
+    ('KOLA SBR', 'CNT 1000', 3.513, 12.43, 12.58),
+    ('KOLA SBR', 'Tambor 200', 3.513, 12.23, 12.39),
+    ('KOLA SUPER', 'Bombona 50', 6.965, 22.13, 22.28),
+    ('KOLA SUPER', 'Bombona 20', 6.965, 22.46, 22.61),
+    ('KOLA SUPER', 'CNT 1000', 6.965, 21.85, 22.00),
+    ('KOLA SUPER', 'Tambor 200', 6.965, 21.65, 21.81),
+    ('LIKTIVE ACEP UF', 'Bombona 60', 2.454, 9.82, 9.97),   -- tabela: Bombona 50
+    ('LIKTIVE ACEP UF', 'Bombona 25', 2.454, 10.91, 10.30),   -- tabela: Bombona 20
+    ('LIKTIVE ACEP UF', 'Tambor 250', 2.454, 9.34, 9.50),   -- tabela: Tambor 200
+    ('MINERAL REPAIR 132 Conjunto', 'Conjunto 40', 2.035, 8.00, 8.80),
+    ('MINERAL REPAIR 333 Conjunto', 'Conjunto 40', 2.014, 8.40, 9.24),
+    ('MINERAL REPAIR 499 Conjunto', 'Conjunto 40', 2.690, 8.00, 8.80),
+    ('PLASTICIZER BINDER', 'Bombona 50', 1.701, 7.76, 7.92),
+    ('PLASTICIZER BINDER', 'Bombona 20', 1.701, 8.09, 8.24),
+    ('PLASTICIZER BINDER', 'CNT 1000', 1.701, 7.48, 7.63),
+    ('PLASTICIZER BINDER', 'Tambor 200', 1.701, 7.29, 7.44),
+    ('PLASTICIZER CW', 'Bombona 50', 4.334, 14.95, 15.10),
+    ('PLASTICIZER CW', 'Bombona 20', 4.334, 15.27, 15.43),
+    ('PLASTICIZER CW', 'CNT 1000', 4.334, 14.66, 14.82),
+    ('PLASTICIZER CW', 'Tambor 200', 4.334, 14.47, 14.63),
+    ('PLASTICIZER HC', 'Bombona 50', 3.386, 12.36, 12.52),
+    ('PLASTICIZER HC', 'Bombona 20', 3.386, 12.69, 12.84),
+    ('PLASTICIZER HC', 'CNT 1000', 3.386, 12.08, 12.23),
+    ('PLASTICIZER HC', 'Tambor 200', 3.386, 12.23, 12.38),
+    ('PLASTICIZER PREMIUM', 'Bombona 50', 1.843, 8.15, 8.31),
+    ('PLASTICIZER PREMIUM', 'Bombona 20', 1.843, 8.48, 8.63),
+    ('PLASTICIZER PREMIUM', 'CNT 1000', 1.843, 7.87, 8.02),
+    ('PLASTICIZER PREMIUM', 'Tambor 200', 1.843, 7.68, 7.83),
+    ('PLASTICIZER SAD', 'Bombona 50', 1.810, 8.06, 8.22),
+    ('PLASTICIZER SAD', 'Bombona 20', 1.810, 8.39, 8.54),
+    ('PLASTICIZER SAD', 'CNT 1000', 1.810, 7.78, 7.93),
+    ('PLASTICIZER SAD', 'Tambor 200', 1.810, 7.59, 7.74),
+    ('PLASTICIZER SAD 20', 'Bombona 50', 1.270, 6.59, 6.74),
+    ('PLASTICIZER SAD 20', 'Bombona 20', 1.270, 6.91, 7.07),
+    ('PLASTICIZER SAD 20', 'CNT 1000', 1.270, 6.30, 6.46),
+    ('PLASTICIZER SAD 20', 'Tambor 200', 1.270, 6.11, 6.27),
+    ('POLYPLAST 146', 'Bombona 60', 3.543, 12.79, 12.94),   -- tabela: Bombona 50
+    ('POLYPLAST 146', 'Bombona 24', 3.543, 13.12, 13.27),   -- tabela: Bombona 20
+    ('POLYPLAST 146', 'CNT 1200', 3.543, 12.51, 12.66),   -- tabela: CNT 1000
+    ('POLYPLAST 146', 'Tambor 240', 3.543, 12.32, 12.47),   -- tabela: Tambor 200
+    ('POLYPLAST 151', 'Bombona 60', 3.576, 12.88, 13.03),   -- tabela: Bombona 50
+    ('POLYPLAST 151', 'Bombona 24', 3.576, 13.21, 13.36),   -- tabela: Bombona 20
+    ('POLYPLAST 151', 'CNT 1200', 3.576, 12.60, 12.75),   -- tabela: CNT 1000
+    ('POLYPLAST 151', 'Tambor 240', 3.576, 12.41, 12.56),   -- tabela: Tambor 200
+    ('POLYPLAST 167', 'Bombona 60', 2.745, 10.61, 10.77),   -- tabela: Bombona 50
+    ('POLYPLAST 167', 'Bombona 24', 2.745, 10.94, 11.09),   -- tabela: Bombona 20
+    ('POLYPLAST 167', 'CNT 1200', 2.745, 10.33, 10.48),   -- tabela: CNT 1000
+    ('POLYPLAST 167', 'Tambor 240', 2.745, 10.14, 10.29),   -- tabela: Tambor 200
+    ('POLYPLAST 170 D', 'Bombona 60', 2.400, 9.67, 9.82),   -- tabela: Bombona 50
+    ('POLYPLAST 170 D', 'Bombona 24', 2.400, 10.00, 10.15),   -- tabela: Bombona 20
+    ('POLYPLAST 170 D', 'CNT 1200', 2.400, 9.39, 9.54),   -- tabela: CNT 1000
+    ('POLYPLAST 170 D', 'Tambor 240', 2.400, 9.20, 9.35),   -- tabela: Tambor 200
+    ('POLYPLAST 170 PLUS', 'Bombona 60', 2.550, 10.08, 10.24),   -- tabela: Bombona 50
+    ('POLYPLAST 170 PLUS', 'Bombona 24', 2.550, 10.41, 10.56),   -- tabela: Bombona 20
+    ('POLYPLAST 170 PLUS', 'CNT 1200', 2.550, 9.80, 9.95),   -- tabela: CNT 1000
+    ('POLYPLAST 170 PLUS', 'Tambor 240', 2.550, 9.61, 9.76),   -- tabela: Tambor 200
+    ('POLYPLAST 4300', 'Bombona 60', 3.589, 12.92, 13.07),   -- tabela: Bombona 50
+    ('POLYPLAST 4300', 'Bombona 24', 3.589, 13.24, 13.40),   -- tabela: Bombona 20
+    ('POLYPLAST 4300', 'CNT 1200', 3.589, 12.63, 12.79),   -- tabela: CNT 1000
+    ('POLYPLAST 4300', 'Tambor 240', 3.589, 12.44, 12.59),   -- tabela: Tambor 200
+    ('POLYSEL CONJUNTO', 'Conjunto 5', 85.000, 241.64, 241.79),
+    ('RELEASE WAX', 'Balde 18', 7.812, 25.44, 25.59),   -- tabela: Balde 14
+    ('RELENT', 'Bombona 50', 6.400, 20.59, 20.74),
+    ('RELENT', 'Bombona 20', 6.400, 20.91, 21.07),
+    ('RELENT', 'CNT 1000', 6.400, 20.30, 20.46),
+    ('RELENT', 'Tambor 200', 6.400, 20.11, 20.27),
+    ('RELENT AD', 'Bombona 50', 23.060, 66.05, 66.20),
+    ('RELENT AD', 'Bombona 20', 14.870, 44.03, 44.18),
+    ('RELENT AD', 'CNT 1000', 23.060, 65.77, 65.92),
+    ('RELENT AD', 'Tambor 200', 14.870, 43.23, 43.38),
+    ('RELENT BASE', 'Tambor 200', 17.000, 48.84, 48.99),
+    ('RELENT BIO-VO', 'Bombona 50', 7.535, 23.69, 23.84),
+    ('RELENT BIO-VO', 'Bombona 20', 7.535, 24.01, 24.16),
+    ('RELENT BIO-VO', 'CNT 1000', 7.535, 23.40, 23.56),
+    ('RELENT BIO-VO', 'Tambor 200', 7.535, 23.21, 23.36),
+    ('RELENT CONCENTRATE', 'Bombona 50', 18.000, 52.24, 52.40),
+    ('RELENT CONCENTRATE', 'Bombona 20', 18.000, 52.57, 52.72),
+    ('RELENT CONCENTRATE', 'CNT 1000', 18.000, 51.96, 52.11),
+    ('RELENT CONCENTRATE', 'Tambor 200', 18.000, 51.77, 51.92),
+    ('RELENT RTU', 'Bombona 50', 1.011, 5.88, 6.04),
+    ('RELENT RTU', 'Bombona 20', 1.011, 6.21, 6.36),
+    ('RELENT RTU', 'CNT 1000', 1.011, 5.60, 5.75),
+    ('RELENT RTU', 'Tambor 200', 1.011, 5.41, 5.56),
+    ('RELENT S', 'Bombona 50', 2.202, 9.13, 9.28),
+    ('RELENT S', 'Bombona 20', 2.202, 9.46, 9.61),
+    ('RELENT S', 'Tambor 200', 2.202, 8.46, 8.61),
+    ('RELENT SMO', 'Bombona 50', 6.378, 20.53, 20.68),
+    ('RELENT SMO', 'Bombona 20', 6.378, 20.85, 21.01),
+    ('RELENT SMO', 'Tambor 200', 6.378, 20.05, 20.21),
+    ('RELENT SUPER', 'Bombona 50', 10.842, 32.71, 32.86),
+    ('RELENT SUPER', 'Bombona 20', 10.842, 33.03, 33.19),
+    ('RELENT SUPER', 'Tambor 200', 10.842, 32.23, 32.39),
+    ('RELENT W', 'Bombona 50', 6.401, 20.59, 20.75),
+    ('RELENT W', 'Bombona 20', 6.401, 20.92, 21.07),
+    ('RELENT W', 'Tambor 200', 6.401, 20.12, 20.27),
+    ('RETARPEG S', 'Bombona 60', 4.741, 16.06, 16.21),   -- tabela: Bombona 50
+    ('RETARPEG S', 'Bombona 24', 4.741, 16.38, 16.54),   -- tabela: Bombona 20
+    ('RETARPEG S', 'Tambor 240', 4.741, 15.58, 15.74),   -- tabela: Tambor 200
+    ('RETARTIVE WR 2010', 'Bombona 60', 2.744, 10.61, 10.76),   -- tabela: Bombona 50
+    ('RETARTIVE WR 2010', 'Bombona 24', 2.744, 10.93, 11.09),   -- tabela: Bombona 20
+    ('RETARTIVE WR 2010', 'CNT 1200', 2.744, 10.33, 10.48),   -- tabela: CNT 1000
+    ('RETARTIVE WR 2010', 'Tambor 240', 2.744, 10.13, 10.29),   -- tabela: Tambor 200
+    ('RETARTIVE WR 2048', 'Bombona 55', 2.873, 10.96, 11.12),   -- tabela: Bombona 50
+    ('RETARTIVE WR 2048', 'Bombona 22', 2.873, 11.29, 11.44),   -- tabela: Bombona 20
+    ('RETARTIVE WR 2048', 'CNT 1100', 2.873, 10.68, 10.83),   -- tabela: CNT 1000
+    ('RETARTIVE WR 2048', 'Tambor 220', 2.873, 10.49, 10.64),   -- tabela: Tambor 200
+    ('RUST CONVERTER', 'Bombona 60', 8.655, 26.74, 26.89),   -- tabela: Bombona 50
+    ('RUST CONVERTER', 'Bombona 25', 8.655, 27.07, 27.22),   -- tabela: Bombona 20
+    ('STRUCTURAL AD CONJUNTO', 'Conjunto 1', 17.070, 56.16, 56.31),
+    ('STRUCTURAL TF CONJUNTO', 'Conjunto 1', 43.492, 128.26, 128.42),
+    ('SUFLEX GREY RA', 'Balde 18', 7.018, 22.54, 22.70),   -- tabela: Balde 20
+    ('SUFLEXIBLE RA', 'Balde 18', 7.018, 22.54, 22.70),   -- tabela: Balde 20
+    ('SUPERFLUID AC', 'Bombona 60', 3.802, 13.50, 13.65),   -- tabela: Bombona 50
+    ('SUPERFLUID AC', 'Bombona 24', 3.802, 13.82, 13.98),   -- tabela: Bombona 20
+    ('SUPERFLUID AC', 'CNT 1200', 3.802, 13.21, 13.37),   -- tabela: CNT 1000
+    ('SUPERFLUID AC', 'Tambor 240', 3.802, 13.02, 13.18),   -- tabela: Tambor 200
+    ('SUPROFLEX CONJUNTO', 'Conjunto 20', 1.071, 7.36, 7.51),   -- tabela: Conjunto 18
+    ('WHITE MINERAL REPAIR CONJUNTO', 'Conjunto 40', 5.500, 18.59, 18.74),
+    ('WP ARCON', 'Bombona 50', 0.493, 4.47, 4.62),
+    ('WP ARCON', 'Bombona 20', 0.493, 4.79, 4.95),
+    ('WP ARCON', 'Tambor 200', 0.493, 3.99, 4.15),
+    ('WP ARPOMON', 'Saco 20', 1.320, 5.43, 5.58),
+    ('WP CRYSTAL', 'Saco 20', 3.053, 10.16, 10.31),   -- tabela: Saco 25
+    ('WP FLEXIBLE', 'Bombona 42', 6.457, 20.74, 20.90),   -- tabela: Bombona 50
+    ('WP FLEXIBLE', 'Bombona 18', 6.457, 21.07, 21.22),   -- tabela: Bombona 20
+    ('WP FLEXIBLE', 'Tambor 180', 6.457, 20.27, 20.42),   -- tabela: Tambor 200
+    ('WP HYDRACEM UF', 'Saco 20', 4.298, 13.55, 13.71),   -- tabela: Saco 25
+    ('WP TILE PRO', 'Bombona 50', 2.026, 8.65, 8.81),
+    ('WP TILE PRO', 'Bombona 20', 2.026, 8.98, 9.13),
+    ('WP TILE PRO', 'Tambor 200', 2.026, 8.18, 8.33)
+  ) AS v(nome, embalagem, mp, of, pj)
+ WHERE p.nome = v.nome AND p.embalagem = v.embalagem;
+
+-- ESPERADO na tela: UPDATE 229
 
 
 -- =========================================================================

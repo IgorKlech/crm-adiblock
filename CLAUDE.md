@@ -952,6 +952,23 @@ maior informação — o cliente acabou de confirmar e tem o número na mão.
 | Arquivo | O que é | Quando serve |
 |---|---|---|
 | `docs/GUIA-VENDEDOR.md` / `.html` | **referência** — 12 seções, cobre tudo | tirar dúvida específica de quem já usa |
+
+> **Atualizado em 26/08/2026.** O guia estava melhor do que a lista de pendências
+> dizia: já cobria revisão de pedido, Pedido Comercial e recuperação de senha.
+> O que faltava de verdade eram **anexos do pedido**, **botões de retorno
+> rápido**, **tarefas/calendário/.ics** e **2FA** — todos entraram agora.
+>
+> ⚠ **O problema maior não era conteúdo: era acesso.** O guia não estava linkado
+> em lugar nenhum do app — os dois pontos de entrada (cartão de login e faixa da
+> aba Hoje) apontavam ambos para a `rotina.html`. Guia atualizado que ninguém
+> alcança não resolve dúvida. Agora há três caminhos: a linha `.guia-sub` sob a
+> faixa da aba Hoje, o cartão de atalhos (`?`) e o fim da própria `rotina.html`
+> — que é o único que funciona no celular e no tablet, onde `?` não existe.
+>
+> O `GUIA-VENDEDOR.pdf` (22/06) foi **apagado** em 26/08: era anterior ao `.md`,
+> não estava no git, e não falava de revisão de pedido nem de Pedido Comercial.
+> PDF desatualizado circulando por e-mail é pior que PDF nenhum — o `.html`
+> servido pelo CRM cumpre o papel e está sempre na versão do deploy.
 | `docs/rotina.html` | **rotina** — ~900 palavras, 4 momentos do dia | aprender a usar; é o que se manda pra quem chegou |
 
 O segundo nasceu em 17/08/2026 porque o primeiro não estava resolvendo: manual
@@ -984,10 +1001,14 @@ Da lista de sprints sugeridos, ainda faltam:
 - **U4**: Confirmação inline (toggles sem modal)
 - **U7**: Avatar/iniciais coloridas consistente em todas as telas
 - **O3**: Timeline unificada no perfil (interações + alterações + propostas + revisões de pedido)
-- **O4**: Anexos via Supabase Storage (PDF, foto da obra)
-- **Guia do vendedor desatualizado**: `docs/GUIA-VENDEDOR.*` está untracked e não cobre editar pedido (revisões), Pedido Comercial nem recuperação de senha
-
 > Já feitos: U1 (cheat-sheet), U5 (mobile Sprint 7.3), O1 (modularização em
 > andamento), **O2** (drag-and-drop do Kanban — já existia em `renderKanban()`;
-> a lista dizia o contrário), **Pedido Comercial** (2026-08-14), **Sprint 9.1**
-> (etapas D e F aplicadas).
+> a lista dizia o contrário), **O4** (anexos — `js/anexos.js` existe e está
+> carregado desde 17/08; a lista dizia o contrário), **Pedido Comercial**
+> (2026-08-14), **Sprint 9.1** (etapas D e F aplicadas), **guia do vendedor**
+> (2026-08-26, ver abaixo).
+
+> ⚠ **Duas entradas desta lista descreviam como pendente algo já entregue** —
+> O2 e O4. Uma lista de pendências que mente para baixo é pior que lista
+> nenhuma: manda refazer o que existe. Antes de pegar um item daqui, confirme
+> no código que ele realmente falta.

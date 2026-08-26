@@ -6,10 +6,10 @@
 - **Login:** seu e-mail corporativo
 - **Perfil:** `vendedor`
 
-> Atualizado em 14/08/2026. Novidades desta versão: **editar um pedido já
-> fechado** (seção 7), **Pedido Comercial** com o nº da OC do cliente (seção 6),
-> **mover card do Pipeline pelo celular** (seção 4) e **recuperar senha sozinho**
-> (seção 10).
+> Atualizado em 26/08/2026. Novidades desta versão: **anexar a OC assinada e o
+> comprovante ao pedido** (seção 6), **botões de retorno rápido** ao registrar
+> interação (seção 4), **tarefas, calendário e exportar para o Google Calendar**
+> (seção 2) e **verificação em duas etapas** (seção 10).
 
 ---
 
@@ -38,6 +38,22 @@ O que aparece aqui:
 - **Retornos agendados** (callbacks) que vencem hoje — com hora.
 - **Tarefas** do dia.
 - **Sininho 🔔** com alertas e pendências.
+
+**Duas visões**, no botão no alto da tela:
+
+- **Lista** — o que vence hoje e nos próximos 3 dias.
+- **Mês** — o calendário inteiro, para enxergar a semana cheia **antes** de
+  prometer visita ao cliente.
+
+A caixa **"Só os meus"** vem marcada. Desmarque para ver a agenda da equipe.
+
+**Tarefa não é retorno.** Retorno está preso a uma oportunidade. **Tarefa é
+livre** — *"levar amostra na obra"*, *"cobrar o financeiro"*, *"mandar a ficha
+técnica"*. Botão **+ Nova Tarefa**.
+
+**📥 Exportar .ics** baixa seus compromissos num arquivo que o **Google Calendar**
+e o **Outlook** importam. Serve para quem vive na agenda do celular: os retornos
+passam a aparecer lá, junto do resto do dia.
 
 **Ações rápidas** em cada item:
 - 💬 **WhatsApp** — abre a conversa direto.
@@ -93,6 +109,20 @@ Regras que o sistema cobra de você:
 **Registrando interações:** toda ligação, visita ou e-mail relevante vira uma
 **interação** na oportunidade. É o histórico que protege você e dá memória ao
 negócio. Ao registrar, já agende o **próximo retorno** (com hora).
+
+**Os botões de retorno rápido.** No celular, escolher data e hora à mão custa 4
+a 6 toques — o Android abre um seletor para a data e outro para a hora. Por isso
+a tela de interação tem uma linha de botões:
+
+`Amanhã` · `3 dias` · `1 semana` · `15 dias` · `1 mês`
+
+Um toque preenche a data às **09:00**. O campo de data continua logo abaixo, para
+quando você precisar de hora exata.
+
+> **Eles pulam o fim de semana.** Retorno marcado para sábado não é retorno — é
+> algo que aparece atrasado na segunda. Consequência: numa sexta-feira, "Amanhã"
+> e "3 dias" caem na mesma segunda. A data escolhida aparece no campo, então não
+> tem como se enganar.
 
 ---
 
@@ -154,6 +184,26 @@ pela busca digitando o número do cliente** (`Ctrl+K`).
 Também são registrados aqui o **local de entrega** (já vem preenchido com a obra
 da oportunidade, mas você pode trocar), a **transportadora** e a **previsão de
 entrega**.
+
+### Anexos do pedido — 📎
+
+A **OC assinada** e o **comprovante de pagamento** ficam junto do pedido, e não
+na caixa de e-mail de quem recebeu. Com o pedido aberto, clique em **📎 Anexos**.
+
+- **PDF, JPG, PNG ou WebP**, até **10 MB** cada, no máximo **20 por vez**.
+- Cada arquivo mostra **quem enviou**, com data e hora.
+- **Apagar: só quem enviou, ou o admin.** É prova — a OC assinada é o documento
+  que sustenta a cobrança.
+- Não existe "substituir". Para trocar, apague e suba de novo — assim o nome de
+  quem enviou nunca fica mentindo.
+
+> ⚠️ **O link do anexo funciona para quem o tiver.** Ao abrir um arquivo, o
+> sistema gera um link que **vale 60 segundos** e não pede login. É tempo de
+> abrir, não de repassar. **Não cole esse link em WhatsApp nem em e-mail** — se
+> o cliente precisa do arquivo, mande o arquivo.
+
+> ✅ **Disciplina nº 4:** chegou a OC assinada, anexou no pedido. Em seis meses,
+> quando o financeiro perguntar, o documento está onde qualquer um acha.
 
 ---
 
@@ -238,12 +288,21 @@ Não precisa pedir para ninguém.
 **Travou em "Entrando..."?** Use o link **"Limpar sessão e tentar de novo"**,
 logo abaixo do formulário.
 
+**Verificação em duas etapas (2FA).** Em **Minhas Configurações** você pode
+ativar o 2FA. O sistema mostra um QR para escanear num app autenticador (Google
+Authenticator, Authy, 1Password) e, dali em diante, o login pede também o código
+de 6 dígitos que o app gera.
+
+É opcional, e vale a pena: sua conta enxerga carteira de clientes, preço e
+margem. **Vai trocar de celular? Desative o 2FA antes.** Sem o app antigo, quem
+destrava é o Igor, pelo painel do Supabase.
+
 **No celular:** o sistema funciona no telefone. As abas ficam numa faixa própria
 que **desliza para o lado** quando não cabem todas na tela.
 
 ---
 
-## 11. Os 8 hábitos de quem usa bem o CRM
+## 11. Os 9 hábitos de quem usa bem o CRM
 
 1. **Comece pelo "Hoje"** e zere os retornos do dia.
 2. **Toda conversa vira interação** registrada.
@@ -253,6 +312,7 @@ que **desliza para o lado** quando não cabem todas na tela.
 6. **Peça e lance a OC do cliente** assim que o pedido fechar.
 7. **Mudou o pedido? Revise no sistema** e escreva o motivo de verdade.
 8. **Radar semanal** para reativar clientes parados.
+9. **Chegou OC assinada ou comprovante? Anexe no pedido.**
 
 ---
 

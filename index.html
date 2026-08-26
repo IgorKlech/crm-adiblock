@@ -188,6 +188,15 @@
         <span><b>Como usar o sistema</b> — a rotina em 4 passos, 2 minutos de leitura</span>
         <span class="guia-seta">→</span>
       </a>
+      <!-- A rotina ensina; o guia tira duvida especifica de quem ja usa. Como
+           <a> nao aninha, o segundo caminho e esta linha de apoio, e nao um
+           segundo banner: dois banners lado a lado disputariam a mesma atencao
+           e nenhum dos dois seria lido. -->
+      <p class="guia-sub">
+        Procurando algo específico?
+        <a href="docs/guia-vendedor.html" target="_blank" rel="noopener">Guia do Vendedor</a>
+        — todas as telas, em detalhe.
+      </p>
       <div class="ph">
         <div><h2 id="td-saud">Hoje</h2><span class="ps" id="td-data">—</span></div>
         <div class="pa" style="gap:14px;flex-wrap:wrap">
@@ -5263,7 +5272,8 @@ document.addEventListener('keydown', e => {
       <div class="kbd-item"><span>Mostrar atalhos</span><kbd>?</kbd></div>
       <div class="kbd-item"><span>Fechar modal</span><kbd>Esc</kbd></div>
     </div>
-    <div style="margin-top:16px;text-align:right">
+    <div style="margin-top:16px;display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap">
+      <a class="guia-sub" style="margin:0" href="docs/guia-vendedor.html" target="_blank" rel="noopener">📘 Guia do Vendedor</a>
       <button class="btn bg sm" onclick="document.getElementById('kbd-help').classList.remove('op')">Fechar</button>
     </div>
   </div>

@@ -817,7 +817,8 @@ crm-adiblock/
 │   ├── 2026-08-14-pedido-comercial.sql
 │   ├── 2026-08-17-closed-at-retroativo.sql  ← APLICADA em 19/08/2026 (60 linhas)
 │   ├── 2026-08-17-anexos-storage.sql        ← APLICADA em 17/08/2026
-│   └── 2026-08-24-tabela-preco-2026.sql     ← APLICADA em 24/08/2026 (229 preços)
+│   ├── 2026-08-24-tabela-preco-2026.sql     ← APLICADA em 24/08/2026 (229 preços)
+│   └── 2026-08-26-reajuste-precos.sql       ← PENDENTE (88 preços + bloco A)
 ├── docs/
 │   ├── RESTORE.md      ← guia de restauração de backup
 │   ├── diagnostico-banco.sql ← 6 blocos SÓ-LEITURA de checagem do banco

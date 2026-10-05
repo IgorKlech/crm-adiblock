@@ -3497,6 +3497,12 @@ document.getElementById('eq-f').addEventListener('submit', async e => {
     office_email:    document.getElementById('eq-off-email').value.trim()|| null,
     office_telefone: document.getElementById('eq-off-tel').value.trim()  || null,
   };
+  // Usuario criado no Supabase Auth nasce SEM organizacao, e sem ela nao
+  // enxerga nada (o RLS filtra tudo por current_org()). O admin, ao salvar,
+  // o traz para a propria org — a policy profiles_update_admin ja permite
+  // exatamente isso. Em 05/10/2026 um externo novo via zero empresas por isso.
+  const alvo = PF.find(x => x.id === EQ_EID);
+  if (ehAdmin() && alvo && !alvo.org_id && MEP?.org_id) d.org_id = MEP.org_id;
   try {
     await api('PATCH', 'profiles', `id=eq.${EQ_EID}`, d);
     // Se foi o próprio usuário logado, atualiza MEP em memória

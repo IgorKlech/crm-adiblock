@@ -640,6 +640,20 @@ as policies; há `COMMENT` na função). Para religar: ver
 commit 174a082. O externo ainda pode ativar o 2FA por conta própria em
 "Minhas configurações".
 
+> ⚠ **Usuário novo nasce SEM organização** (`profiles.org_id` NULL) — o
+> trigger de cadastro não preenche. Sem org ele não vê **nada**, e o sintoma
+> engana: o externo entra, o app mostra o papel certo, e a lista vem vazia.
+> Desde 05/10/2026 o admin, ao salvar o usuário na aba Equipe, o traz para a
+> própria org. Diagnóstico: `SELECT name, email FROM profiles WHERE org_id IS NULL;`
+
+> ⚠ **Função que agrega outras linhas tem que ser `SECURITY DEFINER`.**
+> Antes do externo, todo usuário via a org inteira, e uma função comum que
+> fizesse `MAX(numero)+1` acertava. Com o externo vendo só a carteira, o mesmo
+> `MAX` enxerga só as propostas dele — e a proposta saiu com número repetido
+> (`proposals_org_ano_numero_key`, 05/10/2026). Corrigido em
+> `2026-10-05-externo-numero-proposta.sql`. Vale para qualquer numeração,
+> contagem ou "existe outro igual?" escrita daqui pra frente.
+
 **Custo não vaza:** RLS filtra linha, não coluna. Externo não lê `products`
 (tem `preco_materia_prima`); lê `rpc/produtos_venda`, que devolve só as colunas
 de venda. **Base OFFICE vai junto** — se for sensível, tirar da função.
@@ -875,7 +889,8 @@ crm-adiblock/
 │   ├── 2026-08-26-reajuste-precos.sql       ← APLICADA em 26/08/2026 (88 preços)
 │   ├── 2026-10-05-vendedor-externo.sql      ← só DOCUMENTAÇÃO (rodado junto c/ rollback em 05/10 e anulado)
 │   ├── 2026-10-05-externo-passo-1..5-*.sql   ← APLICADOS em 05/10/2026 (5× OK)
-│   ├── 2026-10-05-externo-sem-2fa.sql        ← PENDENTE — desliga a exigência de 2FA
+│   ├── 2026-10-05-externo-sem-2fa.sql        ← APLICADA em 05/10/2026
+│   ├── 2026-10-05-externo-numero-proposta.sql ← APLICADA em 05/10/2026
 │   └── 2026-10-05-vendedor-externo-ROLLBACK.sql
 ├── docs/
 │   ├── RESTORE.md      ← guia de restauração de backup

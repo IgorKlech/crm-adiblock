@@ -312,8 +312,12 @@
             <button class="td-sw" data-st="expedido" onclick="setPrStatus('expedido')">Expedidos</button>
             <button class="td-sw" data-st="cancelada" onclick="setPrStatus('cancelada')">Canceladas</button>
           </div>
-          <label class="td-filtro-wrap">
-            <input aria-label="Mostrar só as minhas propostas" type="checkbox" id="pr-meus" checked> <span>Só os meus</span>
+          <!-- Externo so enxerga as dele (RLS): escolher vendedor nao faz sentido -->
+          <label class="td-filtro-wrap externo-oculto">Vendedor
+            <select aria-label="Vendedor das propostas" id="pr-vend" onchange="renderPropostas()">
+              <option value="__meus">Minhas</option>
+              <option value="">Todos</option>
+            </select>
           </label>
           <label class="td-filtro-wrap">Período
             <select aria-label="Período das propostas" id="pr-periodo" onchange="setPrPeriodo(this.value)">
@@ -2738,8 +2742,6 @@ document.querySelectorAll('.tb').forEach(b => b.addEventListener('click',()=>{
   if (b.dataset.tab==='rd') renderRadar();
 }));
 
-// Sprint 6.5: filtro "so meus" da aba Propostas
-document.getElementById('pr-meus')?.addEventListener('change', renderPropostas);
 
 // Sprint 6.1: filtro "so meus" na tela Hoje
 document.getElementById('td-meus')?.addEventListener('change', renderToday);

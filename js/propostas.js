@@ -67,7 +67,9 @@ function filtrarPeriodoPropostas(lst) {
 }
 
 // Filtro de vendedor (substituiu o "So os meus" do Sprint 6.5).
-// "__meus" e o padrao, como era a caixinha marcada; "" = todos.
+// "__meus" e o padrao, como era a caixinha marcada; "__todos" = todos.
+// NAO usar "" para "Todos": o `sel.value || '__meus'` abaixo tratava o vazio
+// como "nada escolhido" e a opcao pulava de volta para Minhas (05/10/2026).
 // As opcoes saem das PROPRIAS propostas, nao so do PF: vendedor que saiu da
 // equipe continua tendo propostas, e precisa continuar filtravel.
 function nomeVendedorProposta(p) {
@@ -83,7 +85,7 @@ function popularFiltroVendedorPropostas() {
     if (p.seller_id && !vistos.has(p.seller_id)) vistos.set(p.seller_id, nomeVendedorProposta(p));
   });
   const ordenados = [...vistos].sort((a, b) => a[1].localeCompare(b[1], 'pt-BR'));
-  sel.innerHTML = '<option value="__meus">Minhas</option><option value="">Todos</option>'
+  sel.innerHTML = '<option value="__meus">Minhas</option><option value="__todos">Todos</option>'
     + ordenados.map(([id, nome]) => `<option value="${escHtml(id)}">${escHtml(nome)}</option>`).join('');
   // Mantem a escolha entre re-renders; se o vendedor sumiu da lista, volta pra "Minhas"
   sel.value = [...sel.options].some(o => o.value === atual) ? atual : '__meus';
@@ -93,7 +95,7 @@ function filtrarVendedorPropostas(lst) {
   popularFiltroVendedorPropostas();
   if (ehExterno()) return lst;                 // o banco ja so devolve as dele
   const v = document.getElementById('pr-vend')?.value ?? '__meus';
-  if (!v) return lst;                          // "Todos"
+  if (v === '__todos') return lst;
   const alvo = v === '__meus' ? ME?.id : v;
   return alvo ? lst.filter(p => p.seller_id === alvo) : lst;
 }
@@ -128,7 +130,7 @@ function renderPropostas() {
     // Sprint 9.2: se ha filtro de periodo ativo, a mensagem reflete isso
     const periodoAtivo = PR_PERIODO === 'custom' || (Number(PR_PERIODO) > 0);
     // Filtro de vendedor escondendo tudo: diz isso, em vez de "sem propostas"
-    const vendAtivo = !ehExterno() && !!document.getElementById('pr-vend')?.value && all.length > 0;
+    const vendAtivo = !ehExterno() && document.getElementById('pr-vend')?.value !== '__todos' && all.length > 0;
     const vazio = periodoAtivo
       ? { ico:'📅', tit:'Nenhuma proposta neste período', msg:'Tente ampliar o período (ex: "Todos") ou ajustar as datas.' }
       : vendAtivo

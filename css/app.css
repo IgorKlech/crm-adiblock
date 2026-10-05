@@ -886,6 +886,18 @@ td strong{color:var(--tx);font-weight:600}
 .eq-info-main .eq-role{display:inline-block;font-size:var(--fs-2xs);font-weight:700;padding:2px 7px;border-radius:99px;text-transform:uppercase;letter-spacing:.05em;margin-left:6px}
 .eq-role.admin{background:var(--est3-bg);color:var(--est3-tx)}
 .eq-role.vendedor{background:var(--est2-bg);color:var(--est2-tx)}
+.eq-role.externo{background:var(--wr2);color:var(--wr)}
+
+/* ── Vendedor externo (2026-10-05) ──
+   Esconder aqui e conveniencia: o que ele pode VER e decidido pelo RLS. */
+body.role-externo .externo-oculto{display:none!important}
+.pr-st.aguardando_aceite{background:var(--ac);color:var(--ac-tx)}
+#dev-m{z-index:312}               /* acima da #cot-page (295), igual ao #oc-m */
+.f-ext-lista{display:flex;flex-wrap:wrap;gap:6px 14px}
+/* .fg label e bloco em caixa alta (rotulo de campo); aqui e opcao, texto normal */
+.fg .f-ext-lista label{display:inline-flex;align-items:center;gap:6px;text-transform:none;letter-spacing:0;font-size:var(--fs-md);font-weight:500;color:var(--tx);margin:0;cursor:pointer}
+.f-ext-resp{font-size:var(--fs-2xs);font-weight:700;text-transform:uppercase;letter-spacing:var(--ls-label);color:var(--mt)}
+.mfa-obrig{padding:10px 12px;margin-bottom:10px;background:var(--wr2);border:1px solid var(--wr);color:var(--wr-tx);border-radius:var(--rs);font-size:var(--fs-md);line-height:1.5}
 
 /* ── Listas de contatos / oportunidades no perfil (Sprint 3.3) ── */
 .pf-list-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px}

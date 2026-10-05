@@ -137,7 +137,7 @@
           <svg width="14" height="14" viewBox="0 0 20 20" fill="currentColor"><path d="M2 11a1 1 0 011-1h2a1 1 0 011 1v5a1 1 0 01-1 1H3a1 1 0 01-1-1v-5zM8 7a1 1 0 011-1h2a1 1 0 011 1v9a1 1 0 01-1 1H9a1 1 0 01-1-1V7zM14 4a1 1 0 011-1h2a1 1 0 011 1v12a1 1 0 01-1 1h-2a1 1 0 01-1-1V4z"/></svg>
           <span class="tb-full">Dashboard</span><span class="tb-short">Dash</span>
         </button>
-        <button class="tb" data-tab="eq">
+        <button class="tb externo-oculto" data-tab="eq">
           <svg width="14" height="14" viewBox="0 0 20 20" fill="currentColor"><path d="M13 6a3 3 0 11-6 0 3 3 0 016 0zM18 8a2 2 0 11-4 0 2 2 0 014 0zM14 15a4 4 0 00-8 0v3h8v-3zM6 8a2 2 0 11-4 0 2 2 0 014 0zM16 18v-3a5.972 5.972 0 00-.75-2.906A3.005 3.005 0 0119 15v3h-3zM4.75 12.094A5.973 5.973 0 004 15v3H1v-3a3 3 0 013.75-2.906z"/></svg>
           <span class="tb-full">Equipe</span><span class="tb-short">Equipe</span>
         </button>
@@ -221,7 +221,7 @@
       <div class="ph">
         <div><h2>Empresas</h2><span class="ps" id="cst" aria-live="polite">Carregando...</span></div>
         <div class="pa">
-          <button class="btn bg sm write-only" onclick="abrImport()">↑ Importar CSV</button>
+          <button class="btn bg sm write-only externo-oculto" onclick="abrImport()">↑ Importar CSV</button>
           <button class="btn bp write-only" id="ncbtn">+ Nova Empresa</button>
         </div>
       </div>
@@ -307,6 +307,7 @@
         <div class="pa" style="gap:14px;flex-wrap:wrap">
           <div class="td-switch" id="pr-tabs">
             <button class="td-sw ac" data-st="em_andamento" onclick="setPrStatus('em_andamento')">Em andamento</button>
+            <button class="td-sw" data-st="aguardando_aceite" onclick="setPrStatus('aguardando_aceite')">Aguardando aceite</button>
             <button class="td-sw" data-st="pedido" onclick="setPrStatus('pedido')">Pedidos</button>
             <button class="td-sw" data-st="expedido" onclick="setPrStatus('expedido')">Expedidos</button>
             <button class="td-sw" data-st="cancelada" onclick="setPrStatus('cancelada')">Canceladas</button>
@@ -443,6 +444,11 @@
       <div class="eq-info">
         💡 Para adicionar um novo vendedor: clique no botão acima, crie o usuário no Supabase Auth (marque "Auto Confirm User"). Em segundos o trigger cria o perfil aqui. Depois edite nome/cargo/contatos abaixo.
       </div>
+      <!-- Vendedor externo tentou cadastrar CNPJ que ja existe -->
+      <div id="eq-acessos" hidden style="margin-bottom:22px">
+        <h3 style="font-size:var(--fs-lg);font-weight:600;color:var(--tx);margin-bottom:8px">Pedidos de acesso <span style="font-weight:400;color:var(--mt);font-size:var(--fs-sm)">— vendedores externos</span></h3>
+        <div id="eq-acessos-body"></div>
+      </div>
       <div id="eq-list"></div>
 
       <!-- Sprint 7.4: painel de adocao por vendedor (so admin) -->
@@ -468,6 +474,7 @@
             <option value="vendedor">Vendedor</option>
             <option value="admin">Admin</option>
             <option value="leitor">Leitor (só lê)</option>
+            <option value="externo">Externo (só a própria carteira, 2FA obrigatório)</option>
           </select>
         </div>
       </div>
@@ -580,6 +587,12 @@
             <select id="f-vendedor"><option value="">—</option></select>
           </div>
           <div class="fg"><label for="f-fat">Faturamento estimado (R$/ano)</label><input type="number" id="f-fat" placeholder="0,00" step="1000" min="0"></div>
+        </div>
+        <!-- Vendedor externo: acesso ADICIONAL a esta empresa, dado pelo
+             escritorio. Some para o proprio externo e em empresa nova. -->
+        <div class="fg" id="f-ext-wrap" hidden>
+          <label id="f-ext-lbl">Vendedores externos com acesso <span style="font-weight:400;color:var(--mt);font-size:var(--fs-xs)">— além do responsável</span></label>
+          <div id="f-ext-lista" class="f-ext-lista" role="group" aria-labelledby="f-ext-lbl"></div>
         </div>
         <div class="fg"><label for="fob">Observações</label><textarea id="fob" placeholder="Notas sobre a empresa, contexto da operação..."></textarea></div>
       </div>
@@ -716,6 +729,11 @@
         </div>
       </div>
       <div class="fs"><div class="fsl">Segurança</div>
+        <div id="mfa-obrig" class="mfa-obrig" role="alert" hidden>
+          <b>Ative o 2FA para começar.</b> Vendedor externo só acessa o CRM com
+          a verificação em duas etapas — sem ela, o sistema não mostra nenhum dado.
+          Clique em "Ativar 2FA" abaixo e siga os dois passos.
+        </div>
         <div id="mfa-status" style="font-size:13px;padding:10px 12px;background:var(--bg);border-radius:var(--rs);border:1px solid var(--bdr)">Carregando status do 2FA...</div>
         <div id="mfa-actions" style="margin-top:8px;display:flex;gap:8px;flex-wrap:wrap"></div>
         <div id="mfa-enroll" style="display:none;margin-top:12px;padding:14px;background:var(--bg);border-radius:var(--rs);border:1px solid var(--bdr)">
@@ -782,6 +800,8 @@
     <div style="display:flex;gap:8px" id="cot-acoes">
       <button class="btn bg sm" id="cot-editar-btn" onclick="abrirEditarPedido()" title="Altera produtos, preços e condições gerando uma nova revisão" style="display:none">✏ Editar</button>
       <button class="btn bac sm" id="cot-finalizar-btn" onclick="finalizarComoPedido()" title="Marca esta proposta como Pedido aceito" style="display:none">✓ Marcar como Pedido</button>
+      <button class="btn bac sm" id="cot-aceitar-btn" onclick="aceitarPedido()" title="Confirma o pedido do vendedor externo — ele entra na lista de pedidos e ganha número" style="display:none">✓ Aceitar pedido</button>
+      <button class="btn bg sm" id="cot-devolver-btn" onclick="abrirDevolverPedido()" title="Volta para o vendedor corrigir, com o motivo" style="display:none">↩ Devolver</button>
       <button class="btn bg sm" id="cot-expedir-btn" onclick="expedicaoProposta()" title="Marca como expedido — pedido entregue" style="display:none">🚚 Marcar como Expedido</button>
       <button class="btn bg sm" id="cot-cancelar-btn" onclick="cancelarProposta()" title="Cancela esta proposta" style="display:none">🚫 Cancelar</button>
       <button class="btn bg sm" id="cot-reabrir-btn" onclick="reabrirProposta()" title="Volta para Em andamento" style="display:none">↶ Reabrir</button>
@@ -876,6 +896,29 @@
     <div class="ma">
       <button type="button" class="btn bg" onclick="fecharPerguntaOC()">Depois</button>
       <button type="button" class="btn bac" id="oc-salvar" onclick="salvarPerguntaOC()">Salvar OC</button>
+    </div>
+  </div>
+</div>
+
+<!-- Escritorio devolve o pedido do vendedor externo. Abre por cima da
+     #cot-page (295): camada no app.css, nao inline. -->
+<div class="mo" id="dev-m">
+  <div class="md" style="max-width:440px">
+    <div class="mh">
+      <h3>Devolver pedido ao vendedor</h3>
+      <button class="mx" type="button" onclick="fecharDevolverPedido()" aria-label="Fechar">✕</button>
+    </div>
+    <div class="fg">
+      <label for="dev-motivo">O que precisa ser corrigido</label>
+      <textarea id="dev-motivo" rows="3" maxlength="500" placeholder="Ex: preço abaixo da tabela sem autorização; falta a OC assinada"></textarea>
+      <div style="font-size:var(--fs-xs);color:var(--mt);margin-top:6px;line-height:1.55">
+        A proposta volta para <b>Em andamento</b> e o vendedor vê este motivo no sininho.
+      </div>
+      <div id="dev-err" style="color:var(--er);font-size:var(--fs-sm);margin-top:6px" role="alert"></div>
+    </div>
+    <div class="ma">
+      <button type="button" class="btn bg" onclick="fecharDevolverPedido()">Cancelar</button>
+      <button type="button" class="btn bp" id="dev-ok" onclick="confirmarDevolverPedido()">Devolver</button>
     </div>
   </div>
 </div>
@@ -1320,6 +1363,7 @@
 <script src="js/anexos.js"></script>
 <script src="js/catalogo.js"></script>
 <script src="js/agenda.js"></script>
+<script src="js/externo.js"></script>
 
 <script>
 // ── Estado ────────────────────────────────────────────────────────────────
@@ -1464,19 +1508,33 @@ function empresaVendedor(c) {
 }
 // Helper: total de produtos cadastrados nas oportunidades (pra display)
 const fetchPf = () => api('GET','profiles','select=id,name,role,email&order=name');
-const fetchProds = () => api('GET','products','select=id,nome,embalagem,preco_materia_prima,preco_office,preco_pj&order=nome,embalagem');
+// Externo não lê `products` (o RLS barra): a tabela tem o custo de
+// matéria-prima, e RLS filtra linha, não coluna. Ele lê pela RPC, que só
+// devolve as colunas de venda.
+const fetchProds = () => ehExterno()
+  ? api('GET','rpc/produtos_venda')
+  : api('GET','products','select=id,nome,embalagem,preco_materia_prima,preco_office,preco_pj&order=nome,embalagem');
 // Sprint 6.2: tarefas livres (nao atreladas a oportunidade)
 const fetchTasks = () => api('GET','tasks','select=*,company:companies(id,razao_social),seller:profiles(id,name)&order=due_at.asc');
 // Sprint 6.3+6.5+6.7+6.8. Tenta com todas as colunas; se falhar (colunas ainda nao migradas),
 // cai no select basico pra nao deixar a aba em branco.
 async function fetchPropostas() {
-  try {
-    return await api('GET','proposals',
-      'select=id,ano,numero,revisao,pedido_numero,pedido_ano,company_id,opportunity_id,seller_id,snapshot,status,status_changed_at,nf_numero,transportadora,oc_numero,entrega_local,entrega_previsao,created_at&order=created_at.desc&limit=500');
-  } catch(e) {
-    console.warn('fetchPropostas: colunas novas indisponiveis, usando select basico', e.message);
-    return await api('GET','proposals',
-      'select=id,ano,numero,company_id,opportunity_id,seller_id,snapshot,status,created_at&order=created_at.desc&limit=500');
+  // Do mais completo ao mais basico. O degrau do meio existe para que um
+  // deploy do app ANTES da migration do aceite (2026-10-05) nao derrube OC e
+  // nº de pedido junto — so as colunas de aceite ficam de fora.
+  const base = 'id,ano,numero,revisao,pedido_numero,pedido_ano,company_id,opportunity_id,seller_id,snapshot,status,status_changed_at,nf_numero,transportadora,oc_numero,entrega_local,entrega_previsao,created_at';
+  const tentativas = [
+    base + ',aceite_solicitado_em,aceite_recusa_motivo',
+    base,
+    'id,ano,numero,company_id,opportunity_id,seller_id,snapshot,status,created_at',
+  ];
+  for (let i = 0; i < tentativas.length; i++) {
+    try {
+      return await api('GET','proposals', `select=${tentativas[i]}&order=created_at.desc&limit=500`);
+    } catch(e) {
+      if (i === tentativas.length - 1) throw e;
+      console.warn('fetchPropostas: colunas indisponiveis, tentando select menor', e.message);
+    }
   }
 }
 // Sprint 3: histórico via interactions (por oportunidade) — stub por enquanto
@@ -1896,7 +1954,9 @@ function updateBell() {
   const cbMs = o => new Date(o.callback_date).getTime();
   const atrasados = minhas.filter(o => cbMs(o) < agoraMs);
   const hoje = minhas.filter(o => cbMs(o) >= agoraMs && cbMs(o) <= fimHoje.getTime());
-  const total = atrasados.length + hoje.length;
+  // Pedidos para aceitar / pedidos de acesso / devolvidos (externo.js)
+  const pend = pendenciasDoSininho();
+  const total = atrasados.length + hoje.length + pend.n;
 
   cntEl.textContent = total;
   cntEl.style.display = total ? 'flex' : 'none';
@@ -1917,7 +1977,8 @@ function updateBell() {
   const secao = (titulo, lista) => lista.length ? `<div class="bell-h">${titulo} <span>${lista.length}</span></div>${lista.slice(0,8).map(o=>linha(o,titulo.startsWith('Atrasados'))).join('')}` : '';
 
   pop.innerHTML = total
-    ? secao('Atrasados', atrasados.sort((a,b)=>cbMs(b)-cbMs(a))) +
+    ? pend.html +
+      secao('Atrasados', atrasados.sort((a,b)=>cbMs(b)-cbMs(a))) +
       secao('Hoje', hoje.sort((a,b)=>cbMs(a)-cbMs(b))) +
       `<div class="bell-foot"><a onclick="document.querySelector('.tb[data-tab=&quot;td&quot;]').click();fecharBell()">Ver tudo na agenda →</a></div>`
     : '<div class="bell-empty">Sem retornos pendentes. </div>';
@@ -2394,6 +2455,7 @@ function abrNovo() {
   document.getElementById('fn-err').classList.remove('show');
   // Vendedor responsável: default = usuário logado
   popularSelectVendedorResp(ME?.id || '');
+  carregarAcessoExternos(null); // empresa nova: seção escondida
   // LGPD reset
   document.getElementById('f-lgpd-consent').checked = false;
   document.getElementById('f-lgpd-info').innerHTML = '<span style="color:var(--mt2)">Marque se a empresa autoriza armazenamento e contato.</span>';
@@ -2424,6 +2486,7 @@ function abrEdit(id) {
   document.getElementById('f-classif').value  = c.classificacao || '';
   document.getElementById('fob').value        = c.observacoes || '';
   popularSelectVendedorResp(c.vendedor_responsavel_id || '');
+  carregarAcessoExternos(id);
   // LGPD
   document.getElementById('f-lgpd-consent').checked = !!c.lgpd_consent_at;
   const consInfo = document.getElementById('f-lgpd-info');
@@ -2474,13 +2537,16 @@ function ehDono(rec) { return rec && rec.created_by === ME?.id; }
 function popularSelectVendedorResp(selectedId) {
   const sel = document.getElementById('f-vendedor');
   if (!sel) return;
+  // Externo cadastra sempre como dele (o banco força isso; aqui só não engana)
+  sel.disabled = ehExterno();
+  if (ehExterno()) selectedId = ME?.id || selectedId;
   const opts = [{ id: '', name: '— (sem responsável)' }, ...(PF||[]).slice().sort((a,b)=>(a.name||'').localeCompare(b.name||''))];
   sel.innerHTML = opts.map(p => `<option value="${escHtml(p.id||'')}"${p.id===selectedId?' selected':''}>${escHtml(p.name||p.email||'?')}</option>`).join('');
 }
 
 function aplicarRoleBody() {
   const r = myRole();
-  document.body.classList.remove('role-admin','role-vendedor','role-leitor');
+  document.body.classList.remove('role-admin','role-vendedor','role-leitor','role-externo');
   document.body.classList.add('role-' + r);
 }
 
@@ -2540,13 +2606,20 @@ function mostrarBannerSchema(issues) {
 async function iniciar(user) {
   console.log('[iniciar] start', user.email);
   ME = user;
-  // Cache instantâneo
-  try { const c=localStorage.getItem('crm_cl'); if(c){CL=JSON.parse(c);renderCl();} } catch {}
+  // Cache instantâneo — só se foi gravado por ESTE usuário. Com vendedor
+  // externo, a lista de empresas de outra pessoa no mesmo aparelho (sessão que
+  // expirou sem logout) é exatamente o que ele não pode ver.
+  try {
+    const c=localStorage.getItem('crm_cl');
+    if(c && localStorage.getItem('crm_cl_uid')===user.id){CL=JSON.parse(c);renderCl();}
+  } catch {}
   // Perfil
   try { MEP = await fetchMePf(user.id); console.log('[iniciar] perfil ok', MEP?.role); }
   catch(err) { console.error('[iniciar] perfil falhou:', err); MEP={name:user.email.split('@')[0],role:'vendedor'}; }
   // Sprint 5.1: aplica role no body pra CSS condicional
   aplicarRoleBody();
+  // Externo sem 2FA: o banco não entrega nada. Para aqui e pede o cadastro.
+  if (!(await garantir2faExterno())) return;
   const nm = MEP?.name||user.email;
   document.getElementById('unm').textContent = nm;
   document.getElementById('uav').textContent = ini(nm);
@@ -2563,7 +2636,7 @@ async function iniciar(user) {
   const [rp,rc,rpr,rt,rpp] = await Promise.allSettled([fetchPf(),fetchCl(),fetchProds(),fetchTasks(),fetchPropostas()]);
   if (rc.status==='fulfilled') {
     CL=rc.value;
-    try{localStorage.setItem('crm_cl',JSON.stringify(CL));}catch{}
+    try{localStorage.setItem('crm_cl',JSON.stringify(CL));localStorage.setItem('crm_cl_uid',user.id);}catch{}
   } else if (!CL.length) {
     toast('Erro ao carregar clientes',rc.reason?.message,'warning');
   }
@@ -2571,6 +2644,7 @@ async function iniciar(user) {
   if (rpr.status==='fulfilled'&&Array.isArray(rpr.value)) PRODS=rpr.value;
   if (rt.status==='fulfilled'&&Array.isArray(rt.value)) TASKS=rt.value;
   if (rpp.status==='fulfilled'&&Array.isArray(rpp.value)) PROPOSTAS=rpp.value;
+  await fetchPedidosAcesso(); // pro sininho (escritório: pendentes; externo: os dele)
   updSug(); popularSelectVisoes(); renderCl();
   const n=CL.filter(c=>venc(c.callback_date)&&c.status!=='Comprou'&&c.status!=='Inativo').length;
   if (n>0) toast(n+' retorno(s) vencido(s)',n+' cliente(s) com data vencida.','warning');
@@ -2729,6 +2803,16 @@ document.getElementById('clf').addEventListener('submit', async e => {
   const btn=document.getElementById('msav'), err=document.getElementById('serr');
   btn.disabled=true; btn.textContent='Salvando...'; err.textContent='';
   try {
+    // Externo com CNPJ que já existe: vira pedido de acesso, não cadastro.
+    if (!EID && ehExterno()) {
+      const res = await externoChecaCnpj(document.getElementById('f-cnpj').value.trim(),
+                                         document.getElementById('fn').value.trim());
+      if (avisoCnpjExterno(res)) {
+        fechaModal();
+        if (res === 'ja_tem_acesso') { CL = await fetchCl(); renderCl(); }
+        return;
+      }
+    }
     const d = {
       razao_social:         document.getElementById('fn').value.trim(),
       nome_fantasia:        document.getElementById('f-fantasia').value.trim() || null,
@@ -2763,6 +2847,8 @@ document.getElementById('clf').addEventListener('submit', async e => {
     };
     const saved = await saveCl(d, EID);
     const savedId = EID || saved?.id;
+    // Vendedores externos com acesso extra (só escritório, só na edição)
+    await salvarAcessoExternos(savedId);
     // LGPD: log se houve mudança de consentimento
     if (savedId && d.lgpd_consent_at !== undefined) {
       const acao = d.lgpd_consent_at ? 'consentimento' : 'revogacao_consentimento';
@@ -3287,6 +3373,7 @@ async function renderEquipe() {
     }).join('');
     // Sprint 7.4: painel de adocao (so admin — o container ja e .admin-only)
     if (ehAdmin()) renderAdocao();
+    renderPedidosAcesso();
   } catch(err) {
     console.error('renderEquipe:', err);
     el.innerHTML = '<div class="pf-empty" style="color:var(--er)">Erro ao carregar equipe: '+escHtml(err.message||'')+'</div>';
@@ -3449,7 +3536,8 @@ async function loadMfaStatus() {
     const totpVerified = (data?.totp || []).find(f => f.status === 'verified');
     if (totpVerified) {
       statusEl.innerHTML = '✅ <b>2FA ativo</b> — código TOTP via app autenticador. Cadastrado em ' + new Date(totpVerified.created_at).toLocaleDateString('pt-BR');
-      actionsEl.innerHTML = `<button type="button" class="btn bod sm" onclick="removerMfa('${totpVerified.id}')">Desativar 2FA</button>`;
+      // Externo nao desativa: sem 2FA o banco para de entregar dados a ele
+      actionsEl.innerHTML = ehExterno() ? '' : `<button type="button" class="btn bod sm" onclick="removerMfa('${totpVerified.id}')">Desativar 2FA</button>`;
     } else {
       statusEl.innerHTML = '⚠️ <b>2FA não está ativo.</b> Recomendado pra proteger sua conta — uma camada extra além da senha.';
       actionsEl.innerHTML = `<button type="button" class="btn bp sm" onclick="iniciarMfa()">Ativar 2FA (TOTP)</button>`;
@@ -3506,6 +3594,9 @@ async function confirmarMfa() {
     if (vErr) throw vErr;
     toast('2FA ativado!', 'Da próxima vez que logar, o app vai pedir o código do autenticador.', 'success');
     mfaCurrentFactorId = null;
+    // Externo barrado no iniciar(): a sessao acabou de virar aal2, entao
+    // recarrega e o app abre com os dados.
+    if (MFA_OBRIGATORIO) { setTimeout(() => window.location.reload(), 900); return; }
     loadMfaStatus();
   } catch(err) {
     console.error('confirmarMfa:', err);
@@ -4931,6 +5022,7 @@ function limparSessao() {
     Object.keys(localStorage).filter(k => k.startsWith('sb-')).forEach(k => localStorage.removeItem(k));
     Object.keys(sessionStorage).filter(k => k.startsWith('sb-')).forEach(k => sessionStorage.removeItem(k));
     localStorage.removeItem('crm_cl');
+    localStorage.removeItem('crm_cl_uid');
   } catch(err) { console.error('limparSessao:', err); }
 }
 function showApp(){document.getElementById('ls').style.display='none';document.getElementById('app').style.display='flex';}

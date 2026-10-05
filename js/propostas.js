@@ -20,6 +20,7 @@
 
 // ── Sprint 6.5: Lista de Propostas (Em andamento / Pedidos / Canceladas) ─
 let PR_STATUS = 'em_andamento';
+const PR_STATUS_LBL = { em_andamento:'Em andamento', aguardando_aceite:'Aguardando aceite', pedido:'Pedido', expedido:'Expedido', cancelada:'Cancelada' };
 let PR_PERIODO = 0; // 0 = todos; 30/60/90 dias; ou 'custom'
 
 function setPrStatus(s) {
@@ -92,6 +93,7 @@ function renderPropostas() {
       ? { ico:'📅', tit:'Nenhuma proposta neste período', msg:'Tente ampliar o período (ex: "Todos") ou ajustar as datas.' }
       : {
           em_andamento: { ico:'📝', tit:'Sem propostas em andamento', msg:'Gere uma proposta a partir de uma oportunidade pra ela aparecer aqui.' },
+          aguardando_aceite: { ico:'⏳', tit:'Nada aguardando aceite', msg:'Pedidos fechados por vendedor externo esperam aqui até o escritório aceitar.' },
           pedido:       { ico:'📦', tit:'Sem pedidos finalizados ainda', msg:'Ao marcar uma proposta como "Pedido", ela aparece aqui pra acompanhamento.' },
           expedido:     { ico:'🚚', tit:'Nenhum pedido expedido ainda', msg:'Ao marcar um pedido como "Expedido", ele sai da fila de produção e aparece aqui.' },
           cancelada:    { ico:'🚫', tit:'Sem propostas canceladas', msg:'Propostas canceladas aparecem aqui.' },
@@ -109,7 +111,7 @@ function renderPropostas() {
     const tit = p.snapshot?.oportunidade?.titulo || '';
     const vend = p.snapshot?.consultor?.nome || '';
     const dt = new Date(p.created_at).toLocaleDateString('pt-BR');
-    const stLbl = { em_andamento:'Em andamento', pedido:'Pedido', expedido:'Expedido', cancelada:'Cancelada' }[p.status||'em_andamento'];
+    const stLbl = PR_STATUS_LBL[p.status||'em_andamento'];
     const total = totalProposta(p);
     const pedNum = numPedido(p);
     return `<div class="pr-card" onclick="abrPropostaPorId('${p.id}')">
@@ -124,6 +126,7 @@ function renderPropostas() {
       <div class="pr-emp">${escHtml(empNome)}</div>
       ${tit?`<div class="pr-tit">${escHtml(tit)}</div>`:''}
       ${p.oc_numero?`<div class="pr-tit" style="color:var(--tx2);font-weight:600">OC do cliente: ${escHtml(p.oc_numero)}</div>`:''}
+      ${p.status==='em_andamento' && p.aceite_recusa_motivo?`<div class="pr-tit" style="color:var(--er);font-weight:600">Devolvido pelo escritório: ${escHtml(p.aceite_recusa_motivo)}</div>`:''}
       ${p.nf_numero?`<div class="pr-tit" style="color:var(--p);font-weight:600">NF ${escHtml(p.nf_numero)}${p.transportadora?' · '+escHtml(p.transportadora):''}</div>`:''}
       <div class="pr-meta">
         <span>${escHtml(vend)} · ${dt}</span>
@@ -153,8 +156,7 @@ function atualizarTopoCotacao() {
   const badge = document.getElementById('cot-status-badge');
   // Mostra "Pedido 0336-26" quando ja tem numero de pedido, senao so o label
   const pedNum = numPedido(p);
-  const lblMap = { em_andamento:'Em andamento', pedido:'Pedido', expedido:'Expedido', cancelada:'Cancelada' };
-  const lbl = lblMap[st] || st;
+  const lbl = PR_STATUS_LBL[st] || st;
   badge.textContent = st === 'pedido' && pedNum ? `Pedido ${pedNum}` : (st === 'expedido' && pedNum ? `Expedido ${pedNum}` : lbl);
   badge.className = 'pr-st ' + st;
   badge.style.display = '';
@@ -172,10 +174,19 @@ function atualizarTopoCotacao() {
   // de algo fechado. Proposta em andamento ainda e oferta.
   document.getElementById('cot-pcom-btn').style.display =
     (st === 'pedido' || st === 'expedido') ? '' : 'none';
-  document.getElementById('cot-finalizar-btn').style.display = (podeAcionar && st === 'em_andamento') ? '' : 'none';
-  document.getElementById('cot-expedir-btn').style.display   = (podeAcionar && st === 'pedido') ? '' : 'none';
-  document.getElementById('cot-cancelar-btn').style.display  = (podeAcionar && (st === 'em_andamento' || st === 'pedido')) ? '' : 'none';
-  document.getElementById('cot-reabrir-btn').style.display   = (podeAcionar && (st === 'expedido' || st === 'cancelada')) ? '' : 'none';
+  // Externo fecha, mas quem confirma e o escritorio: ele nao expede, nao
+  // reabre e nao cancela pedido ja aceito. O banco recusa do mesmo jeito.
+  const ext = ehExterno();
+  const escr = podeAcionar && !ext;
+  const finBtn = document.getElementById('cot-finalizar-btn');
+  finBtn.style.display = (podeAcionar && st === 'em_andamento') ? '' : 'none';
+  finBtn.textContent = ext ? '✓ Fechar pedido (vai para aceite)' : '✓ Marcar como Pedido';
+  document.getElementById('cot-aceitar-btn').style.display   = (escr && st === 'aguardando_aceite') ? '' : 'none';
+  document.getElementById('cot-devolver-btn').style.display  = (escr && st === 'aguardando_aceite') ? '' : 'none';
+  document.getElementById('cot-expedir-btn').style.display   = (escr && st === 'pedido') ? '' : 'none';
+  document.getElementById('cot-cancelar-btn').style.display  =
+    (podeAcionar && (st === 'em_andamento' || st === 'aguardando_aceite' || (st === 'pedido' && !ext))) ? '' : 'none';
+  document.getElementById('cot-reabrir-btn').style.display   = (escr && (st === 'expedido' || st === 'cancelada')) ? '' : 'none';
   // Excluir: so admin ve, em qualquer status
   const exclBtn = document.getElementById('cot-excluir-btn');
   if (exclBtn) exclBtn.style.display = (MEP?.role === 'admin') ? '' : 'none';
@@ -212,6 +223,16 @@ async function mudarStatusProposta(novoStatus, msgSucesso) {
 
 async function finalizarComoPedido() {
   if (!PROP_ATUAL) return;
+  // Externo: o pedido so entra na lista do escritorio depois do aceite. A
+  // oportunidade fica para o aceite tambem (aceitarPedido, em externo.js) —
+  // marcar "ganha" antes seria contar venda que ainda pode voltar.
+  // A OC continua sendo perguntada agora: e quando o cliente tem o numero na mao.
+  if (ehExterno()) {
+    await mudarStatusProposta('aguardando_aceite', 'Pedido enviado para aceite do escritório');
+    updateBell();
+    perguntarOC();
+    return;
+  }
   await mudarStatusProposta('pedido', 'Proposta finalizada como Pedido');
   await ofereceMarcarOppGanha();
   // SEMPRE, e por ultimo. Antes, a oferta da oportunidade tinha `return` no
@@ -375,18 +396,24 @@ let EDP_LINHAS = [];
 
 // Status que aceitam edicao. `expedido` fica de fora de proposito: a NF ja
 // foi emitida, e mudar o pedido depois disso descasa do fiscal.
-const EDP_STATUS_EDITAVEIS = new Set(['em_andamento', 'pedido']);
+const EDP_STATUS_EDITAVEIS = new Set(['em_andamento', 'aguardando_aceite', 'pedido']);
+// Externo para de editar quando o escritorio aceita: dali em diante o pedido
+// e do escritorio (o banco recusa — proposals_guarda_externo).
+const EDP_STATUS_EDITAVEIS_EXTERNO = new Set(['em_andamento', 'aguardando_aceite']);
 
 function podeEditarProposta(p) {
   if (!p || MEP?.role === 'leitor') return false;
-  return EDP_STATUS_EDITAVEIS.has(p.status || 'em_andamento');
+  const permitidos = ehExterno() ? EDP_STATUS_EDITAVEIS_EXTERNO : EDP_STATUS_EDITAVEIS;
+  return permitidos.has(p.status || 'em_andamento');
 }
 
 function abrirEditarPedido() {
   const p = PROP_ATUAL;
   if (!p) { toast('Sem proposta carregada','','warning'); return; }
   if (!podeEditarProposta(p)) {
-    toast('Não dá pra editar', 'Pedido expedido ou cancelado não aceita alteração.', 'warning');
+    toast('Não dá pra editar', ehExterno() && p.status === 'pedido'
+      ? 'Pedido já aceito pelo escritório — peça a alteração a eles.'
+      : 'Pedido expedido ou cancelado não aceita alteração.', 'warning');
     return;
   }
   const snap = p.snapshot || {};

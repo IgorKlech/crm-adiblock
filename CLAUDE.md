@@ -102,7 +102,11 @@ O CRM deixará de ser apenas interno (Adiblock) e está sendo preparado para vir
 | Letícia | vendas@adiblock.online | `vendedor` |
 | Gracielle | laboratorio@adiblock.online | `vendedor` |
 
-Roles: `admin`, `vendedor`, `leitor`. Default: `vendedor`.
+Roles: `admin`, `vendedor`, `leitor`, `externo`. Default: `vendedor`.
+
+> **`vendedor` é o escritório** — vê e acata pedidos de todo mundo, de propósito.
+> **`externo`** (2026-10-05) é o vendedor de rua: só a própria carteira. Ver
+> seção 11, "Vendedor externo".
 
 ---
 
@@ -380,7 +384,7 @@ as duas, porque precisa descolar do fundo. Cards clicáveis ganham a sombra no
 500  — kbd-help, gs-overlay
 450  — bell-pop
 400  — schema-banner
-312  — #oc-m          ┐
+312  — #oc-m, #dev-m   ┐
 311  — #anx-m         │
 310  — prod-req-m, pcom-m, expedicao-m   │ MODAIS abertos a partir
 302  — #edp-hist-m    │ dos documentos (295-297)
@@ -607,6 +611,51 @@ ALTER TABLE public.proposals
 
 ## 11. Decisões técnicas importantes
 
+### Vendedor externo — só a própria carteira (2026-10-05)
+
+Migration: `migrations/2026-10-05-vendedor-externo.sql`. Código: `js/externo.js`.
+
+**O que é dele:** empresa com `vendedor_responsavel_id` = ele, **ou** em que o
+escritório o incluiu (`company_access`, marcado no modal da empresa). Todo o
+resto (contatos, oportunidades, interações, propostas, revisões, anexos, até o
+arquivo no Storage) herda da empresa via `alcanca_empresa()` / `alcanca_opp()` /
+`alcanca_proposta()`. **Uma regra, uma função** — não espalhar a condição.
+
+**Padrão das policies:** `org_id = current_org() AND (NOT (SELECT is_externo())
+OR alcanca_…(…))`. Para interno o termo novo é sempre verdadeiro, então cada
+policy é equivalente à da 91f. O `(SELECT …)` vira initplan (uma vez por
+consulta). `companies` e `proposals` usam a condição **inline** no SELECT: o
+`INSERT … RETURNING` do próprio cadastro precisa enxergar a linha nova.
+
+> ⚠ **Tabela nova com dado de cliente precisa do termo de externo na policy.**
+> Sem ele, o externo vê a tabela inteira da org — o isolamento só existe onde
+> foi escrito.
+
+**2FA é obrigatório e quem garante é o banco:** `alcanca_*` exige
+`sessao_com_2fa()` (`auth.jwt()->>'aal' = 'aal2'`). Sem 2FA o externo recebe
+vazio. O app (`garantir2faExterno()` no `iniciar()`) só evita a tela vazia:
+abre o cadastro do autenticador e recarrega quando confere.
+
+**Custo não vaza:** RLS filtra linha, não coluna. Externo não lê `products`
+(tem `preco_materia_prima`); lê `rpc/produtos_venda`, que devolve só as colunas
+de venda. **Base OFFICE vai junto** — se for sensível, tirar da função.
+
+**CNPJ já existente** → `rpc/externo_checa_cnpj` compara só dígitos e, se a
+empresa existe, abre `company_access_requests` sem dizer de quem é. O escritório
+vê no sininho e na aba Equipe e decide com `rpc/decidir_acesso`.
+
+**Aceite de pedido:** externo fecha → `aguardando_aceite` (sem nº de pedido).
+Escritório **aceita** (→ `pedido`, aí o trigger numera) ou **devolve** (→
+`em_andamento` + `aceite_recusa_motivo`, que aparece no sininho dele).
+`proposals_guarda_externo()` impede o externo de pôr `pedido`/`expedido`, de
+mexer depois do aceite e de escrever nº de pedido, NF ou transportadora.
+Painéis de venda leem `pedido`/`expedido`, então aguardando não conta como venda.
+
+**Também fechado de passagem** (valia para qualquer usuário): view
+`companies_with_tier` ignorava RLS (sem `security_invoker`); `audit_log` legível
+inteiro; anexos no Storage filtrados só por org; cache `crm_cl` exibido antes de
+saber de quem era (agora só se `crm_cl_uid` bate).
+
 ### Por que XHR em vez de fetch nativo?
 
 Vercel injeta scripts de instrumentação que interferem com `fetch`. A função `api()` usa `XMLHttpRequest` diretamente com headers de autenticação manuais (`Authorization: Bearer <token>` + `apikey`). Não trocar para `fetch` sem testar em produção.
@@ -809,6 +858,7 @@ crm-adiblock/
 │   ├── anexos.js       ← arquivos do pedido no Supabase Storage (O4)
 │   ├── catalogo.js     ← cadastro de produtos/embalagens/preços (só admin)
 │   ├── agenda.js       ← tarefas livres + tela Hoje/Agenda + export .ics (8.1g)
+│   ├── externo.js      ← vendedor externo: 2FA, pedido de acesso, aceite de pedido
 │   └── vendor/         ← supabase-js 2.39.3 (arquivo local, ver seção 2)
 ├── supabase_setup.sql  ← schema completo (DROP destrutivo COMENTADO — Regra de Ouro)
 ├── migrations/         ← mudanças de schema datadas (AAAA-MM-DD-*.sql)
@@ -818,7 +868,10 @@ crm-adiblock/
 │   ├── 2026-08-17-closed-at-retroativo.sql  ← APLICADA em 19/08/2026 (60 linhas)
 │   ├── 2026-08-17-anexos-storage.sql        ← APLICADA em 17/08/2026
 │   ├── 2026-08-24-tabela-preco-2026.sql     ← APLICADA em 24/08/2026 (229 preços)
-│   └── 2026-08-26-reajuste-precos.sql       ← APLICADA em 26/08/2026 (88 preços)
+│   ├── 2026-08-26-reajuste-precos.sql       ← APLICADA em 26/08/2026 (88 preços)
+│   ├── 2026-10-05-vendedor-externo.sql      ← só DOCUMENTAÇÃO (rodado junto c/ rollback em 05/10 e anulado)
+│   ├── 2026-10-05-externo-passo-1..5-*.sql   ← APLICADOS em 05/10/2026 (5× OK)
+│   └── 2026-10-05-vendedor-externo-ROLLBACK.sql
 ├── docs/
 │   ├── RESTORE.md      ← guia de restauração de backup
 │   ├── diagnostico-banco.sql ← 6 blocos SÓ-LEITURA de checagem do banco
@@ -842,7 +895,8 @@ crm-adiblock/
 
 > **Ordem de carga** (crítica — tudo compartilha escopo global, sem `type=module`):
 > `vendor/supabase-js` → `config.js` → `api.js` → `format.js` → `documentos.js`
-> → `propostas.js` → `perfil.js` → `anexos.js` → `catalogo.js` → `<script>` inline.
+> → `propostas.js` → `perfil.js` → `anexos.js` → `catalogo.js` → `agenda.js`
+> → `externo.js` → `<script>` inline.
 > `api.js` usa `SB_URL`/`SB_KEY` de `config.js`; o inline usa `sb`, `api()`,
 > `apiDelete()` e `MODO_RECUPERACAO` dos dois. Módulo novo entra **antes** do
 > inline e **depois** de quem ele consome. CSS via `<link href="css/app.css">`.

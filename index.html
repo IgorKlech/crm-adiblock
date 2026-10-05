@@ -474,7 +474,7 @@
             <option value="vendedor">Vendedor</option>
             <option value="admin">Admin</option>
             <option value="leitor">Leitor (só lê)</option>
-            <option value="externo">Externo (só a própria carteira, 2FA obrigatório)</option>
+            <option value="externo">Externo (só a própria carteira)</option>
           </select>
         </div>
       </div>
@@ -729,11 +729,6 @@
         </div>
       </div>
       <div class="fs"><div class="fsl">Segurança</div>
-        <div id="mfa-obrig" class="mfa-obrig" role="alert" hidden>
-          <b>Ative o 2FA para começar.</b> Vendedor externo só acessa o CRM com
-          a verificação em duas etapas — sem ela, o sistema não mostra nenhum dado.
-          Clique em "Ativar 2FA" abaixo e siga os dois passos.
-        </div>
         <div id="mfa-status" style="font-size:13px;padding:10px 12px;background:var(--bg);border-radius:var(--rs);border:1px solid var(--bdr)">Carregando status do 2FA...</div>
         <div id="mfa-actions" style="margin-top:8px;display:flex;gap:8px;flex-wrap:wrap"></div>
         <div id="mfa-enroll" style="display:none;margin-top:12px;padding:14px;background:var(--bg);border-radius:var(--rs);border:1px solid var(--bdr)">
@@ -1540,7 +1535,14 @@ async function fetchPropostas() {
 // Sprint 3: histórico via interactions (por oportunidade) — stub por enquanto
 const fetchHist = id => Promise.resolve([]); // será refeito no Sprint 3.3 ligado a oportunidades
 function saveCl(d, id) {
-  if (id) return api('PATCH','companies','id=eq.'+id,d).then(r => Array.isArray(r)?r[0]:r);
+  // PATCH barrado pelo RLS NAO da erro: o PostgREST responde 200 com lista
+  // vazia. Sem esta checagem o modal fechava com "Empresa atualizada" e nada
+  // tinha mudado — foi assim que uma troca de responsavel "sumiu" em 05/10.
+  if (id) return api('PATCH','companies','id=eq.'+id,d).then(r => {
+    if (Array.isArray(r) && !r.length)
+      throw new Error('Sem permissão para editar esta empresa: só quem a cadastrou ou o admin pode alterar.');
+    return Array.isArray(r) ? r[0] : r;
+  });
   return api('POST','companies',null,d).then(r => Array.isArray(r)?r[0]:r);
 }
 const delCl = id => apiDelete('companies','id=eq.'+id);
@@ -2618,8 +2620,6 @@ async function iniciar(user) {
   catch(err) { console.error('[iniciar] perfil falhou:', err); MEP={name:user.email.split('@')[0],role:'vendedor'}; }
   // Sprint 5.1: aplica role no body pra CSS condicional
   aplicarRoleBody();
-  // Externo sem 2FA: o banco não entrega nada. Para aqui e pede o cadastro.
-  if (!(await garantir2faExterno())) return;
   const nm = MEP?.name||user.email;
   document.getElementById('unm').textContent = nm;
   document.getElementById('uav').textContent = ini(nm);
@@ -3536,8 +3536,7 @@ async function loadMfaStatus() {
     const totpVerified = (data?.totp || []).find(f => f.status === 'verified');
     if (totpVerified) {
       statusEl.innerHTML = '✅ <b>2FA ativo</b> — código TOTP via app autenticador. Cadastrado em ' + new Date(totpVerified.created_at).toLocaleDateString('pt-BR');
-      // Externo nao desativa: sem 2FA o banco para de entregar dados a ele
-      actionsEl.innerHTML = ehExterno() ? '' : `<button type="button" class="btn bod sm" onclick="removerMfa('${totpVerified.id}')">Desativar 2FA</button>`;
+      actionsEl.innerHTML = `<button type="button" class="btn bod sm" onclick="removerMfa('${totpVerified.id}')">Desativar 2FA</button>`;
     } else {
       statusEl.innerHTML = '⚠️ <b>2FA não está ativo.</b> Recomendado pra proteger sua conta — uma camada extra além da senha.';
       actionsEl.innerHTML = `<button type="button" class="btn bp sm" onclick="iniciarMfa()">Ativar 2FA (TOTP)</button>`;
@@ -3594,9 +3593,6 @@ async function confirmarMfa() {
     if (vErr) throw vErr;
     toast('2FA ativado!', 'Da próxima vez que logar, o app vai pedir o código do autenticador.', 'success');
     mfaCurrentFactorId = null;
-    // Externo barrado no iniciar(): a sessao acabou de virar aal2, entao
-    // recarrega e o app abre com os dados.
-    if (MFA_OBRIGATORIO) { setTimeout(() => window.location.reload(), 900); return; }
     loadMfaStatus();
   } catch(err) {
     console.error('confirmarMfa:', err);

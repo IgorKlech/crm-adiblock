@@ -539,6 +539,7 @@ imutável — enfiar dado de entrega nele obrigaria a reescrever documento fecha
 | 9.1 | Multi-tenant etapas D/F: NOT NULL + índices compostos + numeração por org, policies RLS por org | 404eb33 + 7b83512 |
 | 9.3 | Auditoria de UX: logo/favicon, recuperação de senha, cores do tema escuro, mover estágio sem arrastar, navbar mobile | 0e0d841 |
 | 8.1g | Modularização: `js/agenda.js` (tarefas + Hoje/Agenda + .ics) + rótulos de acessibilidade (85 campos e 16 botões sem nome → zero) | 06e13b7 |
+| 10.1 | Vendedor externo: carteira própria via RLS, pedido de acesso por CNPJ, aceite de pedido pelo escritório. Testado com conta externa em 05/10/2026 | 174a082 |
 
 ---
 
@@ -631,10 +632,13 @@ consulta). `companies` e `proposals` usam a condição **inline** no SELECT: o
 > Sem ele, o externo vê a tabela inteira da org — o isolamento só existe onde
 > foi escrito.
 
-**2FA é obrigatório e quem garante é o banco:** `alcanca_*` exige
-`sessao_com_2fa()` (`auth.jwt()->>'aal' = 'aal2'`). Sem 2FA o externo recebe
-vazio. O app (`garantir2faExterno()` no `iniciar()`) só evita a tela vazia:
-abre o cadastro do autenticador e recarrega quando confere.
+**2FA: DESLIGADO em 05/10/2026** (decisão do Igor — vendedor de rua teria
+dificuldade com o autenticador). Toda exigência passa por `sessao_com_2fa()`,
+que virou **interruptor** e devolve sempre `true` (o nome ficou para não refazer
+as policies; há `COMMENT` na função). Para religar: ver
+`migrations/2026-10-05-externo-sem-2fa.sql` e o `garantir2faExterno()` do
+commit 174a082. O externo ainda pode ativar o 2FA por conta própria em
+"Minhas configurações".
 
 **Custo não vaza:** RLS filtra linha, não coluna. Externo não lê `products`
 (tem `preco_materia_prima`); lê `rpc/produtos_venda`, que devolve só as colunas
@@ -871,6 +875,7 @@ crm-adiblock/
 │   ├── 2026-08-26-reajuste-precos.sql       ← APLICADA em 26/08/2026 (88 preços)
 │   ├── 2026-10-05-vendedor-externo.sql      ← só DOCUMENTAÇÃO (rodado junto c/ rollback em 05/10 e anulado)
 │   ├── 2026-10-05-externo-passo-1..5-*.sql   ← APLICADOS em 05/10/2026 (5× OK)
+│   ├── 2026-10-05-externo-sem-2fa.sql        ← PENDENTE — desliga a exigência de 2FA
 │   └── 2026-10-05-vendedor-externo-ROLLBACK.sql
 ├── docs/
 │   ├── RESTORE.md      ← guia de restauração de backup

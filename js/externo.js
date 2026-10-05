@@ -7,7 +7,7 @@
    (proposals_guarda_externo, companies_guarda_externo). Nada neste arquivo
    decide o que o externo pode VER — o banco já devolve só o que é dele.
 
-     papel e 2FA          ehExterno, garantir2faExterno
+     papel                ehExterno, ehEscritorio
      CNPJ já existente    externoChecaCnpj -> pedido de acesso pro escritório
      pedidos de acesso    ACESSO_PEDIDOS, renderPedidosAcesso, decidirAcesso
      acesso manual        carregarAcessoExternos / salvarAcessoExternos (modal de empresa)
@@ -21,34 +21,6 @@
 function ehExterno()   { return myRole() === 'externo'; }
 // "Escritório" = quem aceita pedido e libera acesso: interno que escreve.
 function ehEscritorio() { const r = myRole(); return r === 'admin' || r === 'vendedor'; }
-
-// ── 2FA obrigatório ──────────────────────────────────────────────────────
-// O banco só entrega dado a externo em sessão aal2. Sem isso o app abriria
-// vazio e ninguém entenderia por quê — então paramos antes e pedimos o 2FA.
-// Quem já tem o fator passou pelo checkMfaChallenge() no login; chega aqui
-// sem aal2 só quem nunca cadastrou.
-let MFA_OBRIGATORIO = false;
-
-async function garantir2faExterno() {
-  if (!ehExterno()) return true;
-  try {
-    const { data: aal } = await sb.auth.mfa.getAuthenticatorAssuranceLevel();
-    if (aal?.currentLevel === 'aal2') return true;
-    // Tem o fator mas a sessao ficou em aal1: o checkMfaChallenge() do login
-    // deixa passar quando da erro. Reabre o desafio; o mfaLoginConfirm()
-    // chama iniciar() de novo quando o codigo confere.
-    const { data: f } = await sb.auth.mfa.listFactors();
-    if ((f?.totp || []).some(x => x.status === 'verified')) {
-      await checkMfaChallenge(ME);
-      return false;
-    }
-  } catch (err) { console.error('garantir2faExterno:', err); }
-  MFA_OBRIGATORIO = true;
-  abrConfig();
-  const aviso = document.getElementById('mfa-obrig');
-  if (aviso) aviso.hidden = false;
-  return false;
-}
 
 // ── CNPJ que já existe ───────────────────────────────────────────────────
 // O externo não enxerga a empresa de outro vendedor, então o UNIQUE do CNPJ

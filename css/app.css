@@ -897,7 +897,6 @@ body.role-externo .externo-oculto{display:none!important}
 /* .fg label e bloco em caixa alta (rotulo de campo); aqui e opcao, texto normal */
 .fg .f-ext-lista label{display:inline-flex;align-items:center;gap:6px;text-transform:none;letter-spacing:0;font-size:var(--fs-md);font-weight:500;color:var(--tx);margin:0;cursor:pointer}
 .f-ext-resp{font-size:var(--fs-2xs);font-weight:700;text-transform:uppercase;letter-spacing:var(--ls-label);color:var(--mt)}
-.mfa-obrig{padding:10px 12px;margin-bottom:10px;background:var(--wr2);border:1px solid var(--wr);color:var(--wr-tx);border-radius:var(--rs);font-size:var(--fs-md);line-height:1.5}
 
 /* ── Listas de contatos / oportunidades no perfil (Sprint 3.3) ── */
 .pf-list-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px}

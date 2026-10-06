@@ -746,6 +746,13 @@ td strong{color:var(--tx);font-weight:600}
 /* ── Página de Perfil ── */
 #pfpage{display:none;position:fixed;inset:0;background:var(--bg);z-index:280;overflow-y:auto;flex-direction:column}
 #pfpage.op{display:flex}
+/* Coluna flex de altura fixa (inset:0) que ROLA: quando o conteudo passa da
+   tela, o flex encolhe os filhos para caber. Filho com overflow proprio (a
+   .pf-tabs tem overflow-x:auto para o celular) tem min-height 0 e encolhe ATE
+   SUMIR — em 06/10/2026 a barra Contatos/Oportunidades/Interacoes virou um
+   risco de 0px no tablet da Gracielle, em empresa com Observacoes longas.
+   Aqui ninguem encolhe: quem rola e a pagina. */
+#pfpage>*{flex-shrink:0}
 .pf-topbar{display:flex;align-items:center;justify-content:space-between;padding:12px 24px;background:var(--sur);border-bottom:1px solid var(--bdr);position:sticky;top:0;z-index:10;gap:12px}
 .pf-back{display:flex;align-items:center;gap:6px;padding:6px 14px;background:none;border:1.5px solid var(--bdr);border-radius:var(--rs);font-size:var(--fs-md);cursor:pointer;color:var(--tx2);font-family:inherit;transition:all .15s}
 .pf-back:hover{background:var(--bg);border-color:var(--bdr2);color:var(--tx)}
